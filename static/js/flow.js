@@ -30,7 +30,7 @@ function renderTree() {
 // Gera o HTML do nó
 function createNodeUI(node, path, isRoot = false) {
     const div = document.createElement('div');
-    div.className = `flex flex-col gap-2 rounded-xl p-4 ${isRoot ? 'bg-indigo-950/20 border border-indigo-500/20' : 'bg-gray-800/30 border border-gray-700/40 ml-6'}`;
+    div.className = `flex flex-col gap-3 rounded-2xl p-5 transition duration-200 ${isRoot ? 'bg-indigo-950/20 border border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-zinc-900/40 border border-white/5 ml-6 hover:border-white/10'}`;
 
     // Emblemas de acordo com o tipo
     let badgeHTML = '';

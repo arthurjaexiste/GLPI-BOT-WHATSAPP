@@ -3,30 +3,36 @@
 
 :root {
     --bg-primary: #09090b;
-    --bg-secondary: #18181b;
-    --accent-indigo: #a1a1aa;
-    --accent-purple: #d4d4d8;
-    --accent-pink: #f4f4f5;
+    --bg-secondary: #101014;
+    --accent-indigo: #6366f1;
+    --accent-purple: #8b5cf6;
+    --accent-pink: #ec4899;
     --accent-emerald: #10b981;
     --accent-teal: #14b8a6;
+    --accent-cyan: #06b6d4;
     --text-primary: #f4f4f5;
     --text-secondary: #a1a1aa;
 }
 
 body {
     font-family: 'Outfit', sans-serif;
-    background: linear-gradient(135deg, #09090b 0%, #18181b 50%, #27272a 100%) !important;
+    background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #09090b 70%) no-repeat, #09090b !important;
     color: var(--text-primary);
     min-height: 100vh;
 }
 
 /* Glassmorphism Cards */
 .glass-card {
-    background: rgba(24, 24, 27, 0.7) !important;
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background: rgba(16, 16, 20, 0.7) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6) !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-card:hover {
+    border-color: rgba(99, 102, 241, 0.25) !important;
+    box-shadow: 0 16px 48px 0 rgba(99, 102, 241, 0.08) !important;
 }
 
 /* Form Controls */
@@ -35,13 +41,13 @@ input[type="password"],
 input[type="number"], 
 textarea, 
 select {
-    background: rgba(9, 9, 11, 0.5) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 10px !important;
-    padding: 10px 14px !important;
+    background: rgba(9, 9, 11, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 12px 16px !important;
     color: #f3f4f6 !important;
     font-size: 0.875rem !important;
-    transition: all 0.2s ease-in-out !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     width: 100%;
 }
 
@@ -49,24 +55,25 @@ input:focus,
 textarea:focus, 
 select:focus {
     border-color: var(--accent-indigo) !important;
-    box-shadow: 0 0 0 3px rgba(161, 161, 170, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+    background: rgba(9, 9, 11, 0.85) !important;
     outline: none !important;
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.3);
 }
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.25);
 }
 
 /* Navigation Links */
@@ -81,18 +88,18 @@ select:focus {
 }
 .nav-link.active {
     color: #ffffff !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    background: rgba(99, 102, 241, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.25) !important;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
 }
 
 /* Badges for Variables */
 .badge {
-    background: rgba(161, 161, 170, 0.15) !important;
-    color: #e4e4e7 !important;
-    border: 1px solid rgba(161, 161, 170, 0.3) !important;
-    padding: 0.2rem 0.5rem;
-    border-radius: 6px;
+    background: rgba(99, 102, 241, 0.12) !important;
+    color: #c7d2fe !important;
+    border: 1px solid rgba(99, 102, 241, 0.25) !important;
+    padding: 0.25rem 0.6rem;
+    border-radius: 8px;
     font-family: monospace;
     font-size: 0.75rem;
     cursor: pointer;
@@ -100,9 +107,10 @@ select:focus {
     display: inline-block;
 }
 .badge:hover {
-    background: rgba(161, 161, 170, 0.25) !important;
-    border-color: rgba(161, 161, 170, 0.5) !important;
+    background: rgba(99, 102, 241, 0.25) !important;
+    border-color: rgba(99, 102, 241, 0.45) !important;
     color: #ffffff !important;
+    transform: translateY(-1px);
 }
 
 /* Status QR Code container styles */
@@ -114,30 +122,31 @@ select:focus {
     width: 220px;
     height: 220px;
     object-fit: contain;
-    border-radius: 0.5rem;
-    border: 4px solid white;
-    background: white;
+    border-radius: 0.75rem;
+    border: 6px solid #ffffff;
+    background: #ffffff;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
 }
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 main, .glass-card {
-    animation: fadeIn 0.4s ease-out;
+    animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Custom QR Code transition and shine animations */
 @keyframes qrPop {
     0% {
-        transform: scale(0.85) rotate(-4deg);
+        transform: scale(0.9) rotate(-3deg);
         opacity: 0;
-        filter: blur(6px);
+        filter: blur(8px);
     }
     70% {
-        transform: scale(1.04) rotate(1deg);
+        transform: scale(1.03) rotate(1deg);
         filter: blur(0px);
     }
     100% {
@@ -152,13 +161,13 @@ main, .glass-card {
 }
 
 .qr-animate {
-    animation: qrPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: qrPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .qr-container-wrapper {
     position: relative;
     overflow: hidden;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
 }
 
 .qr-container-wrapper::after {
@@ -171,10 +180,10 @@ main, .glass-card {
     background: linear-gradient(
         to right,
         rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0.3) 50%,
         rgba(255, 255, 255, 0) 100%
     );
     transform: rotate(25deg);
-    animation: shineEffect 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    animation: shineEffect 1.5s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
     pointer-events: none;
 }

@@ -7,295 +7,376 @@
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/config.css">
-    <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css?v=1.5">
 </head>
-<body class="bg-[#09090b] bg-gradient-to-br from-[#09090b] via-[#18181b] to-[#27272a] text-white min-h-screen flex flex-col">
+<body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
+    <!-- Ambient light glow effects -->
+    <div class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[150px] pointer-events-none"></div>
+    <div class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[130px] pointer-events-none"></div>
+
     <!-- Header/Navbar -->
-    <header class="bg-zinc-900/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+    <header class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-            <img src="/static/img/logo.png" alt="Logo" class="w-10 h-10 rounded-xl object-contain shadow-lg">
+            <img src="/static/img/logo.png" alt="Logo" class="w-10 h-10 rounded-xl object-contain shadow-lg border border-white/5">
             <div>
                 <h1 class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">GLPI-BOT</h1>
-                <p class="text-xs text-gray-400">Painel de Controle Inteligente</p>
+                <p class="text-xs text-zinc-400">Painel de Controle Inteligente</p>
             </div>
         </div>
         
         <!-- Navigation Links -->
-        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/10 rounded-xl">
-            <a href="/" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/5 rounded-xl">
+            <a href="/" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 📊 Status
             </a>
-            <a href="/flow" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+            <a href="/flow" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 💬 Fluxo do Bot
             </a>
             <a href="/config" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
                 🔧 Configurações
             </a>
-            <a href="/messages" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+            <a href="/messages" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 ✉️ Mensagens
             </a>
-            <a href="/logs" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+            <a href="/logs" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 📋 Logs
             </a>
         </nav>
 
         <!-- Action / Save and Logout -->
         <div class="flex items-center gap-3">
-            <button onclick="saveConfig()" class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg shadow-lg hover:shadow-teal-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
+            <button onclick="saveConfig()" class="px-4 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl shadow-lg hover:shadow-teal-500/20 transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-1.5">
                 💾 Salvar Configurações
             </button>
-            <a href="/logout" class="px-4 py-2 text-xs font-semibold text-red-400 hover:text-white bg-red-950/20 hover:bg-red-900/40 border border-red-900/30 hover:border-red-500/50 rounded-lg transition duration-200">
+            <a href="/logout" class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
                 🚪 Sair
             </a>
         </div>
     </header>
 
-    <main class="flex-1 flex max-w-4xl w-full mx-auto p-6 flex-col gap-6">
-        <!-- Main Form Card -->
-        <div class="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col gap-8">
-            
-            <!-- Section 1: Identity & Support -->
-            <div>
-                <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
-                    👥 Identidade & Suporte
-                </h2>
+    <main class="flex-1 flex max-w-5xl w-full mx-auto p-6 flex-col md:flex-row gap-6 relative z-10">
+        <!-- Sidebar Navigation -->
+        <nav class="md:w-64 w-full flex flex-row md:flex-col gap-1.5 shrink-0 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 scrollbar-none">
+            <button type="button" onclick="showTab('identidade')" id="tab-identidade" class="tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-indigo-400 bg-indigo-950/20 border border-indigo-500/20 shadow-md active">
+                👥 Identidade & Suporte
+            </button>
+            <button type="button" onclick="showTab('glpi')" id="tab-glpi" class="tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent">
+                🔌 Conexão GLPI API
+            </button>
+            <button type="button" onclick="showTab('smtp')" id="tab-smtp" class="tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent">
+                📧 Alerta de E-mail (SMTP)
+            </button>
+            <button type="button" onclick="showTab('expediente')" id="tab-expediente" class="tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent">
+                📅 Horário & Ausência
+            </button>
+            <button type="button" onclick="showTab('seguranca')" id="tab-seguranca" class="tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent">
+                🚫 Bloqueios & Senha
+            </button>
+            <button type="button" onclick="showTab('sistema')" id="tab-sistema" class="tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent">
+                ⚙️ Manutenção do Bot
+            </button>
+        </nav>
+
+        <!-- Right Content Card -->
+        <div class="flex-1 glass-card rounded-2xl p-8 flex flex-col gap-8 relative overflow-hidden">
+            <!-- Panel 1: Identidade -->
+            <div id="panel-identidade" class="settings-panel flex flex-col gap-6">
+                <div class="border-b border-white/5 pb-4">
+                    <h2 class="text-md font-bold text-indigo-400 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                        👥 Identidade & Suporte
+                    </h2>
+                    <p class="text-xs text-zinc-400">Defina a identidade de atendimento e os técnicos administradores no WhatsApp.</p>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="flex flex-col gap-2">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nome da Empresa</label>
-                        <input type="text" id="company_name" placeholder="Insira o nome da empresa" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
-                        <span class="text-[10px] text-gray-500">Nome exibido nas saudações e rodapés das conversas.</span>
+                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nome da Empresa</label>
+                        <input type="text" id="company_name" placeholder="Insira o nome da empresa" class="focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+                        <span class="text-[10px] text-zinc-500">Nome exibido em saudações de conversas e rodapés.</span>
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">WhatsApp do Administrador</label>
-                        <input type="text" id="telefone_notificacao" placeholder="Insira o WhatsApp de alertas (ex: 55...)" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
-                        <span class="text-[10px] text-gray-500">Número de WhatsApp que receberá as notificações de novos tickets.</span>
+                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">WhatsApp do Administrador / Técnico</label>
+                        <input type="text" id="telefone_notificacao" placeholder="Ex: 5511999999999" class="focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+                        <span class="text-[10px] text-zinc-500">Número de WhatsApp (DDI + DDD + Número) para alertas de novos chamados.</span>
                     </div>
                 </div>
-                <div class="flex flex-col gap-2 mt-6">
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Atendentes do Suporte Humano (Separados por vírgula)</label>
-                    <textarea id="support_agents" rows="2" placeholder="Insira os atendentes separados por vírgula" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200 resize-none"></textarea>
-                    <span class="text-[10px] text-gray-500">Técnicos que aparecerão na enquete do WhatsApp para assumir o atendimento ao vivo.</span>
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Atendentes do Suporte Humano (Separados por vírgula)</label>
+                    <textarea id="support_agents" rows="3" placeholder="Insira o nome dos atendentes/técnicos. Ex: João, Maria, Pedro" class="focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"></textarea>
+                    <span class="text-[10px] text-zinc-500">Exibidos na enquete interativa do WhatsApp ao transferir para suporte humano.</span>
                 </div>
             </div>
 
-            <!-- Section 2: GLPI Integration -->
-            <div>
-                <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
-                    🔌 Integração GLPI API
-                </h2>
+            <!-- Panel 2: GLPI -->
+            <div id="panel-glpi" class="settings-panel hidden flex flex-col gap-6">
+                <div class="border-b border-white/5 pb-4">
+                    <h2 class="text-md font-bold text-cyan-400 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                        🔌 Integração GLPI API
+                    </h2>
+                    <p class="text-xs text-zinc-400">Credenciais para conexão com a API Rest do seu sistema GLPI.</p>
+                </div>
                 <div class="flex flex-col gap-6">
                     <div class="flex flex-col gap-2">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Link da API Rest do GLPI</label>
-                        <input type="text" id="glpi_api_url" placeholder="https://seu-glpi/apirest.php" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
-                        <span class="text-[10px] text-gray-500">URL absoluta apontando para o endpoint apirest.php de seu GLPI.</span>
+                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">URL da API Rest do GLPI</label>
+                        <input type="text" id="glpi_api_url" placeholder="https://seu-glpi/apirest.php" class="focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20">
+                        <span class="text-[10px] text-zinc-500">URL absoluta para o arquivo apirest.php de seu GLPI.</span>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">App-Token da API</label>
-                            <div class="flex items-center gap-2">
-                                <input type="password" id="glpi_app_token" placeholder="Insira o Token do App do GLPI" class="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
-                                <button type="button" onclick="toggleVisibility(this, 'glpi_app_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Visualizar Token">👁️</button>
-                                <button type="button" onclick="copyToClipboard('glpi_app_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Copiar Token">📋</button>
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">App-Token da API</label>
+                            <div class="flex items-center gap-2 relative">
+                                <input type="password" id="glpi_app_token" placeholder="Token do App GLPI" class="flex-1 min-w-0 pr-24 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20">
+                                <div class="absolute right-2 flex items-center gap-1">
+                                    <button type="button" onclick="toggleVisibility(this, 'glpi_app_token')" class="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs transition text-zinc-300" title="Visualizar Token">👁️</button>
+                                    <button type="button" onclick="copyToClipboard('glpi_app_token')" class="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs transition text-zinc-300" title="Copiar Token">📋</button>
+                                </div>
                             </div>
-                            <span class="text-[10px] text-gray-500">Chave de aplicação gerada no menu API do GLPI.</span>
+                            <span class="text-[10px] text-zinc-500">Gerado em Configurar > API Rest no GLPI.</span>
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">User-Token do Usuário API</label>
-                            <div class="flex items-center gap-2">
-                                <input type="password" id="glpi_user_token" placeholder="Insira o Token do Usuário" class="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
-                                <button type="button" onclick="toggleVisibility(this, 'glpi_user_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Visualizar Token">👁️</button>
-                                <button type="button" onclick="copyToClipboard('glpi_user_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Copiar Token">📋</button>
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">User-Token do Usuário API</label>
+                            <div class="flex items-center gap-2 relative">
+                                <input type="password" id="glpi_user_token" placeholder="Token do Usuário GLPI" class="flex-1 min-w-0 pr-24 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20">
+                                <div class="absolute right-2 flex items-center gap-1">
+                                    <button type="button" onclick="toggleVisibility(this, 'glpi_user_token')" class="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs transition text-zinc-300" title="Visualizar Token">👁️</button>
+                                    <button type="button" onclick="copyToClipboard('glpi_user_token')" class="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs transition text-zinc-300" title="Copiar Token">📋</button>
+                                </div>
                             </div>
-                            <span class="text-[10px] text-gray-500">Chave de usuário gerada nas preferências do usuário.</span>
+                            <span class="text-[10px] text-zinc-500">Chave obtida nas preferências do usuário administrador no GLPI.</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section 3: SMTP Mail Alerts -->
-            <div>
-                <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
-                    📧 Alerta de Desconexão por E-mail (SMTP)
-                </h2>
+            <!-- Panel 3: SMTP -->
+            <div id="panel-smtp" class="settings-panel hidden flex flex-col gap-6">
+                <div class="border-b border-white/5 pb-4">
+                    <h2 class="text-md font-bold text-purple-400 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                        📧 Alerta de Desconexão por E-mail (SMTP)
+                    </h2>
+                    <p class="text-xs text-zinc-400">Receba avisos instantâneos via e-mail caso o WhatsApp do bot seja desconectado.</p>
+                </div>
                 <div class="flex flex-col gap-6">
-                    <div class="flex items-center justify-between bg-black/40 border border-white/10 p-4 rounded-lg">
+                    <div class="flex items-center justify-between bg-zinc-950/40 border border-white/5 p-5 rounded-2xl">
                         <div>
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ativar Alertas por E-mail</h3>
-                            <p class="text-[10px] text-gray-500">Se ativo, envia um e-mail para o administrador caso o bot perca a conexão.</p>
+                            <h3 class="text-xs font-bold text-zinc-300 uppercase tracking-wider">Enviar Alertas por E-mail</h3>
+                            <p class="text-[10px] text-zinc-500 mt-1">Ativa a notificação imediata quando a sessão cair.</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="smtp_enabled" class="sr-only peer">
-                            <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                         </label>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Servidor SMTP (Host)</label>
-                            <input type="text" id="smtp_host" placeholder="smtp.gmail.com" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Host do Servidor SMTP</label>
+                            <input type="text" id="smtp_host" placeholder="smtp.gmail.com" class="focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20">
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Porta SMTP</label>
-                            <input type="number" id="smtp_port" placeholder="587" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Porta SMTP</label>
+                            <input type="number" id="smtp_port" placeholder="587" class="focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Usuário SMTP</label>
-                            <input type="text" id="smtp_username" placeholder="seu-email@gmail.com" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Usuário / E-mail de Autenticação</label>
+                            <input type="text" id="smtp_username" placeholder="seu-email@gmail.com" class="focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20">
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Senha SMTP</label>
-                            <input type="password" id="smtp_password" placeholder="Senha do e-mail ou App Password" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Senha SMTP / App Password</label>
+                            <input type="password" id="smtp_password" placeholder="Senha do e-mail" class="focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">E-mail Remetente (De:)</label>
-                            <input type="text" id="smtp_sender" placeholder="alertas-bot@empresa.com" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Remetente (De:)</label>
+                            <input type="text" id="smtp_sender" placeholder="alertas@empresa.com" class="focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20">
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">E-mail Destinatário (Para:)</label>
-                            <input type="text" id="smtp_receiver" placeholder="suporte@empresa.com" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Destinatário (Para:)</label>
+                            <input type="text" id="smtp_receiver" placeholder="suporte@empresa.com" class="focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20">
                         </div>
                     </div>
-                    <div class="flex justify-end mt-4">
-                        <button type="button" onclick="testSMTP()" id="btn-test-smtp" class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 rounded-lg shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
+                    <div class="flex justify-end mt-2">
+                        <button type="button" onclick="testSMTP()" id="btn-test-smtp" class="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
                             🧪 Testar Conexão SMTP
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Section: Working Hours and Absence -->
-            <div>
-                <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
-                    📅 Horário de Atendimento e Ausência
-                </h2>
+            <!-- Panel 4: Expediente -->
+            <div id="panel-expediente" class="settings-panel hidden flex flex-col gap-6">
+                <div class="border-b border-white/5 pb-4">
+                    <h2 class="text-md font-bold text-emerald-400 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                        📅 Horário de Expediente & Ausência
+                    </h2>
+                    <p class="text-xs text-zinc-400">Configure as horas e dias de atendimento de suporte. Fora dele, o bot avisa o usuário automaticamente.</p>
+                </div>
                 <div class="flex flex-col gap-6">
-                    <div class="flex items-center justify-between bg-black/40 border border-white/10 p-4 rounded-lg">
+                    <div class="flex items-center justify-between bg-zinc-950/40 border border-white/5 p-5 rounded-2xl">
                         <div>
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ativar Filtro de Horário</h3>
-                            <p class="text-[10px] text-gray-500">Se ativo, usuários recebem uma mensagem de ausência personalizada ao abrir chamados fora do expediente.</p>
+                            <h3 class="text-xs font-bold text-zinc-300 uppercase tracking-wider">Ativar Filtro de Horário</h3>
+                            <p class="text-[10px] text-zinc-500 mt-1">Ignora chamados para atendimento imediato e envia aviso fora do horário útil.</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="working_hours_enabled" class="sr-only peer">
-                            <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                         </label>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Hora de Início (HH:MM)</label>
-                            <input type="text" id="working_hours_start" placeholder="08:00" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Hora de Início (HH:MM)</label>
+                            <input type="text" id="working_hours_start" placeholder="08:00" class="focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Hora de Término (HH:MM)</label>
-                            <input type="text" id="working_hours_end" placeholder="18:00" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Hora de Término (HH:MM)</label>
+                            <input type="text" id="working_hours_end" placeholder="18:00" class="focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Dias de Trabalho</label>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 bg-black/40 border border-white/10 p-4 rounded-lg">
-                            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                                <input type="checkbox" name="working_days_checkbox" value="1" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Segunda
+                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Dias da Semana de Expediente</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 bg-zinc-950/40 border border-white/5 p-4 rounded-xl">
+                            <label class="flex items-center justify-center gap-2 text-xs text-zinc-300 cursor-pointer bg-black/30 border border-white/5 py-2 px-3 rounded-lg hover:border-emerald-500/30 transition">
+                                <input type="checkbox" name="working_days_checkbox" value="1" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Seg
                             </label>
-                            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                                <input type="checkbox" name="working_days_checkbox" value="2" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Terça
+                            <label class="flex items-center justify-center gap-2 text-xs text-zinc-300 cursor-pointer bg-black/30 border border-white/5 py-2 px-3 rounded-lg hover:border-emerald-500/30 transition">
+                                <input type="checkbox" name="working_days_checkbox" value="2" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Ter
                             </label>
-                            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                                <input type="checkbox" name="working_days_checkbox" value="3" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Quarta
+                            <label class="flex items-center justify-center gap-2 text-xs text-zinc-300 cursor-pointer bg-black/30 border border-white/5 py-2 px-3 rounded-lg hover:border-emerald-500/30 transition">
+                                <input type="checkbox" name="working_days_checkbox" value="3" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Qua
                             </label>
-                            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                                <input type="checkbox" name="working_days_checkbox" value="4" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Quinta
+                            <label class="flex items-center justify-center gap-2 text-xs text-zinc-300 cursor-pointer bg-black/30 border border-white/5 py-2 px-3 rounded-lg hover:border-emerald-500/30 transition">
+                                <input type="checkbox" name="working_days_checkbox" value="4" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Qui
                             </label>
-                            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                                <input type="checkbox" name="working_days_checkbox" value="5" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Sexta
+                            <label class="flex items-center justify-center gap-2 text-xs text-zinc-300 cursor-pointer bg-black/30 border border-white/5 py-2 px-3 rounded-lg hover:border-emerald-500/30 transition">
+                                <input type="checkbox" name="working_days_checkbox" value="5" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Sex
                             </label>
-                            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                                <input type="checkbox" name="working_days_checkbox" value="6" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Sábado
+                            <label class="flex items-center justify-center gap-2 text-xs text-zinc-300 cursor-pointer bg-black/30 border border-white/5 py-2 px-3 rounded-lg hover:border-emerald-500/30 transition">
+                                <input type="checkbox" name="working_days_checkbox" value="6" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Sáb
                             </label>
-                            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                                <input type="checkbox" name="working_days_checkbox" value="0" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Domingo
+                            <label class="flex items-center justify-center gap-2 text-xs text-zinc-300 cursor-pointer bg-black/30 border border-white/5 py-2 px-3 rounded-lg hover:border-emerald-500/30 transition">
+                                <input type="checkbox" name="working_days_checkbox" value="0" class="rounded border-white/10 bg-zinc-800 text-emerald-600 focus:ring-0"> Dom
                             </label>
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Mensagem de Ausência</label>
-                        <textarea id="msg_ausencia" rows="3" placeholder="Insira a mensagem personalizada de ausência" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200 resize-none"></textarea>
-                        <span class="text-[10px] text-gray-500">Use {ticket_id} para exibir o ID do chamado e {inicio} / {fim} para o horário configurado.</span>
+                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Mensagem de Ausência (Expediente Fechado)</label>
+                        <textarea id="msg_ausencia" rows="4" placeholder="Insira a mensagem enviada fora do horário" class="focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 resize-none"></textarea>
+                        <div class="flex items-center gap-2 flex-wrap mt-1">
+                            <span class="text-[10px] text-zinc-500">Variáveis disponíveis:</span>
+                            <span class="badge" title="Retorna o ID do ticket">{ticket_id}</span>
+                            <span class="badge" title="Horário de início">{inicio}</span>
+                            <span class="badge" title="Horário de término">{fim}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section 4: Block list -->
-            <div>
-                <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
-                    🚫 Lista de Bloqueio (Dark List)
-                </h2>
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Números Bloqueados (Separados por vírgula)</label>
-                    <textarea id="dark_list" rows="3" placeholder="Insira os números bloqueados separados por vírgula" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200 resize-none"></textarea>
-                    <span class="text-[10px] text-gray-500">Os números listados acima não receberão respostas do bot.</span>
+            <!-- Panel 5: Seguranca -->
+            <div id="panel-seguranca" class="settings-panel hidden flex flex-col gap-6">
+                <!-- Section 4: Block list -->
+                <div>
+                    <div class="border-b border-white/5 pb-4 mb-4">
+                        <h2 class="text-md font-bold text-amber-500 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                            🚫 Lista de Bloqueio (Blacklist)
+                        </h2>
+                        <p class="text-xs text-zinc-400">Contatos adicionados nesta lista serão completamente ignorados pelo bot.</p>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Números Bloqueados (Separados por vírgula)</label>
+                        <textarea id="dark_list" rows="3" placeholder="Ex: 5511999999999, 5521888888888" class="focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 resize-none"></textarea>
+                        <span class="text-[10px] text-zinc-500">Insira números completos com código de país e DDD.</span>
+                    </div>
+                </div>
+
+                <!-- Section 4: Alterar Senha -->
+                <div class="mt-4">
+                    <div class="border-b border-white/5 pb-4 mb-4">
+                        <h2 class="text-md font-bold text-indigo-400 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                            🔑 Alterar Senha do Painel
+                        </h2>
+                        <p class="text-xs text-zinc-400">Atualize a senha de login do painel de administração.</p>
+                    </div>
+                    <form id="change-password-form" onsubmit="changePassword(event)" class="flex flex-col gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Senha Atual</label>
+                                <input type="password" id="current_password" required placeholder="Digite a senha atual" class="focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nova Senha</label>
+                                <input type="password" id="new_password" required placeholder="Nova senha" class="focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Confirmar Nova Senha</label>
+                                <input type="password" id="confirm_password" required placeholder="Confirme a nova senha" class="focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-2">
+                            <button type="submit" class="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
+                                🔑 Atualizar Senha
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            <!-- Section 4: Alterar Senha -->
-            <div>
-                <h2 class="text-md font-bold text-zinc-300 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
-                    🔑 Segurança (Alterar Senha do Painel)
-                </h2>
-                <form id="change-password-form" onsubmit="changePassword(event)" class="flex flex-col gap-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Senha Atual</label>
-                            <input type="password" id="current_password" required placeholder="Sua senha atual" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nova Senha</label>
-                            <input type="password" id="new_password" required placeholder="Nova senha" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Confirmar Nova Senha</label>
-                            <input type="password" id="confirm_password" required placeholder="Confirmar nova senha" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
-                        </div>
-                    </div>
-                    <div class="flex justify-end">
-                        <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-zinc-700 to-zinc-800 hover:from-zinc-600 hover:to-zinc-700 rounded-lg shadow-lg hover:shadow-zinc-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
-                            🔑 Atualizar Senha
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Section 5: Manutenção do Sistema -->
-            <div>
-                <h2 class="text-md font-bold text-red-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
-                    ⚙️ Manutenção do Sistema
-                </h2>
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-red-950/20 border border-red-900/30 p-6 rounded-xl">
+            <!-- Panel 6: Sistema -->
+            <div id="panel-sistema" class="settings-panel hidden flex flex-col gap-6">
+                <div class="border-b border-white/5 pb-4">
+                    <h2 class="text-md font-bold text-rose-500 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                        ⚙️ Manutenção do Sistema
+                    </h2>
+                    <p class="text-xs text-zinc-400">Ações de reinício ou depuração da aplicação.</p>
+                </div>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-rose-950/10 border border-rose-500/10 p-6 rounded-2xl">
                     <div>
-                        <h3 class="text-sm font-bold text-white mb-1">Reiniciar o Bot de Chamados</h3>
-                        <p class="text-xs text-gray-400">Esta ação irá encerrar e reiniciar a aplicação. O WhatsApp reconectará automaticamente.</p>
+                        <h3 class="text-sm font-bold text-white">Reiniciar Aplicação</h3>
+                        <p class="text-xs text-zinc-400 mt-1">Caso note instabilidades ou mude configurações de rede, você pode forçar o reinício da engine.</p>
                     </div>
-                    <button type="button" onclick="restartBot()" class="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-lg shadow-lg hover:shadow-red-500/20 transition-all duration-200 transform hover:-translate-y-0.5 whitespace-nowrap shrink-0">
+                    <button type="button" onclick="restartBot()" class="px-5 py-3 text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 rounded-xl shadow-lg hover:shadow-red-500/20 transition-all duration-200 transform hover:-translate-y-0.5 whitespace-nowrap shrink-0">
                         🔄 Reiniciar Bot
                     </button>
                 </div>
             </div>
-
         </div>
     </main>
+
+    <!-- Inline Script for Tab Switching -->
+    <script>
+        function showTab(tabName) {
+            // Hide all panels
+            const panels = document.querySelectorAll('.settings-panel');
+            panels.forEach(p => p.classList.add('hidden'));
+
+            // Show selected panel
+            const activePanel = document.getElementById('panel-' + tabName);
+            if (activePanel) {
+                activePanel.classList.remove('hidden');
+            }
+
+            // Reset all tabs styling
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(t => {
+                t.classList.remove('active', 'text-indigo-400', 'bg-indigo-950/20', 'border-indigo-500/20', 'shadow-md');
+                t.classList.add('text-zinc-400', 'hover:text-white', 'hover:bg-white/5', 'border-transparent');
+            });
+
+            // Set active tab styling
+            const activeTab = document.getElementById('tab-' + tabName);
+            if (activeTab) {
+                activeTab.classList.add('active', 'text-indigo-400', 'bg-indigo-950/20', 'border-indigo-500/20', 'shadow-md');
+                activeTab.classList.remove('text-zinc-400', 'hover:text-white', 'hover:bg-white/5', 'border-transparent');
+            }
+        }
+    </script>
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 backdrop-blur-md transform translate-y-24 opacity-0 transition duration-300 flex items-center gap-3 z-50">

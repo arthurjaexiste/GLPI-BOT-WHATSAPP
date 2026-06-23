@@ -7,117 +7,114 @@
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=1.4">
-    <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css?v=1.5">
 </head>
-<body class="bg-[#09090b] bg-gradient-to-br from-[#09090b] via-[#18181b] to-[#27272a] text-white min-h-screen flex flex-col">
+<body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
+    <!-- Ambient light glow effects -->
+    <div class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[150px] pointer-events-none"></div>
+    <div class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[130px] pointer-events-none"></div>
+
     <!-- Header/Navbar -->
-    <header class="bg-zinc-900/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+    <header class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-            <img src="/static/img/logo.png" alt="Logo" class="w-10 h-10 rounded-xl object-contain shadow-lg">
+            <img src="/static/img/logo.png" alt="Logo" class="w-10 h-10 rounded-xl object-contain shadow-lg border border-white/5">
             <div>
                 <h1 class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">GLPI-BOT</h1>
-                <p class="text-xs text-gray-400">Painel de Controle Inteligente</p>
+                <p class="text-xs text-zinc-400">Painel de Controle Inteligente</p>
             </div>
         </div>
         
         <!-- Navigation Links -->
-        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/10 rounded-xl">
+        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/5 rounded-xl">
             <a href="/" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
                 📊 Status
             </a>
-            <a href="/flow" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+            <a href="/flow" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 💬 Fluxo do Bot
             </a>
-            <a href="/config" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+            <a href="/config" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 🔧 Configurações
             </a>
-            <a href="/messages" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+            <a href="/messages" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 ✉️ Mensagens
             </a>
-            <a href="/logs" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+            <a href="/logs" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 📋 Logs
             </a>
         </nav>
 
         <!-- Action / Logout -->
         <div class="flex items-center gap-3">
-            <a href="/logout" class="px-4 py-2 text-xs font-semibold text-red-400 hover:text-white bg-red-950/20 hover:bg-red-900/40 border border-red-900/30 hover:border-red-500/50 rounded-lg transition duration-200">
+            <a href="/logout" class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
                 🚪 Sair
             </a>
         </div>
     </header>
 
-    <main class="flex-1 flex flex-col justify-center gap-8 p-6 w-full max-w-5xl mx-auto">
+    <main class="flex-1 flex flex-col justify-center gap-8 p-6 w-full max-w-5xl mx-auto relative z-10">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
             
             <!-- Coluna 1: Status Conexão Card -->
-            <div class="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col items-center relative overflow-hidden group">
-                <!-- Efeito de Brilho de fundo -->
-                <div class="absolute -top-24 -left-24 w-48 h-48 bg-zinc-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/20 transition-all duration-500"></div>
+            <div class="glass-card rounded-2xl p-8 flex flex-col items-center relative overflow-hidden group">
+                <!-- Inner soft accent light -->
+                <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/20 transition-all duration-500"></div>
                 
-                <h2 class="text-xl font-bold mb-1 flex items-center gap-2 text-zinc-300 z-10">
+                <h2 class="text-lg font-bold mb-1 flex items-center gap-2 text-zinc-200 z-10">
                     📶 Conexão WhatsApp
                 </h2>
-                <p class="text-xs text-gray-400 mb-6 text-center font-normal z-10">Status atual da conexão do bot na rede</p>
+                <p class="text-xs text-zinc-400 mb-6 text-center font-normal z-10">Status da conexão do bot com a rede do WhatsApp</p>
 
                 <!-- QR Code / Status Container -->
-                <div class="bg-black/40 border border-white/5 p-6 rounded-xl w-full flex flex-col items-center justify-center min-h-[280px] shadow-inner z-10 relative">
+                <div class="bg-black/30 border border-white/5 p-6 rounded-2xl w-full flex flex-col items-center justify-center min-h-[290px] shadow-inner z-10 relative">
                     <!-- Div onde o JS vai injetar a imagem do QR Code -->
-                    <div id="qrcode" class="flex justify-center items-center rounded-lg overflow-hidden"></div>
+                    <div id="qrcode" class="flex justify-center items-center rounded-xl overflow-hidden"></div>
                     
                     <!-- Div onde o JS vai injetar os textos de status -->
-                    <div id="qr-status" class="mt-4 text-center font-semibold text-sm">
+                    <div id="qr-status" class="mt-4 text-center font-semibold text-xs tracking-wide">
                         Verificando...
                     </div>
                 </div>
             </div>
 
             <!-- Coluna 2: Informações do Sistema -->
-            <div class="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col relative overflow-hidden group">
-                <!-- Efeito de Brilho de fundo -->
-                <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-zinc-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/20 transition-all duration-500"></div>
+            <div class="glass-card rounded-2xl p-8 flex flex-col relative overflow-hidden group">
+                <!-- Inner soft accent light -->
+                <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/20 transition-all duration-500"></div>
  
-                <h2 class="text-xl font-bold mb-1 flex items-center gap-2 text-zinc-300 z-10">
+                <h2 class="text-lg font-bold mb-1 flex items-center gap-2 text-zinc-200 z-10">
                     📊 Monitoramento & Diagnóstico
                 </h2>
-                <p class="text-xs text-gray-400 mb-6 font-normal z-10">Informações e métricas sobre a execução do bot</p>
+                <p class="text-xs text-zinc-400 mb-6 font-normal z-10">Métricas de uplink e informações sobre a execução da engine</p>
 
                 <div class="flex flex-col gap-4 z-10 flex-1 justify-center">
                     <!-- Item 1: Status Geral -->
                     <div class="flex items-center justify-between border-b border-white/5 pb-3">
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Status Geral</span>
+                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status Geral</span>
                         <div id="status-badge" class="flex items-center gap-2">
                             <span class="relative flex h-2 w-2">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
                                 <span id="status-dot" class="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
                             </span>
-                            <span id="status-text" class="text-xs font-semibold text-yellow-400 font-bold">Verificando...</span>
+                            <span id="status-text" class="text-xs font-bold text-yellow-400">Verificando...</span>
                         </div>
                     </div>
 
-
-
-                    <!-- Item 4: Fuso Horário -->
+                    <!-- Item 2: Fuso Horário -->
                     <div class="flex items-center justify-between border-b border-white/5 pb-3">
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Fuso Horário</span>
-                        <span id="info-timezone" class="text-xs font-semibold text-white">Carregando...</span>
+                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Fuso Horário</span>
+                        <span id="info-timezone" class="text-xs font-bold text-zinc-200">Carregando...</span>
                     </div>
 
-                    <!-- Item 5: Engine Core -->
+                    <!-- Item 3: Engine Core -->
                     <div class="flex items-center justify-between border-b border-white/5 pb-3">
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Engine do Bot</span>
-                        <span id="info-engine" class="text-xs font-semibold text-white font-medium">Carregando...</span>
+                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Engine do Bot</span>
+                        <span id="info-engine" class="text-xs font-bold text-zinc-200">Carregando...</span>
                     </div>
 
-                    <!-- Item 6: Tempo de Uplink / Atividade -->
+                    <!-- Item 4: Tempo de Atividade -->
                     <div class="flex items-center justify-between pt-1">
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tempo de Uplink</span>
-                        <span id="info-uptime" class="text-xs font-semibold text-white font-medium">Carregando...</span>
+                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Tempo de Uplink</span>
+                        <span id="info-uptime" class="text-xs font-bold text-zinc-200">Carregando...</span>
                     </div>
                 </div>
             </div>
@@ -125,26 +122,26 @@
         </div>
 
         <!-- Coluna Única: Chamados Recentes -->
-        <div class="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col relative overflow-hidden group w-full">
-            <!-- Efeito de Brilho de fundo -->
+        <div class="glass-card rounded-2xl p-8 flex flex-col relative overflow-hidden group w-full">
+            <!-- Inner soft accent light -->
             <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-zinc-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/10 transition-all duration-500"></div>
 
-            <h2 class="text-xl font-bold mb-1 flex items-center gap-2 text-zinc-300 z-10">
+            <h2 class="text-lg font-bold mb-1 flex items-center gap-2 text-zinc-200 z-10">
                 🎫 Chamados Recentes
             </h2>
-            <p class="text-xs text-gray-400 mb-6 font-normal z-10">Últimos chamados abertos pelo bot no sistema</p>
+            <p class="text-xs text-zinc-400 mb-6 font-normal z-10">Últimos chamados abertos pelo bot diretamente no GLPI</p>
 
             <div class="overflow-x-auto w-full z-10">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
-                        <tr class="border-b border-white/10 text-gray-400 font-semibold uppercase tracking-wider">
+                        <tr class="border-b border-white/10 text-zinc-400 font-semibold uppercase tracking-wider">
                             <th class="pb-3 text-left">Chamado</th>
                             <th class="pb-3 text-left">Solicitante</th>
                             <th class="pb-3 text-left">Título</th>
                             <th class="pb-3 text-right">Data/Hora</th>
                         </tr>
                     </thead>
-                    <tbody id="recent-tickets-body" class="divide-y divide-white/5 text-gray-300">
+                    <tbody id="recent-tickets-body" class="divide-y divide-white/5 text-zinc-300">
                         <tr>
                             <td colspan="4" class="py-4 text-center text-zinc-500 italic">Carregando chamados recentes...</td>
                         </tr>
@@ -155,6 +152,6 @@
     </main>
 
     <!-- Importando o Script -->
-    <script src="/static/js/script.js?v=1.4"></script>
+    <script src="/static/js/script.js?v=1.5"></script>
 </body>
 </html>
