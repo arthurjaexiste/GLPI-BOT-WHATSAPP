@@ -8,50 +8,79 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css?v=1.6">
+    <style>
+        /* Sleek card border animation & focus transition */
+        .premium-input {
+            background: rgba(9, 9, 11, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 14px !important;
+            padding: 14px 18px !important;
+            font-size: 0.875rem !important;
+            color: #ffffff !important;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .premium-input:focus {
+            border-color: #ffffff !important;
+            box-shadow: 0 0 0 1px #ffffff, 0 10px 20px -10px rgba(255, 255, 255, 0.1) !important;
+            background: #000000 !important;
+        }
+        /* Custom card glow outline */
+        .login-card {
+            background: rgba(9, 9, 11, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+        }
+    </style>
 </head>
-<body class="text-white min-h-screen flex items-center justify-center p-6 relative overflow-hidden select-none">
-    <!-- Interactive Canvas background -->
-    <canvas id="interactive-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+<body class="text-white min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-black">
+    <!-- Interactive background canvas -->
+    <canvas id="cosmic-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
 
-    <!-- Ambient light glow effects (Monochrome/Gray theme) -->
-    <div id="glow-spotlight" class="absolute w-[450px] h-[450px] bg-white/[0.02] rounded-full blur-[110px] pointer-events-none z-0 transition-all duration-300 ease-out" style="top: 20%; left: 40%;"></div>
-    <div class="absolute bottom-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-white/[0.01] rounded-full blur-[100px] pointer-events-none z-0"></div>
+    <!-- Smooth tracking background glow spotlight -->
+    <div id="glow-spotlight" class="absolute w-[500px] h-[500px] bg-white/[0.015] rounded-full blur-[120px] pointer-events-none z-0 transition-all duration-500 ease-out" style="top: 20%; left: 30%;"></div>
 
-    <div class="glass-card p-10 rounded-3xl w-full max-w-md flex flex-col gap-8 relative z-10 select-text">
-        <div class="text-center">
-            <div class="relative inline-block mb-4">
-                <div class="absolute inset-0 bg-white/[0.02] rounded-full blur-xl animate-pulse"></div>
-                <img src="/static/img/logo.png" alt="Logo" class="w-24 h-24 mx-auto object-contain relative z-10 drop-shadow-[0_4px_20px_rgba(255,255,255,0.08)]">
+    <!-- Login Container Card -->
+    <div class="login-card p-10 md:p-12 rounded-[28px] w-full max-w-[420px] flex flex-col gap-8 relative z-10 backdrop-blur-2xl">
+        <div class="text-center flex flex-col items-center">
+            <!-- Sleek Logo with subtle backglow -->
+            <div class="relative w-20 h-20 mb-5 flex items-center justify-center bg-zinc-950 border border-white/10 rounded-2xl shadow-xl overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-50"></div>
+                <img src="/static/img/logo.png" alt="Logo" class="w-12 h-12 object-contain relative z-10 drop-shadow-[0_2px_8px_rgba(255,255,255,0.15)] transition duration-500 group-hover:scale-105">
             </div>
-            <h1 class="text-2xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">Acesso GLPI-BOT</h1>
-            <p class="text-xs text-zinc-400 mt-1.5">Insira suas credenciais para gerenciar o bot</p>
+            
+            <h1 class="text-xl font-bold tracking-tight bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent uppercase text-xs tracking-widest">Painel Administrativo</h1>
+            <h2 class="text-2xl font-bold tracking-tight mt-1 text-white">Acesse sua Conta</h2>
+            <p class="text-xs text-zinc-400 mt-2 font-normal">Insira seu usuário e senha do GLPI-BOT</p>
         </div>
 
         {{if .Error}}
-        <div class="bg-rose-500/10 border border-rose-500/25 text-rose-300 px-4 py-3.5 rounded-xl text-xs flex items-center gap-2.5 animate-bounce">
+        <div class="bg-rose-950/20 border border-rose-500/30 text-rose-300 px-4 py-3.5 rounded-xl text-xs flex items-center gap-2.5 animate-bounce">
             <span class="text-sm">⚠️</span>
-            <span class="font-medium">{{.Error}}</span>
+            <span class="font-semibold">{{.Error}}</span>
         </div>
         {{end}}
 
         <form action="/login" method="POST" class="flex flex-col gap-5">
             <div class="flex flex-col gap-2">
-                <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Usuário</label>
-                <input name="username" type="text" placeholder="Ex: admin" required class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Usuário</label>
+                <input name="username" type="text" placeholder="Ex: admin" required class="premium-input focus:outline-none">
             </div>
             <div class="flex flex-col gap-2">
-                <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Senha</label>
-                <input name="password" type="password" placeholder="Sua senha" required class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Senha</label>
+                <input name="password" type="password" placeholder="••••••••" required class="premium-input focus:outline-none">
             </div>
-            <button class="mt-3 bg-white hover:bg-zinc-200 text-black border border-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5" type="submit">
-                Entrar no Painel
+            
+            <button class="mt-4 bg-white hover:bg-zinc-200 text-black border border-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 hover:scale-[1.01] active:translate-y-0 active:scale-100 flex items-center justify-center gap-2" type="submit">
+                <span>Entrar no Sistema</span>
+                <span class="text-sm">→</span>
             </button>
         </form>
     </div>
 
-    <!-- Interactive Canvas & Spotlight Logic -->
+    <!-- Cosmic Starfield & Water Ripple Wave Animation Script -->
     <script>
-        const canvas = document.getElementById('interactive-canvas');
+        const canvas = document.getElementById('cosmic-canvas');
         const ctx = canvas.getContext('2d');
         const spotlight = document.getElementById('glow-spotlight');
 
@@ -59,30 +88,30 @@
         let height = canvas.height = window.innerHeight;
 
         let particles = [];
+        let ripples = [];
         let mouse = { x: null, y: null, active: false };
 
-        // Handle Resize
         window.addEventListener('resize', () => {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
             initParticles();
         });
 
-        // Track Mouse
+        // Track mouse movement
         window.addEventListener('mousemove', (e) => {
             mouse.x = e.clientX;
             mouse.y = e.clientY;
             mouse.active = true;
 
-            // Spawn stardust mouse trails
-            if (Math.random() < 0.8) {
+            // Spawn dynamic fine trails (cosmic stardust)
+            if (Math.random() < 0.4) {
                 particles.push(new Particle(mouse.x, mouse.y, false, true));
             }
 
-            // Update smooth ambient spotlight position
+            // Smoothly slide ambient glow behind the card
             if (spotlight) {
-                spotlight.style.left = `${mouse.x - 225}px`;
-                spotlight.style.top = `${mouse.y - 225}px`;
+                spotlight.style.left = `${mouse.x - 250}px`;
+                spotlight.style.top = `${mouse.y - 250}px`;
             }
         });
 
@@ -90,39 +119,48 @@
             mouse.active = false;
         });
 
-        // Track Click Explosion
+        // Create ripple wave and stardust burst on click
         window.addEventListener('click', (e) => {
-            // Burst of sparks from click location
-            const burstCount = 20;
-            for (let i = 0; i < burstCount; i++) {
+            // Ripple wave
+            ripples.push({
+                x: e.clientX,
+                y: e.clientY,
+                radius: 2,
+                maxRadius: 180,
+                opacity: 0.3
+            });
+
+            // Burst stardust
+            for (let i = 0; i < 15; i++) {
                 particles.push(new Particle(e.clientX, e.clientY, true, false));
             }
         });
 
-        // Particle Class
         class Particle {
             constructor(x, y, isSpark = false, isTrail = false) {
                 this.x = x !== undefined ? x : Math.random() * width;
                 this.y = y !== undefined ? y : Math.random() * height;
                 this.isSpark = isSpark;
                 this.isTrail = isTrail;
-                this.radius = isSpark ? Math.random() * 2 + 1.2 : (isTrail ? Math.random() * 1.5 + 0.8 : Math.random() * 1.5 + 0.8);
+                
+                // Keep particles smaller and elegant
+                this.radius = isSpark ? Math.random() * 1.5 + 0.8 : (isTrail ? Math.random() * 1.2 + 0.5 : Math.random() * 1.0 + 0.5);
                 
                 if (isSpark) {
                     const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * 4 + 1.5;
+                    const speed = Math.random() * 2.5 + 1.0;
                     this.vx = Math.cos(angle) * speed;
                     this.vy = Math.sin(angle) * speed;
                     this.life = 1.0;
-                    this.decay = Math.random() * 0.02 + 0.015;
+                    this.decay = Math.random() * 0.015 + 0.01;
                 } else if (isTrail) {
-                    this.vx = (Math.random() - 0.5) * 0.4;
-                    this.vy = (Math.random() - 0.5) * 0.4;
+                    this.vx = (Math.random() - 0.5) * 0.3;
+                    this.vy = (Math.random() - 0.5) * 0.3;
                     this.life = 1.0;
-                    this.decay = Math.random() * 0.03 + 0.02;
+                    this.decay = Math.random() * 0.02 + 0.01;
                 } else {
-                    this.baseVx = (Math.random() - 0.5) * 0.4;
-                    this.baseVy = (Math.random() - 0.5) * 0.4;
+                    this.baseVx = (Math.random() - 0.5) * 0.25; // Slower drifting
+                    this.baseVy = (Math.random() - 0.5) * 0.25;
                     this.vx = this.baseVx;
                     this.vy = this.baseVy;
                     this.life = 1.0;
@@ -134,11 +172,11 @@
                 if (this.isSpark || this.isTrail) {
                     this.x += this.vx;
                     this.y += this.vy;
-                    this.vx *= 0.97; // Friction
-                    this.vy *= 0.97;
+                    this.vx *= 0.98;
+                    this.vy *= 0.98;
                     this.life -= this.decay;
                 } else {
-                    // Interactive physics - antigravity repulsion
+                    // Slow hover repulsion force
                     if (mouse.active && mouse.x !== null) {
                         const dx = mouse.x - this.x;
                         const dy = mouse.y - this.y;
@@ -146,22 +184,18 @@
                         const limit = 160;
 
                         if (dist < limit) {
-                            // Repel from mouse to create an antigravity bubble effect
                             const force = (limit - dist) / limit;
                             const angle = Math.atan2(dy, dx);
-                            this.vx -= Math.cos(angle) * force * 0.5;
-                            this.vy -= Math.sin(angle) * force * 0.5;
+                            this.vx -= Math.cos(angle) * force * 0.3;
+                            this.vy -= Math.sin(angle) * force * 0.3;
                         }
                     }
 
-                    // Add simple damping and return to base speed
-                    this.vx += (this.baseVx - this.vx) * 0.05;
-                    this.vy += (this.baseVy - this.vy) * 0.05;
-
+                    this.vx += (this.baseVx - this.vx) * 0.03;
+                    this.vy += (this.baseVy - this.vy) * 0.03;
                     this.x += this.vx;
                     this.y += this.vy;
 
-                    // Screen Boundary Wrap-around
                     if (this.x < 0) this.x = width;
                     if (this.x > width) this.x = 0;
                     if (this.y < 0) this.y = height;
@@ -172,15 +206,14 @@
             draw() {
                 ctx.save();
                 if (this.isSpark) {
-                    ctx.shadowBlur = 8;
+                    ctx.shadowBlur = 6;
                     ctx.shadowColor = '#ffffff';
                     ctx.fillStyle = `rgba(255, 255, 255, ${this.life})`;
                 } else if (this.isTrail) {
-                    ctx.shadowBlur = 4;
-                    ctx.shadowColor = '#a1a1aa';
-                    ctx.fillStyle = `rgba(161, 161, 170, ${this.life * 0.5})`;
+                    ctx.fillStyle = `rgba(212, 212, 216, ${this.life * 0.4})`;
                 } else {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    // Starfield subtle glow
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
                 }
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -191,27 +224,43 @@
 
         function initParticles() {
             particles = [];
-            // Base background wandering particles
-            const count = Math.min(Math.floor((width * height) / 16000), 90);
+            // Subtle, elegant count
+            const count = Math.min(Math.floor((width * height) / 20000), 75);
             for (let i = 0; i < count; i++) {
                 particles.push(new Particle());
             }
         }
 
+        function drawRipples() {
+            ripples.forEach((rp, idx) => {
+                rp.radius += 3.5;
+                rp.opacity = (1 - (rp.radius / rp.maxRadius)) * 0.35;
+
+                ctx.strokeStyle = `rgba(255, 255, 255, ${rp.opacity})`;
+                ctx.lineWidth = 1.0;
+                ctx.beginPath();
+                ctx.arc(rp.x, rp.y, rp.radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                if (rp.radius >= rp.maxRadius) {
+                    ripples.splice(idx, 1);
+                }
+            });
+        }
+
         function drawLines() {
-            // Draw lines only between background wandering particles to avoid clutter
             const bgParticles = particles.filter(p => !p.isSpark && !p.isTrail);
             for (let i = 0; i < bgParticles.length; i++) {
                 for (let j = i + 1; j < bgParticles.length; j++) {
                     const dx = bgParticles[i].x - bgParticles[j].x;
                     const dy = bgParticles[i].y - bgParticles[j].y;
                     const dist = Math.hypot(dx, dy);
-                    const limit = 110;
+                    const limit = 100;
 
                     if (dist < limit) {
-                        const alpha = (1 - (dist / limit)) * 0.06;
+                        const alpha = (1 - (dist / limit)) * 0.04;
                         ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-                        ctx.lineWidth = 0.6;
+                        ctx.lineWidth = 0.5;
                         ctx.beginPath();
                         ctx.moveTo(bgParticles[i].x, bgParticles[i].y);
                         ctx.lineTo(bgParticles[j].x, bgParticles[j].y);
@@ -224,7 +273,6 @@
         function animate() {
             ctx.clearRect(0, 0, width, height);
 
-            // Filter out dead particles
             particles = particles.filter(p => !((p.isSpark || p.isTrail) && p.life <= 0));
 
             particles.forEach(p => {
@@ -233,6 +281,7 @@
             });
 
             drawLines();
+            drawRipples();
 
             requestAnimationFrame(animate);
         }
