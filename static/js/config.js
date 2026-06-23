@@ -160,24 +160,46 @@ async function restartBot() {
 
         if (!response.ok) throw new Error('Falha ao enviar sinal de reinício');
 
-        showToast('Sinal de reinício enviado! Aguarde alguns segundos e atualize a página.', '✅');
+        showToast('Sinal de reinício enviado! Aguardando o bot voltar...', '✅');
         
         // Bloqueia a tela informando que está reiniciando
         setTimeout(() => {
             document.body.innerHTML = `
                 <div class="min-h-screen flex items-center justify-center bg-[#0b0f19] text-white flex-col gap-4">
-                    <span class="text-5xl animate-spin">🔄</span>
-                    <h2 class="text-xl font-bold">Reiniciando o Sistema...</h2>
-                    <p class="text-xs text-gray-400">Aguarde 5 segundos e tente recarregar a página.</p>
-                    <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-bold transition">
-                        Recarregar Página
-                    </button>
+                    <span class="text-5xl animate-spin text-indigo-500">🔄</span>
+                    <h2 class="text-xl font-bold animate-pulse">Reiniciando o Sistema...</h2>
+                    <p class="text-xs text-gray-400" id="restart-msg">Aguardando o bot subir novamente...</p>
                 </div>
             `;
+            
+            // Inicia tentativa de reconexão automática após 4 segundos
+            setTimeout(autoReconnect, 4000);
         }, 1000);
     } catch (err) {
         showToast('Erro ao reiniciar o bot.', '❌');
     }
+}
+
+// Tenta se reconectar ao bot em loop até o painel voltar, então redireciona para a home
+async function autoReconnect() {
+    const msgEl = document.getElementById('restart-msg');
+    try {
+        // Tenta buscar o status da API
+        const res = await fetch('/api/status');
+        if (res.ok) {
+            if (msgEl) msgEl.innerText = "Conectado! Redirecionando...";
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+            return;
+        }
+    } catch (err) {
+        // Ignora erros de rede enquanto o servidor estiver fora do ar
+        console.log("Servidor ainda offline, tentando novamente...");
+    }
+    
+    // Tenta novamente após 1.5 segundos
+    setTimeout(autoReconnect, 1500);
 }
 
 // Inicializa buscando as configurações
