@@ -21,6 +21,19 @@ async function fetchConfig() {
         document.getElementById('smtp_password').value = cfg.smtp_password || '';
         document.getElementById('smtp_sender').value = cfg.smtp_sender || '';
         document.getElementById('smtp_receiver').value = cfg.smtp_receiver || '';
+
+        // Horários e Dias de Trabalho
+        document.getElementById('working_hours_enabled').checked = cfg.working_hours_enabled || false;
+        document.getElementById('working_hours_start').value = cfg.working_hours_start || '08:00';
+        document.getElementById('working_hours_end').value = cfg.working_hours_end || '18:00';
+        document.getElementById('msg_ausencia').value = cfg.msg_ausencia || '';
+
+        // Marca os checkboxes dos dias de trabalho
+        const workingDays = cfg.working_days ? cfg.working_days.split(',') : ['1','2','3','4','5'];
+        const checkboxes = document.getElementsByName('working_days_checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = workingDays.includes(cb.value);
+        });
     } catch (err) {
         showToast('Erro ao obter as configurações.', '❌');
     }
@@ -45,6 +58,22 @@ async function saveConfig() {
     const smtp_sender = document.getElementById('smtp_sender').value.trim();
     const smtp_receiver = document.getElementById('smtp_receiver').value.trim();
 
+    // Horários e Dias de Trabalho
+    const working_hours_enabled = document.getElementById('working_hours_enabled').checked;
+    const working_hours_start = document.getElementById('working_hours_start').value.trim();
+    const working_hours_end = document.getElementById('working_hours_end').value.trim();
+    const msg_ausencia = document.getElementById('msg_ausencia').value.trim();
+
+    // Dias de Trabalho selecionados
+    const selectedDays = [];
+    const checkboxes = document.getElementsByName('working_days_checkbox');
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            selectedDays.push(cb.value);
+        }
+    });
+    const working_days = selectedDays.join(',');
+
     if (!glpi_api_url) {
         showToast('O Link da API do GLPI é obrigatório.', '⚠️');
         return;
@@ -64,7 +93,12 @@ async function saveConfig() {
         smtp_username,
         smtp_password,
         smtp_sender,
-        smtp_receiver
+        smtp_receiver,
+        working_hours_enabled,
+        working_hours_start,
+        working_hours_end,
+        working_days,
+        msg_ausencia
     };
 
     try {

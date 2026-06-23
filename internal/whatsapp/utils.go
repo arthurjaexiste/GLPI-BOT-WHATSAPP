@@ -3,6 +3,7 @@ package whatsapp
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -162,4 +163,59 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 		}
 	}
 	return resp, err
+}
+
+func IsOutsideWorkingHours() bool {
+	cfg := config.GetConfig()
+	if !cfg.WorkingHoursEnabled {
+		return false
+	}
+
+	loc, err := time.LoadLocation("America/Sao_Paulo")
+	if err != nil {
+		loc = time.Local
+	}
+	now := time.Now().In(loc)
+
+	// 1. Verifica se o dia atual da semana é dia útil configurado
+	weekday := int(now.Weekday()) // 0=Domingo, 1=Segunda, ..., 6=Sábado
+	daysParts := strings.Split(cfg.WorkingDays, ",")
+	isWorkingDay := false
+	for _, dayStr := range daysParts {
+		dayStr = strings.TrimSpace(dayStr)
+		if dayStr == "" {
+			continue
+		}
+		d, err := strconv.Atoi(dayStr)
+		if err == nil && d == weekday {
+			isWorkingDay = true
+			break
+		}
+	}
+
+	if !isWorkingDay {
+		return true // Fora do expediente porque não é dia de trabalho
+	}
+
+	// 2. Verifica o horário (ex: "08:00" até "18:00")
+	startParts := strings.Split(cfg.WorkingHoursStart, ":")
+	endParts := strings.Split(cfg.WorkingHoursEnd, ":")
+	if len(startParts) != 2 || len(endParts) != 2 {
+		return false // Configuração inválida, considera dentro do horário por segurança
+	}
+
+	startHour, _ := strconv.Atoi(startParts[0])
+	startMin, _ := strconv.Atoi(startParts[1])
+	endHour, _ := strconv.Atoi(endParts[0])
+	endMin, _ := strconv.Atoi(endParts[1])
+
+	currentMinutes := now.Hour()*60 + now.Minute()
+	startMinutes := startHour*60 + startMin
+	endMinutes := endHour*60 + endMin
+
+	if currentMinutes < startMinutes || currentMinutes > endMinutes {
+		return true // Fora do horário de expediente diário
+	}
+
+	return false
 }

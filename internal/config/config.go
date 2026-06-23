@@ -24,6 +24,13 @@ type Config struct {
 	SMTPSender          string `json:"smtp_sender"`
 	SMTPReceiver        string `json:"smtp_receiver"`
 	SMTPEnabled         bool   `json:"smtp_enabled"`
+
+	WorkingHoursStart   string `json:"working_hours_start"`
+	WorkingHoursEnd     string `json:"working_hours_end"`
+	WorkingDays         string `json:"working_days"`
+	WorkingHoursEnabled bool   `json:"working_hours_enabled"`
+	MsgAusencia         string `json:"msg_ausencia"`
+
 	MsgNovoUsuario      string `json:"msg_novo_usuario"`
 	MsgUsuarioExistente string `json:"msg_usuario_existente"`
 	MsgMenuInicial      string `json:"msg_menu_inicial"`
@@ -135,6 +142,9 @@ func preencherDefaultsMensagens(cfg *Config) {
 	if cfg.MsgProximaFoto == "" {
 		cfg.MsgProximaFoto = "📸 Beleza, pode enviar a próxima foto!"
 	}
+	if cfg.MsgAusencia == "" {
+		cfg.MsgAusencia = "Anotamos seu problema! 📝 No momento estamos fora do horário de expediente. Nosso atendimento retorna no próximo dia útil às {inicio}h."
+	}
 }
 
 func InitConfig() {
@@ -176,6 +186,9 @@ func InitConfig() {
 	enabledVal := getVal("SMTP_ENABLED", "false")
 	enabled := enabledVal == "true" || enabledVal == "1"
 
+	whEnabledVal := getVal("WORKING_HOURS_ENABLED", "false")
+	whEnabled := whEnabledVal == "true" || whEnabledVal == "1"
+
 	globalConfig = Config{
 		GLPIApiURL:          getVal("GLPI_API_URL", ""),
 		GLPIAppToken:        getVal("GLPI_APP_TOKEN", ""),
@@ -192,6 +205,12 @@ func InitConfig() {
 		SMTPSender:          getVal("SMTP_SENDER", ""),
 		SMTPReceiver:        getVal("SMTP_RECEIVER", ""),
 		SMTPEnabled:         enabled,
+
+		WorkingHoursStart:   getVal("WORKING_HOURS_START", "08:00"),
+		WorkingHoursEnd:     getVal("WORKING_HOURS_END", "18:00"),
+		WorkingDays:         getVal("WORKING_DAYS", "1,2,3,4,5"),
+		WorkingHoursEnabled: whEnabled,
+		MsgAusencia:         getVal("MSG_AUSENCIA", ""),
 	}
 	preencherDefaultsMensagens(&globalConfig)
 

@@ -427,9 +427,20 @@ func FinalizarChamadoEAlertar(ctx context.Context, client *whatsmeow.Client, v *
 			_ = glpi.AnexarDocumento(token, ticketID, imgBytes, fmt.Sprintf("foto_whatsapp_%d.jpeg", i+1))
 		}
 
-		sendTextMessage(ctx, client, v.Info.Chat, formatarMensagem(config.GetConfig().MsgTicketCriado, map[string]string{"ticket_id": strconv.Itoa(ticketID), "ticket_title": tituloChamado}))
+		cfg := config.GetConfig()
+		if IsOutsideWorkingHours() && cfg.MsgAusencia != "" {
+			msgFinal := formatarMensagem(cfg.MsgAusencia, map[string]string{
+				"ticket_id":    strconv.Itoa(ticketID),
+				"ticket_title": tituloChamado,
+				"inicio":       cfg.WorkingHoursStart,
+				"fim":          cfg.WorkingHoursEnd,
+			})
+			sendTextMessage(ctx, client, v.Info.Chat, msgFinal)
+		} else {
+			sendTextMessage(ctx, client, v.Info.Chat, formatarMensagem(cfg.MsgTicketCriado, map[string]string{"ticket_id": strconv.Itoa(ticketID), "ticket_title": tituloChamado}))
+		}
 
-		numeroTI := config.GetConfig().TelefoneNotificacao
+		numeroTI := cfg.TelefoneNotificacao
 		if numeroTI != "" {
 			targetJID := types.NewJID(numeroTI, types.DefaultUserServer)
 			textoAlerta := fmt.Sprintf(
