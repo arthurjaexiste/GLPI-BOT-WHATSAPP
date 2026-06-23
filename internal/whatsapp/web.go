@@ -391,10 +391,19 @@ func StartWebServer() {
 			status = "qr"
 		}
 
-		ips := getLocalIPs()
-		mainIP := "localhost"
-		if len(ips) > 0 {
-			mainIP = ips[0]
+		// Tenta obter o IP de acesso do cabeçalho Host da requisição
+		mainIP := r.Host
+		if shost, _, err := net.SplitHostPort(r.Host); err == nil {
+			mainIP = shost
+		}
+		// Se for vazio ou loopback, tenta obter o IP local da máquina/container como fallback
+		if mainIP == "" || mainIP == "localhost" || mainIP == "127.0.0.1" || mainIP == "::1" {
+			ips := getLocalIPs()
+			if len(ips) > 0 {
+				mainIP = ips[0]
+			} else {
+				mainIP = "localhost"
+			}
 		}
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
