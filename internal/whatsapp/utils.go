@@ -154,5 +154,12 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 		_ = client.SendChatPresence(ctx, jid, types.ChatPresencePaused, mediaType)
 	}
 
-	return client.SendMessage(ctx, jid, msg)
+	resp, err := client.SendMessage(ctx, jid, msg)
+	if err != nil {
+		fmt.Printf("🚨 [ERRO WHATSAPP] Falha ao enviar mensagem para %s: %v\n", jid.String(), err)
+		if strings.Contains(err.Error(), "463") {
+			fmt.Printf("💡 [DICA] O número %s pode estar bloqueado como 'contato frio' pelo WhatsApp após a recriação da sessão. Para liberar, basta enviar qualquer mensagem (ex: 'oi') deste celular para o número do bot.\n", jid.String())
+		}
+	}
+	return resp, err
 }
