@@ -7,12 +7,12 @@
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=1.5">
+    <link rel="stylesheet" href="/static/css/style.css?v=1.6">
 </head>
 <body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
-    <!-- Ambient light glow effects -->
-    <div class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[150px] pointer-events-none"></div>
-    <div class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[130px] pointer-events-none"></div>
+    <!-- Ambient light glow effects (Monochrome/Gray theme) -->
+    <div class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-zinc-500/[0.03] rounded-full blur-[150px] pointer-events-none"></div>
+    <div class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[130px] pointer-events-none"></div>
 
     <!-- Header/Navbar -->
     <header class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -57,7 +57,7 @@
             <!-- Coluna 1: Status Conexão Card -->
             <div class="glass-card rounded-2xl p-8 flex flex-col items-center relative overflow-hidden group">
                 <!-- Inner soft accent light -->
-                <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/20 transition-all duration-500"></div>
+                <div class="absolute -top-24 -left-24 w-48 h-48 bg-zinc-500/[0.04] rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/[0.08] transition-all duration-500"></div>
                 
                 <h2 class="text-lg font-bold mb-1 flex items-center gap-2 text-zinc-200 z-10">
                     📶 Conexão WhatsApp
@@ -79,7 +79,7 @@
             <!-- Coluna 2: Informações do Sistema -->
             <div class="glass-card rounded-2xl p-8 flex flex-col relative overflow-hidden group">
                 <!-- Inner soft accent light -->
-                <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/20 transition-all duration-500"></div>
+                <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-zinc-500/[0.04] rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/[0.08] transition-all duration-500"></div>
  
                 <h2 class="text-lg font-bold mb-1 flex items-center gap-2 text-zinc-200 z-10">
                     📊 Monitoramento & Diagnóstico
@@ -124,7 +124,7 @@
         <!-- Coluna Única: Chamados Recentes -->
         <div class="glass-card rounded-2xl p-8 flex flex-col relative overflow-hidden group w-full">
             <!-- Inner soft accent light -->
-            <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-zinc-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/10 transition-all duration-500"></div>
+            <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-zinc-500/[0.02] rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/[0.04] transition-all duration-500"></div>
 
             <h2 class="text-lg font-bold mb-1 flex items-center gap-2 text-zinc-200 z-10">
                 🎫 Chamados Recentes
@@ -152,6 +152,6 @@
     </main>
 
     <!-- Importando o Script -->
-    <script src="/static/js/script.js?v=1.5"></script>
+    <script src="/static/js/script.js?v=1.6"></script>
 </body>
 </html>

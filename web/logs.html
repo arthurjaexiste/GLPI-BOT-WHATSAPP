@@ -7,7 +7,7 @@
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=1.5">
+    <link rel="stylesheet" href="/static/css/style.css?v=1.6">
     <style>
         .terminal-font {
             font-family: 'Fira Code', 'Courier New', Courier, monospace;
@@ -30,9 +30,9 @@
     </style>
 </head>
 <body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
-    <!-- Ambient light glow effects -->
-    <div class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[150px] pointer-events-none"></div>
-    <div class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[130px] pointer-events-none"></div>
+    <!-- Ambient light glow effects (Monochrome/Gray theme) -->
+    <div class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-zinc-500/[0.03] rounded-full blur-[150px] pointer-events-none"></div>
+    <div class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[130px] pointer-events-none"></div>
 
     <!-- Header/Navbar -->
     <header class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -105,7 +105,7 @@
             <div class="flex items-center justify-between flex-wrap gap-4 text-xs text-zinc-400">
                 <div class="flex items-center gap-4">
                     <label class="flex items-center gap-2 cursor-pointer select-none text-zinc-300 hover:text-white transition">
-                        <input type="checkbox" id="autoScrollCheck" checked class="rounded border-white/10 bg-zinc-800 text-indigo-600 focus:ring-0">
+                        <input type="checkbox" id="autoScrollCheck" checked class="rounded border-white/10 bg-zinc-800 text-zinc-300 focus:ring-0">
                         <span>Rolar Automaticamente ao Fim</span>
                     </label>
                     <div class="flex items-center gap-2 bg-black/40 border border-white/5 px-3 py-1.5 rounded-lg">
@@ -117,7 +117,7 @@
                     <button onclick="clearConsole()" class="px-4 py-2 bg-zinc-800/40 hover:bg-zinc-700/60 border border-white/5 rounded-xl transition text-zinc-300 hover:text-white font-semibold">
                         🗑️ Limpar Tela
                     </button>
-                    <a href="/api/logs?download=true" target="_blank" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/20 transition flex items-center gap-1.5">
+                    <a href="/api/logs?download=true" target="_blank" class="px-4 py-2 bg-white hover:bg-zinc-200 text-black border border-white font-bold rounded-xl shadow-lg transition flex items-center gap-1.5">
                         📥 Baixar Log Completo
                     </a>
                 </div>
@@ -163,13 +163,13 @@
             } else if (escaped.includes("⚠️") || escaped.toLowerCase().includes("warning") || escaped.toLowerCase().includes("warn") || escaped.toLowerCase().includes("offline") || escaped.toLowerCase().includes("desconectado")) {
                 colorClass = "text-amber-400 font-semibold";
             } else if (escaped.includes("[POLL]") || escaped.includes("[VOTO]")) {
-                colorClass = "text-cyan-400";
+                colorClass = "text-zinc-300";
             } else if (escaped.includes("[WEBHOOK]") || escaped.includes("[API]")) {
-                colorClass = "text-purple-400";
+                colorClass = "text-zinc-200";
             } else if (escaped.includes("[TICKET]") || escaped.includes("[GLPI]")) {
-                colorClass = "text-teal-400";
+                colorClass = "text-white font-medium";
             } else if (escaped.includes("🔄") || escaped.includes("iniciado") || escaped.includes("reiniciado") || escaped.includes("START")) {
-                colorClass = "text-indigo-400 font-semibold";
+                colorClass = "text-zinc-100 font-semibold";
             }
 
             return `<div class="${colorClass} py-0.5">${escaped}</div>`;
