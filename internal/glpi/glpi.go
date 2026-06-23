@@ -298,6 +298,17 @@ func BuscarChamado(sessionToken string, ticketID int) (string, int, string, erro
 			statusInt, _ = strconv.Atoi(val)
 		case int:
 			statusInt = val
+		case map[string]interface{}:
+			if idVal, ok := val["id"]; ok {
+				switch id := idVal.(type) {
+				case float64:
+					statusInt = int(id)
+				case string:
+					statusInt, _ = strconv.Atoi(id)
+				case int:
+					statusInt = id
+				}
+			}
 		}
 	}
 	titulo, _ := result["name"].(string)
