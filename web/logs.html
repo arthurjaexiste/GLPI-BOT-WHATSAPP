@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs do Bot - GLPI-BOT</title>
+    <link rel="icon" type="image/png" href="/static/img/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        .terminal-font {
+            font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        }
+        /* Custom scrollbar for terminal */
+        .terminal-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .terminal-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-[#09090b] bg-gradient-to-br from-[#09090b] via-[#18181b] to-[#27272a] text-white min-h-screen flex flex-col">
+    <!-- Header/Navbar -->
+    <header class="bg-zinc-900/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <img src="/static/img/logo.png" alt="Logo" class="w-10 h-10 rounded-xl object-contain shadow-lg">
+            <div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">GLPI-BOT</h1>
+                <p class="text-xs text-gray-400">Painel de Controle Inteligente</p>
+            </div>
+        </div>
+        
+        <!-- Navigation Links -->
+        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/10 rounded-xl">
+            <a href="/" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                📊 Status
+            </a>
+            <a href="/flow" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                💬 Fluxo do Bot
+            </a>
+            <a href="/config" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                🔧 Configurações
+            </a>
+            <a href="/messages" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                ✉️ Mensagens
+            </a>
+            <a href="/logs" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
+                📋 Logs
+            </a>
+        </nav>
+
+        <!-- Action / Logout -->
+        <div class="flex items-center gap-3">
+            <a href="/logout" class="px-4 py-2 text-xs font-semibold text-red-400 hover:text-white bg-red-950/20 hover:bg-red-900/40 border border-red-900/30 hover:border-red-500/50 rounded-lg transition duration-200">
+                🚪 Sair
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-5xl w-full mx-auto p-6 flex flex-col gap-6">
+        <!-- Dashboard Card -->
+        <div class="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col gap-4">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+                <div>
+                    <h2 class="text-md font-bold text-zinc-300 flex items-center gap-2 uppercase tracking-wide">
+                        📋 Console de Logs em Tempo Real
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">Acompanhe as interações e operações internas executadas pelo bot</p>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Limit Select -->
+                    <select id="limitSelect" onchange="fetchLogs()" class="bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-zinc-400">
+                        <option value="50">Últimas 50 linhas</option>
+                        <option value="150" selected>Últimas 150 linhas</option>
+                        <option value="300">Últimas 300 linhas</option>
+                        <option value="500">Últimas 500 linhas</option>
+                    </select>
+
+                    <!-- Refresh Interval Select -->
+                    <select id="intervalSelect" onchange="setupAutoRefresh()" class="bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-zinc-400">
+                        <option value="0">Sem auto-atualização</option>
+                        <option value="2000" selected>Atualizar a cada 2s</option>
+                        <option value="5000">Atualizar a cada 5s</option>
+                        <option value="10000">Atualizar a cada 10s</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Toolbar Controls -->
+            <div class="flex items-center justify-between flex-wrap gap-4 text-xs text-zinc-400">
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="autoScrollCheck" checked class="rounded bg-black border-white/10 text-zinc-600 focus:ring-0 focus:ring-offset-0">
+                        <span>Rolar Automaticamente ao Fim</span>
+                    </label>
+                    <div class="flex items-center gap-1.5">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="status-pulse"></span>
+                        <span id="status-text">Monitorando...</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="clearConsole()" class="px-3 py-1.5 bg-zinc-800/60 hover:bg-zinc-700/60 border border-white/10 rounded-lg transition text-zinc-300 hover:text-white">
+                        🗑️ Limpar Tela
+                    </button>
+                    <a href="/api/logs?download=true" target="_blank" class="px-3 py-1.5 bg-gradient-to-r from-zinc-700 to-zinc-800 hover:from-zinc-600 hover:to-zinc-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-zinc-500/10 transition flex items-center gap-1">
+                        📥 Baixar Log Completo
+                    </a>
+                </div>
+            </div>
+
+            <!-- Terminal Area -->
+            <div class="relative">
+                <div id="terminal" class="terminal-font terminal-scroll w-full h-[550px] bg-[#020202] border border-white/10 rounded-xl p-5 overflow-y-auto text-xs leading-relaxed text-zinc-400 whitespace-pre-wrap select-text">Carregando logs do sistema...</div>
+            </div>
+            
+        </div>
+    </main>
+
+    <script>
+        let refreshInterval = null;
+        let lastLogContent = "";
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // Analisa e colore as linhas de logs para simular um terminal com sintaxe destacada
+        function formatLogLine(line) {
+            const trimmed = line.trim();
+            if (!trimmed) return "";
+
+            let colorClass = "text-zinc-400";
+            let escaped = escapeHTML(line);
+
+            // Verifica palavras-chave e define estilos de cor
+            if (escaped.includes("🚨") || escaped.toLowerCase().includes("erro") || escaped.toLowerCase().includes("error") || escaped.toLowerCase().includes("failed") || escaped.toLowerCase().includes("panic") || escaped.toLowerCase().includes("fatal")) {
+                colorClass = "text-rose-400 font-semibold";
+            } else if (escaped.includes("✅") || escaped.toLowerCase().includes("sucesso") || escaped.toLowerCase().includes("success") || escaped.toLowerCase().includes("conectado") || escaped.toLowerCase().includes("connected")) {
+                colorClass = "text-emerald-400 font-semibold";
+            } else if (escaped.includes("⚠️") || escaped.toLowerCase().includes("warning") || escaped.toLowerCase().includes("warn") || escaped.toLowerCase().includes("offline") || escaped.toLowerCase().includes("desconectado")) {
+                colorClass = "text-amber-400 font-semibold";
+            } else if (escaped.includes("[POLL]") || escaped.includes("[VOTO]")) {
+                colorClass = "text-cyan-400";
+            } else if (escaped.includes("[WEBHOOK]") || escaped.includes("[API]")) {
+                colorClass = "text-purple-400";
+            } else if (escaped.includes("[TICKET]") || escaped.includes("[GLPI]")) {
+                colorClass = "text-teal-400";
+            } else if (escaped.includes("🔄") || escaped.includes("iniciado") || escaped.includes("reiniciado") || escaped.includes("START")) {
+                colorClass = "text-indigo-400 font-semibold";
+            }
+
+            return `<div class="${colorClass}">${escaped}</div>`;
+        }
+
+        async function fetchLogs() {
+            const limit = document.getElementById('limitSelect').value;
+            const terminal = document.getElementById('terminal');
+            const statusText = document.getElementById('status-text');
+            const statusPulse = document.getElementById('status-pulse');
+
+            try {
+                const response = await fetch(`/api/logs?limit=${limit}`);
+                if (!response.ok) throw new Error("Erro na rede");
+                const data = await response.json();
+                
+                const logsText = data.logs || "Nenhum log gravado até o momento.";
+                
+                // Evita redesenhar se o log for idêntico
+                if (logsText === lastLogContent) {
+                    statusText.innerText = "Monitorando (sem novas linhas)";
+                    return;
+                }
+                lastLogContent = logsText;
+
+                const lines = logsText.split("\n");
+                let formattedHTML = "";
+                for (let line of lines) {
+                    formattedHTML += formatLogLine(line);
+                }
+
+                terminal.innerHTML = formattedHTML || "Nenhum log gravado até o momento.";
+
+                statusText.innerText = "Monitorando - Atualizado: " + new Date().toLocaleTimeString();
+                statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+
+                // Rolar para o fim se selecionado
+                if (document.getElementById('autoScrollCheck').checked) {
+                    terminal.scrollTop = terminal.scrollHeight;
+                }
+            } catch (err) {
+                statusText.innerText = "Erro ao buscar logs do bot";
+                statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping";
+            }
+        }
+
+        function clearConsole() {
+            document.getElementById('terminal').innerHTML = '<div class="text-zinc-600 italic">// Tela limpa localmente. Aguardando próximas linhas...</div>';
+            lastLogContent = "";
+        }
+
+        function setupAutoRefresh() {
+            const interval = parseInt(document.getElementById('intervalSelect').value);
+            const statusPulse = document.getElementById('status-pulse');
+            const statusText = document.getElementById('status-text');
+
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+
+            if (interval > 0) {
+                refreshInterval = setInterval(fetchLogs, interval);
+                statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                statusText.innerText = "Monitorando...";
+            } else {
+                statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-zinc-600";
+                statusText.innerText = "Atualização automática desativada";
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchLogs();
+            setupAutoRefresh();
+        });
+    </script>
+</body>
+</html>

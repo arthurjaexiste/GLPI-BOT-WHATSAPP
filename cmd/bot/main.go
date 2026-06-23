@@ -44,7 +44,39 @@ func eventHandler(client *whatsmeow.Client) func(interface{}) {
 	}
 }
 
+func setupLogRedirection() {
+	_ = os.MkdirAll("db", 0777)
+	f, err := os.OpenFile("db/bot.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		fmt.Printf("🚨 Erro ao criar arquivo de log: %v\n", err)
+		return
+	}
+
+	r, w, _ := os.Pipe()
+
+	origStdout := os.Stdout
+
+	os.Stdout = w
+	os.Stderr = w
+
+	go func() {
+		buf := make([]byte, 2048)
+		for {
+			n, err := r.Read(buf)
+			if n > 0 {
+				_, _ = origStdout.Write(buf[:n])
+				_, _ = f.Write(buf[:n])
+			}
+			if err != nil {
+				break
+			}
+		}
+	}()
+}
+
 func main() {
+	setupLogRedirection()
+
 	// Verifica se foi reiniciado pelo painel web
 	restartedFile := "db/.restarted"
 	if _, err := os.Stat(restartedFile); err == nil {

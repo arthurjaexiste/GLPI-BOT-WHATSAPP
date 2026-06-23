@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 
@@ -231,6 +232,65 @@ func StartWebServer() {
 			return
 		}
 		tmpl.Execute(w, nil)
+	})
+
+	// ROTA DA TELA DE LOGS (Protegida)
+	http.HandleFunc("/logs", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		tmpl, err := template.ParseFiles(filepath.Join(webDir, "logs.html"))
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao carregar a interface de logs: %v", err), http.StatusInternalServerError)
+			return
+		}
+		tmpl.Execute(w, nil)
+	})
+
+	// API PARA OBTER ÚLTIMOS LOGS DO BOT (Protegida)
+	http.HandleFunc("/api/logs", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		// Opção de download do arquivo completo
+		download := r.URL.Query().Get("download")
+		if download == "true" {
+			data, err := os.ReadFile("db/bot.log")
+			if err != nil {
+				http.Error(w, "Log não encontrado", http.StatusNotFound)
+				return
+			}
+			w.Header().Set("Content-Type", "application/octet-stream")
+			w.Header().Set("Content-Disposition", "attachment; filename=bot.log")
+			w.Write(data)
+			return
+		}
+
+		limitStr := r.URL.Query().Get("limit")
+		limit := 150
+		if limitStr != "" {
+			if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 {
+				limit = parsed
+			}
+		}
+
+		data, err := os.ReadFile("db/bot.log")
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{"logs": "Nenhum log disponível ainda ou arquivo de log não encontrado."})
+			return
+		}
+
+		lines := strings.Split(string(data), "\n")
+		if len(lines) > limit {
+			lines = lines[len(lines)-limit:]
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"logs": strings.Join(lines, "\n")})
 	})
 
 	// API PARA OBTER E SALVAR CONFIGURAÇÕES GERAIS
