@@ -156,28 +156,38 @@ func processarGravacaoDescricao(ctx context.Context, client *whatsmeow.Client, v
 		return
 	}
 
+	node, found := FindNodeByID(uState.CurrentNodeID)
+	askImages := true
+	askDocs := true
+	if found {
+		askImages = node.GetAskImages()
+		askDocs = node.GetAskDocs()
+	}
+
 	state.Mu.Lock()
 	uState.Description = text
 	uState.Images = nil
 	uState.Docs = nil
-	subCat := uState.SubCategory
-	isSubmenu := subCat != "" && subCat != "Outros"
-	if isSubmenu {
+	if askDocs {
+		uState.Step = 40
+	} else if askImages {
 		uState.Step = 35
 	} else {
-		uState.Step = 40
+		uState.Step = -1
 	}
 	state.Mu.Unlock()
 
 	sendTextMessage(ctx, client, v.Info.Chat, "Problema anotado! 📝")
 	time.Sleep(500 * time.Millisecond)
 
-	if isSubmenu {
+	if askDocs {
+		pollMsg := client.BuildPollCreation("Você possui arquivos ou documentos (PDF, Word, Excel, etc) para enviar?", []string{"Sim", "Não"}, 1)
+		client.SendMessage(ctx, v.Info.Chat, pollMsg)
+	} else if askImages {
 		pollMsg := client.BuildPollCreation("Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
 		client.SendMessage(ctx, v.Info.Chat, pollMsg)
 	} else {
-		pollMsg := client.BuildPollCreation("Você possui arquivos ou documentos (PDF, Word, Excel, etc) para enviar?", []string{"Sim", "Não"}, 1)
-		client.SendMessage(ctx, v.Info.Chat, pollMsg)
+		FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
 	}
 }
 
@@ -310,11 +320,20 @@ func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *ev
 		currentStep := uState.Step
 		state.Mu.Unlock()
 		if currentStep == 41 || currentStep == 42 {
-			state.Mu.Lock()
-			uState.Step = 35
-			state.Mu.Unlock()
-			pollMsg := client.BuildPollCreation("Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
-			client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			node, found := FindNodeByID(uState.CurrentNodeID)
+			askImages := true
+			if found {
+				askImages = node.GetAskImages()
+			}
+			if askImages {
+				state.Mu.Lock()
+				uState.Step = 35
+				state.Mu.Unlock()
+				pollMsg := client.BuildPollCreation("Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
+				client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			} else {
+				FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
+			}
 		} else if currentStep == 36 || currentStep == 37 {
 			FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
 		}

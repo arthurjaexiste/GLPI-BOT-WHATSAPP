@@ -18,12 +18,32 @@ const (
 )
 
 type FlowNode struct {
-	ID       string     `json:"id"`
-	Title    string     `json:"title"`
-	Type     NodeType   `json:"type"`
-	Content  string     `json:"content,omitempty"`  // Mensagem de texto (se NodeText) ou prompt customizado (se NodeGLPITicket)
-	GLPIID   int        `json:"glpi_id,omitempty"`  // ID da categoria no GLPI
-	Children []FlowNode `json:"children,omitempty"` // Filhos (se NodeMenu)
+	ID        string     `json:"id"`
+	Title     string     `json:"title"`
+	Type      NodeType   `json:"type"`
+	Content   string     `json:"content,omitempty"`   // Mensagem de texto (se NodeText) ou prompt customizado (se NodeGLPITicket)
+	GLPIID    int        `json:"glpi_id,omitempty"`   // ID da categoria no GLPI
+	Children  []FlowNode `json:"children,omitempty"`  // Filhos (se NodeMenu)
+	AskImages *bool      `json:"ask_images,omitempty"` // Solicitar Imagens/Fotos
+	AskDocs   *bool      `json:"ask_docs,omitempty"`   // Solicitar Documentos/Arquivos
+}
+
+func (n FlowNode) GetAskImages() bool {
+	if n.AskImages == nil {
+		return true
+	}
+	return *n.AskImages
+}
+
+func (n FlowNode) GetAskDocs() bool {
+	if n.AskDocs == nil {
+		return true
+	}
+	return *n.AskDocs
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }
 
 var (
@@ -131,11 +151,13 @@ func createDefaultFlowJSON() {
 		Type:  NodeMenu,
 		Children: []FlowNode{
 			{
-				ID:      "abrir_chamado",
-				Title:   "Abrir Chamado",
-				Type:    NodeGLPITicket,
-				GLPIID:  0,
-				Content: "Por favor, descreva o seu problema detalhadamente:",
+				ID:        "abrir_chamado",
+				Title:     "Abrir Chamado",
+				Type:      NodeGLPITicket,
+				GLPIID:    0,
+				Content:   "Por favor, descreva o seu problema detalhadamente:",
+				AskImages: boolPtr(true),
+				AskDocs:   boolPtr(true),
 			},
 			{
 				ID:    "acompanhar_chamado",

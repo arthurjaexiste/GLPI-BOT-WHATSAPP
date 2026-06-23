@@ -134,16 +134,34 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 			state.Mu.Lock(); uState.Step = 41; state.Mu.Unlock()
 			sendTextMessage(ctx, client, v.Info.Chat, "Pode enviar seus arquivos ou documentos! 📄")
 		} else if isNao {
-			state.Mu.Lock(); uState.Step = 35; state.Mu.Unlock()
-			pollMsg := client.BuildPollCreation("Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
-			client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			node, found := FindNodeByID(uState.CurrentNodeID)
+			askImages := true
+			if found {
+				askImages = node.GetAskImages()
+			}
+			if askImages {
+				state.Mu.Lock(); uState.Step = 35; state.Mu.Unlock()
+				pollMsg := client.BuildPollCreation("Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
+				client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			} else {
+				FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
+			}
 		}
 
 	case 42: 
 		if isSim {
-			state.Mu.Lock(); uState.Step = 35; state.Mu.Unlock()
-			pollMsg := client.BuildPollCreation("Arquivos salvos! Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
-			client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			node, found := FindNodeByID(uState.CurrentNodeID)
+			askImages := true
+			if found {
+				askImages = node.GetAskImages()
+			}
+			if askImages {
+				state.Mu.Lock(); uState.Step = 35; state.Mu.Unlock()
+				pollMsg := client.BuildPollCreation("Arquivos salvos! Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
+				client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			} else {
+				FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
+			}
 		} else if isNao {
 			state.Mu.Lock(); uState.Step = 41; state.Mu.Unlock()
 			sendTextMessage(ctx, client, v.Info.Chat, "📄 Beleza, pode enviar o próximo arquivo!")

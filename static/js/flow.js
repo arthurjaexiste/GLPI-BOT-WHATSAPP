@@ -39,7 +39,11 @@ function createNodeUI(node, path, isRoot = false) {
             badgeHTML = '<span class="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded">📁 Menu</span>';
             break;
         case 'ticket':
-            badgeHTML = `<span class="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">🎫 Chamado GLPI (ID: ${node.glpi_id || 0})</span>`;
+            const attachmentTypes = [];
+            if (node.ask_images !== false) attachmentTypes.push('Imagens');
+            if (node.ask_docs !== false) attachmentTypes.push('Documentos');
+            const attachmentsInfo = attachmentTypes.length > 0 ? ` (+Anexos: ${attachmentTypes.join('/')})` : ' (Sem Anexos)';
+            badgeHTML = `<span class="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">🎫 Chamado GLPI (ID: ${node.glpi_id || 0})${attachmentsInfo}</span>`;
             break;
         case 'text':
             badgeHTML = '<span class="text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded">💬 Resposta / FAQ</span>';
@@ -130,6 +134,10 @@ function openEditModal(path) {
     document.getElementById('node-type').value = node.type || 'menu';
     document.getElementById('node-glpi').value = node.glpi_id || 0;
     document.getElementById('node-content').value = node.content || '';
+    
+    // Configura os checkboxes (padrão é true para nós existentes)
+    document.getElementById('node-ask-images').checked = node.ask_images !== false;
+    document.getElementById('node-ask-docs').checked = node.ask_docs !== false;
 
     // Raiz não pode ter tipo alterado (sempre menu)
     document.getElementById('node-type').disabled = path.length === 0;
@@ -148,6 +156,10 @@ function openAddModal(path) {
     document.getElementById('node-type').value = 'ticket';
     document.getElementById('node-glpi').value = 0;
     document.getElementById('node-content').value = '';
+    
+    // Checkboxes marcados por padrão ao adicionar novo nó
+    document.getElementById('node-ask-images').checked = true;
+    document.getElementById('node-ask-docs').checked = true;
 
     document.getElementById('node-type').disabled = false;
 
@@ -165,13 +177,16 @@ function toggleModalFields() {
     const fieldGLPI = document.getElementById('field-glpi');
     const fieldContent = document.getElementById('field-content');
     const labelContent = document.getElementById('label-content');
+    const fieldAttachments = document.getElementById('field-attachments');
 
     fieldGLPI.classList.add('hidden');
     fieldContent.classList.add('hidden');
+    if (fieldAttachments) fieldAttachments.classList.add('hidden');
 
     if (type === 'ticket') {
         fieldGLPI.classList.remove('hidden');
         fieldContent.classList.remove('hidden');
+        if (fieldAttachments) fieldAttachments.classList.remove('hidden');
         labelContent.innerText = "Prompt de Descrição (Opcional)";
         document.getElementById('node-content').placeholder = "Ex: por favor, descreva o problema detalhadamente:";
     } else if (type === 'text') {
@@ -199,6 +214,15 @@ function confirmModal() {
         node.type = type;
         node.glpi_id = glpi_id;
         node.content = content;
+        
+        if (type === 'ticket') {
+            node.ask_images = document.getElementById('node-ask-images').checked;
+            node.ask_docs = document.getElementById('node-ask-docs').checked;
+        } else {
+            delete node.ask_images;
+            delete node.ask_docs;
+        }
+
         // Limpar filhos se mudou de menu para outro tipo
         if (type !== 'menu') delete node.children;
     } else if (activeEditMode === "add") {
@@ -215,6 +239,11 @@ function confirmModal() {
             glpi_id,
             content
         };
+        
+        if (type === 'ticket') {
+            newNode.ask_images = document.getElementById('node-ask-images').checked;
+            newNode.ask_docs = document.getElementById('node-ask-docs').checked;
+        }
         
         if (type === 'menu') newNode.children = [];
         parent.children.push(newNode);
