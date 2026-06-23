@@ -131,60 +131,11 @@ func createDefaultFlowJSON() {
 		Type:  NodeMenu,
 		Children: []FlowNode{
 			{
-				ID:    "abrir_chamado",
-				Title: "Abrir Novo Chamado",
-				Type:  NodeMenu,
-				Children: []FlowNode{
-					{
-						ID:      "cat_sankhya",
-						Title:   "Sankhya",
-						Type:    NodeGLPITicket,
-						GLPIID:  1,
-						Content: "por favor, descreva o problema detalhadamente:",
-					},
-					{
-						ID:    "cat_ion",
-						Title: "Ion Vendas",
-						Type:  NodeMenu,
-						Children: []FlowNode{
-							{ID: "sub_ion_login", Title: "Erro de login", Type: NodeGLPITicket, GLPIID: 14},
-							{ID: "sub_ion_app", Title: "App travando", Type: NodeGLPITicket, GLPIID: 15},
-							{ID: "sub_ion_sync", Title: "Não sincroniza", Type: NodeGLPITicket, GLPIID: 16},
-							{ID: "sub_ion_outros", Title: "Outros", Type: NodeGLPITicket, GLPIID: 2},
-						},
-					},
-					{
-						ID:    "cat_comp",
-						Title: "Computador",
-						Type:  NodeMenu,
-						Children: []FlowNode{
-							{ID: "sub_comp_disco", Title: "Disco cheio", Type: NodeGLPITicket, GLPIID: 11},
-							{ID: "sub_comp_liga", Title: "Não liga", Type: NodeGLPITicket, GLPIID: 12},
-							{ID: "sub_comp_lento", Title: "Lento/Travando", Type: NodeGLPITicket, GLPIID: 13},
-							{ID: "sub_comp_mouse", Title: "Mouse falhando", Type: NodeGLPITicket, GLPIID: 17},
-							{ID: "sub_comp_teclado", Title: "Teclado falhando", Type: NodeGLPITicket, GLPIID: 18},
-							{ID: "sub_comp_monitor", Title: "Monitor sem vídeo", Type: NodeGLPITicket, GLPIID: 19},
-							{ID: "sub_comp_outros", Title: "Outros", Type: NodeGLPITicket, GLPIID: 3},
-						},
-					},
-					{
-						ID:    "cat_impressora",
-						Title: "Impressoras",
-						Type:  NodeMenu,
-						Children: []FlowNode{
-							{ID: "sub_imp_nao", Title: "Não imprime", Type: NodeGLPITicket, GLPIID: 20},
-							{ID: "sub_imp_papel", Title: "Papel atolado", Type: NodeGLPITicket, GLPIID: 21},
-							{ID: "sub_imp_offline", Title: "Sem conexão", Type: NodeGLPITicket, GLPIID: 22},
-							{ID: "sub_imp_outros", Title: "Outros", Type: NodeGLPITicket, GLPIID: 5},
-						},
-					},
-					{
-						ID:    "cat_outros",
-						Title: "Outros",
-						Type:  NodeGLPITicket,
-						GLPIID: 0,
-					},
-				},
+				ID:      "abrir_chamado",
+				Title:   "Abrir Chamado",
+				Type:    NodeGLPITicket,
+				GLPIID:  0,
+				Content: "Por favor, descreva o seu problema detalhadamente:",
 			},
 			{
 				ID:    "acompanhar_chamado",
