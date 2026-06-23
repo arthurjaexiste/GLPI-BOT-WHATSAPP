@@ -147,11 +147,41 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 	client.MarkRead(ctx, []types.MessageID{v.Info.ID}, v.Info.Timestamp, chatJID, v.Info.Sender)
 
-	fmt.Printf("ℹ️ [MENSAGEM] Recebida de %s (Chat: %s) | Texto: %q | PollUpdate: %t | Imagem: %t | Doc: %t\n", sender, chatJID.String(), text, pollUpdate != nil, imgMsg != nil, docMsg != nil)
-
 	state.Mu.Lock()
+	userName := state.Names[sender]
+	userStep := -1
+	if uState, exists := state.Users[sender]; exists {
+		userStep = uState.Step
+	}
 	activeUserFull := state.ActiveLiveChatUser
 	state.Mu.Unlock()
+
+	var debugName string
+	if userName != "" {
+		debugName = fmt.Sprintf("%s (%s)", userName, sender)
+	} else {
+		debugName = sender
+	}
+
+	if pollUpdate != nil {
+		fmt.Printf("📥 [ENQUETE] Usuário %s votou em uma enquete do WhatsApp.\n", debugName)
+	} else if userStep == 100 && activeUserFull != "" {
+		if imgMsg != nil {
+			fmt.Printf("💬 [LIVECHAT] Cliente %s em atendimento enviou uma imagem\n", debugName)
+		} else if docMsg != nil {
+			fmt.Printf("💬 [LIVECHAT] Cliente %s em atendimento enviou um documento (%q)\n", debugName, docMsg.GetFileName())
+		} else {
+			fmt.Printf("💬 [LIVECHAT] Cliente %s em atendimento enviou mensagem: %q\n", debugName, text)
+		}
+	} else {
+		if imgMsg != nil {
+			fmt.Printf("📥 [IMAGEM] Usuário %s enviou uma imagem | Passo: %d\n", debugName, userStep)
+		} else if docMsg != nil {
+			fmt.Printf("📥 [DOCUMENTO] Usuário %s enviou um documento (%q) | Passo: %d\n", debugName, docMsg.GetFileName(), userStep)
+		} else {
+			fmt.Printf("📥 [MENSAGEM] Usuário %s enviou: %q | Passo: %d\n", debugName, text, userStep)
+		}
+	}
 
 	supportNumber := getSupportNumber()
 	isSupport := false
@@ -169,6 +199,8 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 			state.Mu.Lock()
 			agenteAtual := state.ActiveAgentName
 			state.Mu.Unlock()
+
+			fmt.Printf("👤 [LIVECHAT] Suporte (%s) enviou resposta para o cliente (%s): %q\n", agenteAtual, activeUserFull, textoLimpo)
 
 			if agenteAtual == "" {
 				supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)

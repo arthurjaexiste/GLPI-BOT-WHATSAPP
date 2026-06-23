@@ -410,6 +410,7 @@ func FinalizarChamadoEAlertar(ctx context.Context, client *whatsmeow.Client, v *
 	ticketID, err := glpi.CriarChamado(token, tituloChamado, descricaoHTML, 3, requesterID, categoriaID)
 
 	if err == nil {
+		fmt.Printf("✅ [TICKET] Chamado #%d criado com sucesso no GLPI para %s (%s) | Categoria: %s (ID: %d)\n", ticketID, nomeVisitante, sender, subCat, categoriaID)
 		for _, doc := range documentosSalvos {
 			_ = glpi.AnexarDocumento(token, ticketID, doc.Bytes, doc.Name)
 		}
@@ -439,6 +440,7 @@ func FinalizarChamadoEAlertar(ctx context.Context, client *whatsmeow.Client, v *
 		uState.Step = -1
 		state.Mu.Unlock()
 	} else {
+		fmt.Printf("🚨 [TICKET] Erro ao criar chamado no GLPI para %s (%s): %v\n", nomeVisitante, sender, err)
 		sendTextMessage(ctx, client, v.Info.Chat, "❌ Ocorreu um erro ao registrar o ticket no GLPI.")
 	}
 }

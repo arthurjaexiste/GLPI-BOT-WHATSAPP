@@ -44,6 +44,7 @@ func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID ty
 		nome := state.Names[sender]
 		state.Mu.Unlock()
 
+		fmt.Printf("👥 [LIVECHAT] Novo atendimento ao vivo iniciado para %s (%s)\n", nome, sender)
 		sendTextMessage(ctx, client, chatJID, formatarMensagem(config.GetConfig().MsgFilaSuporte, nil))
 
 		supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
@@ -66,8 +67,10 @@ func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID ty
 			uState.Step = 99
 		}
 		pos := len(state.LiveChatQueue)
+		nome := state.Names[sender]
 		state.Mu.Unlock()
 
+		fmt.Printf("👥 [LIVECHAT] Atendimento ocupado. Adicionando %s (%s) à fila de espera (Posição: %d)\n", nome, sender, pos)
 		sendTextMessage(ctx, client, chatJID, formatarMensagem(config.GetConfig().MsgFilaEspera, map[string]string{"posicao": strconv.Itoa(pos)}))
 	}
 }
@@ -93,6 +96,7 @@ func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerrado
 		}
 		state.Mu.Unlock()
 
+		fmt.Printf("👥 [LIVECHAT] Chat ao vivo encerrado para %s (%s) | Encerrado por suporte: %t\n", nome, userNumber, encerradoPeloSuporte)
 		sendTextMessage(ctx, client, userJID, formatarMensagem(config.GetConfig().MsgFimAtendimento, nil))
 
 		if !encerradoPeloSuporte {
@@ -113,18 +117,20 @@ func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerrado
 		if uState, ok := state.Users[nextUserNumber]; ok {
 			uState.Step = 100
 		}
-		nome := state.Names[nextUserNumber]
+		nomeProximo := state.Names[nextUserNumber]
 		state.Mu.Unlock()
+
+		fmt.Printf("👥 [LIVECHAT] Próximo da fila de espera puxado para atendimento: %s (%s)\n", nomeProximo, nextUserNumber)
 
 		sendTextMessage(ctx, client, nextUserJID, "⏳ Chegou a sua vez! Aguarde um momento enquanto um técnico assume o seu atendimento.")
 
-		sendTextMessage(ctx, client, supportJID, fmt.Sprintf("🔔 *NOTIFICAÇÃO FILA:* *%s* saiu da fila de espera e aguarda atendimento.", nome))
+		sendTextMessage(ctx, client, supportJID, fmt.Sprintf("🔔 *NOTIFICAÇÃO FILA:* *%s* saiu da fila de espera e aguarda atendimento.", nomeProximo))
 		time.Sleep(1500 * time.Millisecond)
 
 		atendentes := obterAtendentesSuporte()
 		fmt.Printf("ℹ️ [LIVECHAT] Enviando enquete de suporte (fila) para %s. Atendentes: %v\n", supportJID, atendentes)
 
-		textoNotificacao := fmt.Sprintf("Quem vai assumir o atendimento de *%s*?", nome)
+		textoNotificacao := fmt.Sprintf("Quem vai assumir o atendimento de *%s*?", nomeProximo)
 		pollMsg := client.BuildPollCreation(textoNotificacao, atendentes, 1)
 		_, errSend := client.SendMessage(ctx, supportJID, pollMsg)
 		if errSend != nil {
