@@ -122,17 +122,19 @@ function showToast(message, icon = '✅') {
     toastIcon.innerText = icon;
     toastMsg.innerText = message;
 
+    // Reset layout classes to avoid duplicate accumulation
+    const baseClasses = "fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl backdrop-blur-md transform transition duration-300 flex items-center gap-3 z-50";
+    
     if (icon === '✅') {
-        toast.className = toast.className.replace('border-red-500/30', 'border-emerald-500/30')
-                                       .replace('bg-red-950/80', 'bg-emerald-950/80')
-                                       .replace('text-red-300', 'text-emerald-300') + ' border-emerald-500/30 bg-emerald-950/80 text-emerald-300';
+        toast.className = baseClasses + " bg-emerald-950/80 border border-emerald-500/30 text-emerald-300";
     } else {
-        toast.className = toast.className.replace('border-emerald-500/30', 'border-red-500/30')
-                                       .replace('bg-emerald-950/80', 'bg-red-950/80')
-                                       .replace('text-emerald-300', 'text-red-300') + ' border-red-500/30 bg-red-950/80 text-red-300';
+        toast.className = baseClasses + " bg-red-950/80 border border-red-500/30 text-red-300";
     }
 
-    toast.classList.remove('translate-y-24', 'opacity-0');
+    // Force transition by removing classes in a new microtask
+    setTimeout(() => {
+        toast.classList.remove('translate-y-24', 'opacity-0');
+    }, 10);
     
     setTimeout(() => {
         toast.classList.add('translate-y-24', 'opacity-0');
