@@ -57,7 +57,7 @@ func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID ty
 
 		textoNotificacao := fmt.Sprintf("Quem vai assumir o atendimento de *%s*?", nome)
 		pollMsg := client.BuildPollCreation(textoNotificacao, atendentes, 1)
-		_, errSend := client.SendMessage(ctx, supportJID, pollMsg)
+		_, errSend := sendMessage(ctx, client, supportJID, pollMsg)
 		if errSend != nil {
 			fmt.Printf("🚨 [ERRO WHATSMEOW] Falha ao enviar enquete de suporte: %v\n", errSend)
 		}
@@ -132,7 +132,7 @@ func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerrado
 
 		textoNotificacao := fmt.Sprintf("Quem vai assumir o atendimento de *%s*?", nomeProximo)
 		pollMsg := client.BuildPollCreation(textoNotificacao, atendentes, 1)
-		_, errSend := client.SendMessage(ctx, supportJID, pollMsg)
+		_, errSend := sendMessage(ctx, client, supportJID, pollMsg)
 		if errSend != nil {
 			fmt.Printf("🚨 [ERRO WHATSMEOW] Falha ao enviar enquete de suporte (fila): %v\n", errSend)
 		}
@@ -182,6 +182,6 @@ func processarMensagemDoSuporte(ctx context.Context, client *whatsmeow.Client, v
 	if imgMsg == nil && docMsg == nil && audioMsg == nil && videoMsg == nil {
 		sendTextMessage(ctx, client, userJID, fmt.Sprintf("👨‍💻 *%s:*\n\n%s", agenteAtual, textoLimpo))
 	} else {
-		client.SendMessage(ctx, userJID, v.Message)
+		_, _ = sendMessage(ctx, client, userJID, v.Message)
 	}
 }

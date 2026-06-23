@@ -44,7 +44,7 @@ func processarSaudacaoInicial(ctx context.Context, client *whatsmeow.Client, v *
 			time.Sleep(500 * time.Millisecond)
 
 			pollMsg := client.BuildPollCreation(fmt.Sprintf("Ainda estou falando com *%s*?", primeiroNome), []string{"Sim", "Não"}, 1)
-			client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 		} else {
 			uState.Step = 1
 			state.Mu.Unlock()
@@ -87,7 +87,7 @@ func processarBuscaNomeGLPI(ctx context.Context, client *whatsmeow.Client, v *ev
 	state.Mu.Unlock()
 
 	pollMsg := client.BuildPollCreation("Selecione o seu nome abaixo:", nomes, 1)
-	client.SendMessage(ctx, v.Info.Chat, pollMsg)
+	_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 }
 
 func processarNomeManual(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, text string) {
@@ -183,11 +183,11 @@ func processarGravacaoDescricao(ctx context.Context, client *whatsmeow.Client, v
 	if askDocs {
 		cfg := config.GetConfig()
 		pollMsg := client.BuildPollCreation(cfg.MsgEnqueteDocumentos, []string{"Sim", "Não"}, 1)
-		client.SendMessage(ctx, v.Info.Chat, pollMsg)
+		_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 	} else if askImages {
 		cfg := config.GetConfig()
 		pollMsg := client.BuildPollCreation(cfg.MsgEnqueteFotos, []string{"Sim", "Não"}, 1)
-		client.SendMessage(ctx, v.Info.Chat, pollMsg)
+		_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 	} else {
 		FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
 	}
@@ -251,7 +251,7 @@ func processarBuscaChamadoInfo(ctx context.Context, client *whatsmeow.Client, v 
 				state.Mu.Unlock()
 
 				pollMsg := client.BuildPollCreation("Deseja adicionar uma nova mensagem para o chamado?", []string{"Sim", "Não"}, 1)
-				client.SendMessage(ctx, v.Info.Chat, pollMsg)
+				_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 			}
 		}
 	} else {
@@ -305,7 +305,7 @@ func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *ev
 			state.Mu.Unlock()
 			if stepAnterior != 42 {
 				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteConfirmarDocumentos, []string{"Sim", "Não"}, 1)
-				client.SendMessage(ctx, v.Info.Chat, pollMsg)
+				_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 			} else {
 				sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgDocumentoAdicionado)
 			}
@@ -323,7 +323,7 @@ func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *ev
 			state.Mu.Unlock()
 			if stepAnterior != 37 {
 				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteConfirmarFotos, []string{"Sim", "Não"}, 1)
-				client.SendMessage(ctx, v.Info.Chat, pollMsg)
+				_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 			} else {
 				sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgFotoAdicionada)
 			}
@@ -346,7 +346,7 @@ func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *ev
 				uState.Step = 35
 				state.Mu.Unlock()
 				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteFotos, []string{"Sim", "Não"}, 1)
-				client.SendMessage(ctx, v.Info.Chat, pollMsg)
+				_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 			} else {
 				FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
 			}

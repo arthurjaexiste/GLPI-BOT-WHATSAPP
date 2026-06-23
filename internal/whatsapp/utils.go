@@ -2,6 +2,7 @@ package whatsapp
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -78,7 +79,7 @@ func isBlacklisted(sender string) bool {
 }
 
 func sendTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string) {
-	client.SendMessage(ctx, jid, &waE2E.Message{Conversation: proto.String(text)})
+	_, _ = sendMessage(ctx, client, jid, &waE2E.Message{Conversation: proto.String(text)})
 }
 
 func formatarMensagem(msg string, placeholders map[string]string) string {
@@ -106,4 +107,52 @@ func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *w
 		rawText = v.Message.GetConversation()
 	}
 	return rawText, imgMsg, docMsg
+}
+
+func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, msg *waE2E.Message) (whatsmeow.SendResponse, error) {
+	if client == nil {
+		return whatsmeow.SendResponse{}, fmt.Errorf("cliente whatsmeow nulo")
+	}
+
+	// Não simula digitação para alertas internos (ex: webhook enviado para o suporte/TI)
+	tiNum := getSupportNumber()
+	isTiChat := strings.Contains(jid.String(), tiNum)
+
+	if !isTiChat {
+		presenceState := types.ChatPresenceComposing
+		mediaType := types.ChatPresenceMediaText
+
+		if msg.AudioMessage != nil {
+			mediaType = types.ChatPresenceMediaAudio
+		}
+
+		_ = client.SendChatPresence(ctx, jid, presenceState, mediaType)
+
+		// Calcula tempo baseado na mensagem (velocidade média de escrita)
+		delay := 1200 * time.Millisecond
+		var textLength int
+		if msg.Conversation != nil {
+			textLength = len(*msg.Conversation)
+		} else if msg.ExtendedTextMessage != nil && msg.ExtendedTextMessage.Text != nil {
+			textLength = len(*msg.ExtendedTextMessage.Text)
+		}
+
+		if textLength > 0 {
+			calcDelay := time.Duration(textLength) * 12 * time.Millisecond
+			if calcDelay < 1000*time.Millisecond {
+				delay = 1000 * time.Millisecond
+			} else if calcDelay > 2500*time.Millisecond {
+				delay = 2500 * time.Millisecond
+			} else {
+				delay = calcDelay
+			}
+		} else if msg.AudioMessage != nil {
+			delay = 3000 * time.Millisecond
+		}
+
+		time.Sleep(delay)
+		_ = client.SendChatPresence(ctx, jid, types.ChatPresencePaused, mediaType)
+	}
+
+	return client.SendMessage(ctx, jid, msg)
 }

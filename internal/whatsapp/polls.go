@@ -154,7 +154,7 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 			if askImages {
 				state.Mu.Lock(); uState.Step = 35; state.Mu.Unlock()
 				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteFotos, []string{"Sim", "Não"}, 1)
-				client.SendMessage(ctx, v.Info.Chat, pollMsg)
+				_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 			} else {
 				FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
 			}
@@ -170,7 +170,7 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 			if askImages {
 				state.Mu.Lock(); uState.Step = 35; state.Mu.Unlock()
 				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteFotosPosDocs, []string{"Sim", "Não"}, 1)
-				client.SendMessage(ctx, v.Info.Chat, pollMsg)
+				_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 			} else {
 				FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
 			}
@@ -258,7 +258,7 @@ func SendRootFlowPoll(ctx context.Context, client *whatsmeow.Client, jid types.J
 	state.Mu.Unlock()
 
 	pollMsg := client.BuildPollCreation("Como posso te ajudar hoje?", options, 1)
-	client.SendMessage(ctx, jid, pollMsg)
+	_, _ = sendMessage(ctx, client, jid, pollMsg)
 }
 
 func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, selectedHash []byte) {
@@ -296,7 +296,7 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 				}
 				pollMsg = client.BuildPollCreation(fmt.Sprintf("Qual o problema com %s?", parent.Title), options, 1)
 			}
-			client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 		} else {
 			SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
 		}
@@ -356,7 +356,7 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 		state.Mu.Unlock()
 
 		pollMsg := client.BuildPollCreation(fmt.Sprintf("Qual o problema com %s?", selectedChild.Title), options, 1)
-		client.SendMessage(ctx, v.Info.Chat, pollMsg)
+		_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 
 	case NodeText:
 		sendTextMessage(ctx, client, v.Info.Chat, selectedChild.Content)

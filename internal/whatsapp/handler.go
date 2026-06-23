@@ -82,7 +82,7 @@ func retrocederPasso(ctx context.Context, client *whatsmeow.Client, v *events.Me
 			} else {
 				pollMsg = client.BuildPollCreation(fmt.Sprintf("Qual o problema com %s?", parent.Title), options, 1)
 			}
-			client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 		} else {
 			state.Mu.Unlock()
 			SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
@@ -107,7 +107,7 @@ func retrocederPasso(ctx context.Context, client *whatsmeow.Client, v *events.Me
 			} else {
 				pollMsg = client.BuildPollCreation(fmt.Sprintf("Qual o problema com %s?", parent.Title), options, 1)
 			}
-			client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 		} else {
 			state.Mu.Unlock()
 			SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
@@ -265,7 +265,7 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 		} else {
 			// É uma mídia. Envia a etiqueta e em seguida a mensagem com o arquivo real!
 			sendTextMessage(ctx, client, supportJID, fmt.Sprintf("👤 *%s enviou o arquivo/mídia abaixo:*", nome))
-			client.SendMessage(ctx, supportJID, v.Message)
+			_, _ = sendMessage(ctx, client, supportJID, v.Message)
 		}
 		return
 	}
