@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensagens do Sistema - Bot GLPI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/messages.css">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-[#0b0f19] bg-gradient-to-br from-[#0b0f19] via-[#111827] to-[#1e1b4b] text-white min-h-screen flex flex-col">
+    <!-- Header/Navbar -->
+    <header class="bg-gray-900/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <span class="text-3xl">🤖</span>
+            <div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">GLPI-BOT</h1>
+                <p class="text-xs text-gray-400">Painel de Controle Inteligente</p>
+            </div>
+        </div>
+        
+        <!-- Navigation Links -->
+        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/10 rounded-xl">
+            <a href="/" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                📊 Status
+            </a>
+            <a href="/flow" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                💬 Fluxo do Bot
+            </a>
+            <a href="/config" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                🔧 Configurações
+            </a>
+            <a href="/messages" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
+                ✉️ Mensagens
+            </a>
+        </nav>
+
+        <!-- Action / Save and Logout -->
+        <div class="flex items-center gap-3">
+            <button onclick="saveMessages()" class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-lg shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
+                💾 Salvar Mensagens
+            </button>
+            <a href="/logout" class="px-4 py-2 text-xs font-semibold text-red-400 hover:text-white bg-red-950/20 hover:bg-red-900/40 border border-red-900/30 hover:border-red-500/50 rounded-lg transition duration-200">
+                🚪 Sair
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-4xl w-full mx-auto p-6 flex flex-col gap-6">
+        <!-- Main Form Card -->
+        <div class="bg-gray-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col gap-8">
+            
+            <!-- Section 1: Welcome -->
+            <div>
+                <h2 class="text-md font-bold text-violet-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    👋 Boas-Vindas e Cadastro
+                </h2>
+                <div class="flex flex-col gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>Saudação / Novo Usuário</span>
+                            <span class="text-[10px] text-gray-500 lowercase normal-case">Primeira mensagem para alguém sem cadastro</span>
+                        </label>
+                        <textarea id="msg_novo_usuario" rows="3" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-y"></textarea>
+                        <div class="flex items-center gap-2 flex-wrap mt-1">
+                            <span class="text-[10px] text-gray-500">Variáveis:</span>
+                            <span class="badge" title="Retorna 'Bom dia', 'Boa tarde' ou 'Boa noite'">{saudacao}</span>
+                            <span class="badge" title="Retorna o Nome da Empresa configurado">{empresa}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>Boas-Vindas / Usuário Conhecido</span>
+                            <span class="text-[10px] text-gray-500 lowercase normal-case">Enviada para quem já tem cadastro no sistema</span>
+                        </label>
+                        <textarea id="msg_usuario_existente" rows="3" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-y"></textarea>
+                        <div class="flex items-center gap-2 flex-wrap mt-1">
+                            <span class="text-[10px] text-gray-500">Variáveis:</span>
+                            <span class="badge">{saudacao}</span>
+                            <span class="badge">{empresa}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Ticket flows -->
+            <div>
+                <h2 class="text-md font-bold text-violet-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    🎫 Enquetes e Chamados GLPI
+                </h2>
+                <div class="flex flex-col gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>Pergunta do Menu Principal</span>
+                            <span class="text-[10px] text-gray-500 lowercase normal-case">Texto explicativo da enquete inicial</span>
+                        </label>
+                        <input type="text" id="msg_menu_inicial" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[10px] text-gray-500">Variáveis:</span>
+                            <span class="badge">{saudacao}</span>
+                            <span class="badge">{empresa}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>Chamado Criado com Sucesso</span>
+                            <span class="text-[10px] text-gray-500 lowercase normal-case">Mensagem enviada com o número do ticket</span>
+                        </label>
+                        <textarea id="msg_ticket_criado" rows="3" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-y"></textarea>
+                        <div class="flex items-center gap-2 flex-wrap mt-1">
+                            <span class="text-[10px] text-gray-500">Variáveis:</span>
+                            <span class="badge" title="ID do ticket criado">{ticket_id}</span>
+                            <span class="badge" title="Título do ticket">{ticket_title}</span>
+                            <span class="badge">{empresa}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Live support -->
+            <div>
+                <h2 class="text-md font-bold text-violet-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    👤 Chat Humano e Fila de Suporte
+                </h2>
+                <div class="flex flex-col gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>Aguardando Técnico (Fila Inicial)</span>
+                            <span class="text-[10px] text-gray-500 lowercase normal-case">Enviada ao pedir suporte humano</span>
+                        </label>
+                        <textarea id="msg_fila_suporte" rows="2" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-y"></textarea>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[10px] text-gray-500">Variáveis:</span>
+                            <span class="badge">{empresa}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>Entrada em Fila de Espera</span>
+                            <span class="text-[10px] text-gray-500 lowercase normal-case">Enviada se os atendentes estiverem ocupados</span>
+                        </label>
+                        <textarea id="msg_fila_espera" rows="3" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-y"></textarea>
+                        <div class="flex items-center gap-2 flex-wrap mt-1">
+                            <span class="text-[10px] text-gray-500">Variáveis:</span>
+                            <span class="badge" title="Posição na fila">{posicao}</span>
+                            <span class="badge">{empresa}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>Técnico Assumiu Atendimento</span>
+                            <span class="text-[10px] text-gray-500 lowercase normal-case">Enviada quando o atendente assume a conversa</span>
+                        </label>
+                        <textarea id="msg_suporte_assumido" rows="3" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-y"></textarea>
+                        <div class="flex items-center gap-2 flex-wrap mt-1">
+                            <span class="text-[10px] text-gray-500">Variáveis:</span>
+                            <span class="badge" title="Nome do técnico">{agente}</span>
+                            <span class="badge">{empresa}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>Encerramento do Chat Ao Vivo</span>
+                            <span class="text-[10px] text-gray-500 lowercase normal-case">Agradecimento final pós-atendimento</span>
+                        </label>
+                        <textarea id="msg_fim_atendimento" rows="3" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-y"></textarea>
+                        <div class="flex items-center gap-2 flex-wrap mt-1">
+                            <span class="text-[10px] text-gray-500">Variáveis:</span>
+                            <span class="badge">{empresa}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 backdrop-blur-md transform translate-y-24 opacity-0 transition duration-300 flex items-center gap-3 z-50">
+        <span id="toast-icon">✅</span>
+        <span id="toast-message">Mensagens salvas com sucesso!</span>
+    </div>
+
+    <script src="/static/js/messages.js"></script>
+</body>
+</html>

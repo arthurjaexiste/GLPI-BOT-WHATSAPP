@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Configurações de Ambiente (MUITO IMPORTANTE)
+.env
+.env.example
+
+# Banco de dados local
+# Impede que seu banco local seja copiado para a imagem e dê conflito
+db/
+session.db
+session.db-wal
+session.db-shm
+
+# Arquivos do Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# IDE e Editor de texto
+.vscode/
+.idea/
+
+# Binários gerados localmente
+*.exe
+bot-chamados
+
+# Documentação (Opcional)
+README.md

@@ -1,0 +1,15 @@
+services:
+  bot:
+    image: bot-glpi-whatsapp
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: glpi-bot
+    restart: unless-stopped
+    environment:
+      - TZ=America/Sao_Paulo 
+    ports:
+      - "33090:33090" # AQUI ESTÁ A MÁGICA: Abre a porta da Interface Web
+    volumes:
+      # AQUI ESTÁ O SEGREDO: apontar para /app/db
+      - ./db:/app/db

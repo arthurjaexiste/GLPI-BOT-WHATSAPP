@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações do Sistema - Bot GLPI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/config.css">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-[#0b0f19] bg-gradient-to-br from-[#0b0f19] via-[#111827] to-[#1e1b4b] text-white min-h-screen flex flex-col">
+    <!-- Header/Navbar -->
+    <header class="bg-gray-900/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <span class="text-3xl">🤖</span>
+            <div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">GLPI-BOT</h1>
+                <p class="text-xs text-gray-400">Painel de Controle Inteligente</p>
+            </div>
+        </div>
+        
+        <!-- Navigation Links -->
+        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/10 rounded-xl">
+            <a href="/" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                📊 Status
+            </a>
+            <a href="/flow" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                💬 Fluxo do Bot
+            </a>
+            <a href="/config" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
+                🔧 Configurações
+            </a>
+            <a href="/messages" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-gray-400 hover:text-white hover:bg-white/5">
+                ✉️ Mensagens
+            </a>
+        </nav>
+
+        <!-- Action / Save and Logout -->
+        <div class="flex items-center gap-3">
+            <button onclick="saveConfig()" class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg shadow-lg hover:shadow-teal-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
+                💾 Salvar Configurações
+            </button>
+            <a href="/logout" class="px-4 py-2 text-xs font-semibold text-red-400 hover:text-white bg-red-950/20 hover:bg-red-900/40 border border-red-900/30 hover:border-red-500/50 rounded-lg transition duration-200">
+                🚪 Sair
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-1 flex max-w-4xl w-full mx-auto p-6 flex-col gap-6">
+        <!-- Main Form Card -->
+        <div class="bg-gray-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col gap-8">
+            
+            <!-- Section 1: Identity & Support -->
+            <div>
+                <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    👥 Identidade & Suporte
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nome da Empresa</label>
+                        <input type="text" id="company_name" placeholder="Insira o nome da empresa" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        <span class="text-[10px] text-gray-500">Nome exibido nas saudações e rodapés das conversas.</span>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">WhatsApp do Administrador</label>
+                        <input type="text" id="telefone_notificacao" placeholder="Insira o WhatsApp de alertas (ex: 55...)" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        <span class="text-[10px] text-gray-500">Número de WhatsApp que receberá as notificações de novos tickets.</span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2 mt-6">
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Atendentes do Suporte Humano (Separados por vírgula)</label>
+                    <textarea id="support_agents" rows="2" placeholder="Insira os atendentes separados por vírgula" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-none"></textarea>
+                    <span class="text-[10px] text-gray-500">Técnicos que aparecerão na enquete do WhatsApp para assumir o atendimento ao vivo.</span>
+                </div>
+            </div>
+
+            <!-- Section 2: GLPI Integration -->
+            <div>
+                <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    🔌 Integração GLPI API
+                </h2>
+                <div class="flex flex-col gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Link da API Rest do GLPI</label>
+                        <input type="text" id="glpi_api_url" placeholder="https://seu-glpi/apirest.php" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        <span class="text-[10px] text-gray-500">URL absoluta apontando para o endpoint apirest.php de seu GLPI.</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">App-Token da API</label>
+                            <div class="flex items-center gap-2">
+                                <input type="password" id="glpi_app_token" placeholder="Insira o Token do App do GLPI" class="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                                <button type="button" onclick="toggleVisibility(this, 'glpi_app_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Visualizar Token">👁️</button>
+                                <button type="button" onclick="copyToClipboard('glpi_app_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Copiar Token">📋</button>
+                            </div>
+                            <span class="text-[10px] text-gray-500">Chave de aplicação gerada no menu API do GLPI.</span>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">User-Token do Usuário API</label>
+                            <div class="flex items-center gap-2">
+                                <input type="password" id="glpi_user_token" placeholder="Insira o Token do Usuário" class="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                                <button type="button" onclick="toggleVisibility(this, 'glpi_user_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Visualizar Token">👁️</button>
+                                <button type="button" onclick="copyToClipboard('glpi_user_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Copiar Token">📋</button>
+                            </div>
+                            <span class="text-[10px] text-gray-500">Chave de usuário gerada nas preferências do usuário.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Block list -->
+            <div>
+                <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    🚫 Lista de Bloqueio (Dark List)
+                </h2>
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Números Bloqueados (Separados por vírgula)</label>
+                    <textarea id="dark_list" rows="3" placeholder="Insira os números bloqueados separados por vírgula" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-none"></textarea>
+                    <span class="text-[10px] text-gray-500">Os números listados acima não receberão respostas do bot.</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 backdrop-blur-md transform translate-y-24 opacity-0 transition duration-300 flex items-center gap-3 z-50">
+        <span id="toast-icon">✅</span>
+        <span id="toast-message">Configurações salvas com sucesso!</span>
+    </div>
+
+    <script src="/static/js/config.js"></script>
+</body>
+</html>

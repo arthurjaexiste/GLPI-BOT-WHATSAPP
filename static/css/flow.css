@@ -1,0 +1,6 @@
+@import url('style.css');
+
+/* Flow-specific tree styling */
+#flow-tree {
+    scroll-behavior: smooth;
+}
