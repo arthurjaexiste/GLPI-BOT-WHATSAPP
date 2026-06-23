@@ -80,6 +80,7 @@ func main() {
 
 	// 3. Cria o cliente do WhatsApp
 	client := whatsmeow.NewClient(deviceStore, nil)
+	whatsapp.GlobalClient = client
 	client.AddEventHandler(eventHandler(client))
 
 	// 4. Inicia a conexão

@@ -21,9 +21,10 @@ import (
 // VARIÁVEIS GLOBAIS E ESTADO (COMPARTILHADO)
 // ==========================================
 var (
-	CurrentQR   string
-	IsConnected bool
-	ClientMu    sync.Mutex
+	CurrentQR    string
+	IsConnected  bool
+	ClientMu     sync.Mutex
+	GlobalClient *whatsmeow.Client
 
 	// Variáveis do Sistema de Login Web
 	webDB      *sql.DB
