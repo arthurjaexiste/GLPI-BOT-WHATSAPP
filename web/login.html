@@ -21,7 +21,7 @@
         <div class="text-center">
             <div class="relative inline-block mb-4">
                 <div class="absolute inset-0 bg-white/[0.02] rounded-full blur-xl animate-pulse"></div>
-                <img src="/static/img/logo.png" alt="Logo" class="w-24 h-24 mx-auto object-contain relative z-10 drop-shadow-[0_4px_20px_rgba(255,255,255,0.08)]">
+                <img src="/static/img/logo.png" alt="Logo" class="w-36 h-36 mx-auto object-contain relative z-10 drop-shadow-[0_4px_20px_rgba(255,255,255,0.08)]">
             </div>
             <h1 class="text-2xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">Acesso GLPI-BOT</h1>
             <p class="text-xs text-zinc-400 mt-1.5">Insira suas credenciais para gerenciar o bot</p>
@@ -73,11 +73,6 @@
             mouse.x = e.clientX;
             mouse.y = e.clientY;
             mouse.active = true;
-
-            // Spawn stardust mouse trails
-            if (Math.random() < 0.8) {
-                particles.push(new Particle(mouse.x, mouse.y, false, true));
-            }
 
             // Update smooth ambient spotlight position
             if (spotlight) {
