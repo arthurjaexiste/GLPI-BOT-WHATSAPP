@@ -44,11 +44,16 @@ func eventHandler(client *whatsmeow.Client) func(interface{}) {
 		case *events.LoggedOut:
 			whatsapp.IsConnected = false
 			whatsapp.CurrentQR = ""
-			fmt.Println("❌ O bot foi deslogado do WhatsApp pelo celular.")
+			fmt.Println("❌ O bot foi deslogado do WhatsApp pelo celular. Limpando credenciais locais...")
 			
 			go func() {
-				// Aguarda a desconexão completa e inicia o pareamento com QR Code
-				time.Sleep(2 * time.Second)
+				// Aguarda 1 segundo e força desconexão para limpar estados residuais do socket
+				time.Sleep(1 * time.Second)
+				client.Disconnect()
+				client.Store.ID = nil
+				_ = client.Store.Delete(context.Background())
+
+				time.Sleep(1 * time.Second)
 				fmt.Println("🔄 Inicializando novo canal de QR Code para re-pareamento...")
 				qrChan, err := client.GetQRChannel(context.Background())
 				if err != nil {

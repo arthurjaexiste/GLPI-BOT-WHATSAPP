@@ -44,8 +44,16 @@ async function checkStatus() {
                 lastQR = data.qr;
                 const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.qr)}`;
                 qrCodeDiv.innerHTML = `
-                    <div class="qr-container-wrapper">
+                    <div class="qr-container-wrapper flex flex-col items-center">
                         <img src="${qrImageUrl}" alt="QR Code do WhatsApp" class="qr-animate">
+                        <div class="mt-4 flex gap-2 w-full justify-center">
+                            <button onclick="whatsappConnect()" class="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 hover:border-indigo-500/50 text-indigo-400 hover:text-indigo-300 rounded-xl text-xs font-semibold transition duration-150">
+                                🔌 Conectar
+                            </button>
+                            <button onclick="whatsappLogout()" class="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 rounded-xl text-xs font-semibold transition duration-150">
+                                🧹 Resetar
+                            </button>
+                        </div>
                     </div>
                 `;
             } 
@@ -58,6 +66,9 @@ async function checkStatus() {
                         </div>
                         <span class="text-emerald-400 font-bold text-lg tracking-wide">Sessão Ativa</span>
                         <p class="text-xs text-gray-400 mt-1 font-normal">O bot está pronto e operando</p>
+                        <button onclick="whatsappLogout()" class="mt-5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 rounded-xl text-xs font-semibold transition duration-150 flex items-center gap-1.5 shadow-lg">
+                            ❌ Desconectar Bot
+                        </button>
                     </div>
                 `;
                 qrStatusText.style.display = 'block';
@@ -75,6 +86,14 @@ async function checkStatus() {
                 qrCodeDiv.innerHTML = `
                     <div class="flex flex-col items-center justify-center p-4">
                         <span class="text-4xl animate-spin mb-3 text-indigo-400">🔄</span>
+                        <div class="mt-4 flex gap-2">
+                            <button onclick="whatsappConnect()" class="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 hover:border-indigo-500/50 text-indigo-400 hover:text-indigo-300 rounded-xl text-xs font-semibold transition duration-150">
+                                🔌 Conectar
+                            </button>
+                            <button onclick="whatsappLogout()" class="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 rounded-xl text-xs font-semibold transition duration-150">
+                                🧹 Resetar
+                            </button>
+                        </div>
                     </div>
                 `;
                 qrStatusText.style.display = 'block';
@@ -93,8 +112,16 @@ async function checkStatus() {
                 lastQR = data.qr;
                 const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.qr)}`;
                 qrCodeDiv.innerHTML = `
-                    <div class="qr-container-wrapper">
+                    <div class="qr-container-wrapper flex flex-col items-center">
                         <img src="${qrImageUrl}" alt="QR Code do WhatsApp" class="qr-animate">
+                        <div class="mt-4 flex gap-2 w-full justify-center">
+                            <button onclick="whatsappConnect()" class="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 hover:border-indigo-500/50 text-indigo-400 hover:text-indigo-300 rounded-xl text-xs font-semibold transition duration-150">
+                                🔌 Conectar
+                            </button>
+                            <button onclick="whatsappLogout()" class="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 rounded-xl text-xs font-semibold transition duration-150">
+                                🧹 Resetar
+                            </button>
+                        </div>
                     </div>
                 `;
             }
@@ -175,3 +202,39 @@ async function fetchRecentTickets() {
 // Busca os chamados recentes ao iniciar e a cada 10 segundos
 fetchRecentTickets();
 setInterval(fetchRecentTickets, 10000);
+
+// Chamadas de controle de conexao do WhatsApp
+async function whatsappConnect() {
+    try {
+        const res = await fetch('/api/whatsapp/connect', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+            console.log("Solitação de conexão enviada com sucesso.");
+            checkStatus();
+        } else {
+            alert("Erro ao conectar: " + (data.error || res.statusText));
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Erro de rede ao conectar o WhatsApp");
+    }
+}
+
+async function whatsappLogout() {
+    if (!confirm("Tem certeza que deseja desconectar o bot e limpar a sessão ativa? Isso irá gerar um novo QR Code.")) {
+        return;
+    }
+    try {
+        const res = await fetch('/api/whatsapp/logout', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+            console.log("Solicitação de logout/reset enviada com sucesso.");
+            checkStatus();
+        } else {
+            alert("Erro ao deslogar: " + (data.error || res.statusText));
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Erro de rede ao deslogar o WhatsApp");
+    }
+}
