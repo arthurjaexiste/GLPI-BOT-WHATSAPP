@@ -389,9 +389,18 @@ func StartWebServer() {
 			status = "qr"
 		}
 
-		json.NewEncoder(w).Encode(map[string]string{
-			"status": status,
-			"qr":     CurrentQR,
+		ips := getLocalIPs()
+		mainIP := "localhost"
+		if len(ips) > 0 {
+			mainIP = ips[0]
+		}
+
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":   status,
+			"qr":       CurrentQR,
+			"ip":       mainIP,
+			"engine":   "Whatsmeow (Multi-Device)",
+			"timezone": "America/Sao_Paulo (UTC-3)",
 		})
 	})
 
