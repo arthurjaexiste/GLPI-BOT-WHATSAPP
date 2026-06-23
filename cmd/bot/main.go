@@ -1,11 +1,12 @@
 package main
 
 import (
-	"context" // 🟢 Adicionado o pacote de contexto
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"bot-glpi/internal/config"
 	"bot-glpi/internal/whatsapp"
@@ -36,10 +37,40 @@ func eventHandler(client *whatsmeow.Client) func(interface{}) {
 				fmt.Println("✅ Bot conectado ao WhatsApp com sucesso!")
 			}
 
-		case *events.Disconnected, *events.LoggedOut:
-			// QUEDA DE CONEXÃO
+		case *events.Disconnected:
 			whatsapp.IsConnected = false
-			fmt.Println("❌ Bot desconectado do WhatsApp.")
+			fmt.Println("❌ Bot desconectado do WhatsApp (queda de rede). Tentando reconexão automática...")
+
+		case *events.LoggedOut:
+			whatsapp.IsConnected = false
+			whatsapp.CurrentQR = ""
+			fmt.Println("❌ O bot foi deslogado do WhatsApp pelo celular.")
+			
+			go func() {
+				// Aguarda a desconexão completa e inicia o pareamento com QR Code
+				time.Sleep(2 * time.Second)
+				fmt.Println("🔄 Inicializando novo canal de QR Code para re-pareamento...")
+				qrChan, err := client.GetQRChannel(context.Background())
+				if err != nil {
+					fmt.Printf("🚨 Erro ao obter canal de QR Code: %v\n", err)
+					return
+				}
+				err = client.Connect()
+				if err != nil {
+					fmt.Printf("🚨 Erro ao conectar para pareamento: %v\n", err)
+				}
+				for evt := range qrChan {
+					if evt.Event == "code" {
+						whatsapp.CurrentQR = evt.Code
+						whatsapp.IsConnected = false
+						fmt.Println("⚠️  NOVO QR CODE GERADO. VEJA NO PAINEL WEB OU ESCANEIE.")
+					} else if evt.Event == "success" {
+						whatsapp.IsConnected = true
+						whatsapp.CurrentQR = ""
+						fmt.Println("✅ Bot re-conectado ao WhatsApp com sucesso!")
+					}
+				}
+			}()
 		}
 	}
 }
