@@ -67,3 +67,13 @@ Abra o navegador no endereço: **`http://localhost:33090`** (ou IP do seu servid
 2. **Configurações:** Configure a URL da API do seu GLPI, tokens de acesso (`App Token` e `User Token`) e parametrize a lista de técnicos.
 3. **Fluxo do Bot:** Crie a sua árvore de decisões usando o construtor visual de menus, submenus e formulários de chamado com ou sem anexos.
 4. **Mensagens:** Personalize as respostas automáticas enviadas pelo bot no WhatsApp usando as variáveis disponíveis (`{nome}`, `{ticket_id}`, etc).
+
+---
+
+## 🔑 Requisitos de Permissões no GLPI
+
+Para que a integração funcione de forma correta (identificação de usuários, busca de chamados e abertura de tickets), o usuário do GLPI associado ao `User Token` utilizado no painel do bot deve possuir um perfil (Profile) com as seguintes permissões habilitadas:
+
+- **Usuários (Users):** Permissão de **Leitura (Read / Pesquisa)** — Necessária para buscar e identificar o solicitante a partir do número de telefone ou e-mail no banco do GLPI.
+- **Chamados (Tickets):** Permissões de **Criação (Create)** e **Atualização (Update)** — Necessárias para abrir novos chamados e adicionar novos acompanhamentos ou interações.
+- **Documentos (Documents):** Permissão de **Criação (Create)** — Necessária para realizar o upload e vincular imagens, prints e documentos enviados via WhatsApp ao respectivo ticket do GLPI.
