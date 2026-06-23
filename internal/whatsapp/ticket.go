@@ -207,8 +207,9 @@ func processarBuscaChamadoInfo(ctx context.Context, client *whatsmeow.Client, v 
 
 			time.Sleep(1 * time.Second)
 			
-			// Se o chamado estiver Solucionado (5) ou Fechado (6), impede novas mensagens
-			if statusInt == 5 || statusInt == 6 {
+			// Se o chamado estiver Solucionado (5) ou Fechado (6), ou o texto do status indicar isso, impede novas mensagens e enquetes
+			statusLower := strings.ToLower(status)
+			if statusInt == 5 || statusInt == 6 || strings.Contains(statusLower, "solucionado") || strings.Contains(statusLower, "fechado") {
 				sendTextMessage(ctx, client, v.Info.Chat, "🔒 Este chamado já está finalizado (solucionado/fechado) e não aceita novas interações.")
 				time.Sleep(1 * time.Second)
 				sendTextMessage(ctx, client, v.Info.Chat, "Agradecemos o contato. Quando precisar de algo, envie uma nova mensagem para recomeçar! 🚀")

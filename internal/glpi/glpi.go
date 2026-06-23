@@ -289,7 +289,17 @@ func BuscarChamado(sessionToken string, ticketID int) (string, int, string, erro
 	var result map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&result)
 
-	statusInt := int(result["status"].(float64))
+	var statusInt int
+	if statusVal, ok := result["status"]; ok {
+		switch val := statusVal.(type) {
+		case float64:
+			statusInt = int(val)
+		case string:
+			statusInt, _ = strconv.Atoi(val)
+		case int:
+			statusInt = val
+		}
+	}
 	titulo, _ := result["name"].(string)
 
 	mapaStatus := map[int]string{
