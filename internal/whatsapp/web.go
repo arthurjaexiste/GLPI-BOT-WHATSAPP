@@ -448,6 +448,42 @@ func StartWebServer() {
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 	})
 
+	// API PARA TESTAR AS CONFIGURAÇÕES SMTP (Protegido)
+	http.HandleFunc("/api/config/test-smtp", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method != "POST" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var testCfg config.Config
+		if err := json.NewDecoder(r.Body).Decode(&testCfg); err != nil {
+			http.Error(w, "JSON inválido", http.StatusBadRequest)
+			return
+		}
+
+		if testCfg.SMTPHost == "" || testCfg.SMTPUsername == "" || testCfg.SMTPPassword == "" || testCfg.SMTPSender == "" || testCfg.SMTPReceiver == "" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Preencha todos os campos do SMTP antes de testar."})
+			return
+		}
+
+		err := SendSMTPTestEmail(testCfg)
+		w.Header().Set("Content-Type", "application/json")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": err.Error()})
+			return
+		}
+
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+
 	// ROTA DE CONSTRUTOR DE FLUXO (Protegido)
 	http.HandleFunc("/flow", func(w http.ResponseWriter, r *http.Request) {
 		if !isAuthenticated(r) {

@@ -229,3 +229,67 @@ async function autoReconnect() {
 
 // Inicializa buscando as configurações
 window.addEventListener('DOMContentLoaded', fetchConfig);
+
+// Testar conexão SMTP antes de salvar
+async function testSMTP() {
+    const company_name = document.getElementById('company_name').value.trim();
+    const smtp_host = document.getElementById('smtp_host').value.trim();
+    const smtp_port = parseInt(document.getElementById('smtp_port').value) || 587;
+    const smtp_username = document.getElementById('smtp_username').value.trim();
+    const smtp_password = document.getElementById('smtp_password').value;
+    const smtp_sender = document.getElementById('smtp_sender').value.trim();
+    const smtp_receiver = document.getElementById('smtp_receiver').value.trim();
+
+    if (!smtp_host || !smtp_username || !smtp_password || !smtp_sender || !smtp_receiver) {
+        showToast('Preencha todos os campos do SMTP antes de testar.', '⚠️');
+        return;
+    }
+
+    const btn = document.getElementById('btn-test-smtp');
+    if (!btn) return;
+    
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "⏳ Testando...";
+
+    const payload = {
+        company_name,
+        smtp_host,
+        smtp_port,
+        smtp_username,
+        smtp_password,
+        smtp_sender,
+        smtp_receiver
+    };
+
+    try {
+        const response = await fetch('/api/config/test-smtp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            data = { status: 'error', message: 'Servidor retornou resposta inválida' };
+        }
+        
+        btn.disabled = false;
+        btn.innerText = originalText;
+
+        if (response.ok && data.status === 'ok') {
+            showToast('E-mail de teste enviado com sucesso! Verifique a caixa de entrada.', '✅');
+        } else {
+            showToast('Falha no envio: ' + (data.message || 'Erro desconhecido'), '❌');
+        }
+    } catch (err) {
+        btn.disabled = false;
+        btn.innerText = originalText;
+        console.error(err);
+        showToast('Erro de conexão ao testar o SMTP.', '❌');
+    }
+}

@@ -115,3 +115,40 @@ func sendSMTPAlertEmail(cfg config.Config) error {
 	err := smtp.SendMail(addr, auth, cfg.SMTPSender, []string{cfg.SMTPReceiver}, msg)
 	return err
 }
+
+func SendSMTPTestEmail(cfg config.Config) error {
+	host := cfg.SMTPHost
+	if strings.Contains(host, ":") {
+		host = strings.Split(host, ":")[0]
+	}
+	auth := smtp.PlainAuth("", cfg.SMTPUsername, cfg.SMTPPassword, host)
+
+	subject := fmt.Sprintf("Subject: 🧪 TESTE: Envio SMTP do Bot GLPI (%s)\r\n", cfg.CompanyName)
+	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n\r\n"
+	
+	body := fmt.Sprintf(`
+		<html>
+		<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+			<div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
+				<h2 style="color: #0275d8; margin-top: 0;">🧪 Teste de Conexão SMTP</h2>
+				<p>Olá Administrador,</p>
+				<p>Este é um e-mail de teste enviado a partir do seu <strong>GLPI-BOT</strong> para verificar as configurações de SMTP.</p>
+				<p style="background-color: #dff0d8; padding: 15px; border-left: 5px solid #5cb85c; border-radius: 4px; font-weight: bold; color: #3c763d;">
+					✅ Parabéns! Suas configurações de SMTP estão corretas e o envio está funcionando!
+				</p>
+				<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+				<p style="font-size: 11px; color: #777;">
+					Este é um e-mail de teste automático.<br>
+					Configuração SMTP: %s:%d
+				</p>
+			</div>
+		</body>
+		</html>
+	`, cfg.CompanyName, cfg.SMTPHost, cfg.SMTPPort)
+
+	msg := []byte(subject + mime + body)
+	addr := fmt.Sprintf("%s:%d", cfg.SMTPHost, cfg.SMTPPort)
+
+	err := smtp.SendMail(addr, auth, cfg.SMTPSender, []string{cfg.SMTPReceiver}, msg)
+	return err
+}
