@@ -118,7 +118,59 @@
                 </div>
             </div>
 
-            <!-- Section 3: Block list -->
+            <!-- Section 3: SMTP Mail Alerts -->
+            <div>
+                <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    📧 Alerta de Desconexão por E-mail (SMTP)
+                </h2>
+                <div class="flex flex-col gap-6">
+                    <div class="flex items-center justify-between bg-black/40 border border-white/10 p-4 rounded-lg">
+                        <div>
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ativar Alertas por E-mail</h3>
+                            <p class="text-[10px] text-gray-500">Se ativo, envia um e-mail para o administrador caso o bot perca a conexão.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="smtp_enabled" class="sr-only peer">
+                            <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Servidor SMTP (Host)</label>
+                            <input type="text" id="smtp_host" placeholder="smtp.gmail.com" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Porta SMTP</label>
+                            <input type="number" id="smtp_port" placeholder="587" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Usuário SMTP</label>
+                            <input type="text" id="smtp_username" placeholder="seu-email@gmail.com" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Senha SMTP</label>
+                            <input type="password" id="smtp_password" placeholder="Senha do e-mail ou App Password" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">E-mail Remetente (De:)</label>
+                            <input type="text" id="smtp_sender" placeholder="alertas-bot@empresa.com" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">E-mail Destinatário (Para:)</label>
+                            <input type="text" id="smtp_receiver" placeholder="suporte@empresa.com" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Block list -->
             <div>
                 <h2 class="text-md font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
                     🚫 Lista de Bloqueio (Dark List)

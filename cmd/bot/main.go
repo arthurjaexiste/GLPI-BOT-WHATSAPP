@@ -80,6 +80,9 @@ func main() {
 		panic(err)
 	}
 
+	// Inicia o monitor de conexão SMTP em segundo plano
+	go whatsapp.StartSMTPChecker(context.Background())
+
 	// 5. Mantém o bot rodando até você apertar CTRL+C no terminal
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

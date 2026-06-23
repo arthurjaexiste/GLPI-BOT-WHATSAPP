@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -15,6 +16,14 @@ type Config struct {
 	TelefoneNotificacao string `json:"telefone_notificacao"`
 	DarkList            string `json:"dark_list"`
 	SupportAgents       string `json:"support_agents"`
+
+	SMTPHost            string `json:"smtp_host"`
+	SMTPPort            int    `json:"smtp_port"`
+	SMTPUsername        string `json:"smtp_username"`
+	SMTPPassword        string `json:"smtp_password"`
+	SMTPSender          string `json:"smtp_sender"`
+	SMTPReceiver        string `json:"smtp_receiver"`
+	SMTPEnabled         bool   `json:"smtp_enabled"`
 	MsgNovoUsuario      string `json:"msg_novo_usuario"`
 	MsgUsuarioExistente string `json:"msg_usuario_existente"`
 	MsgMenuInicial      string `json:"msg_menu_inicial"`
@@ -159,6 +168,14 @@ func InitConfig() {
 		return fallback
 	}
 
+	portVal := getVal("SMTP_PORT", "587")
+	port, _ := strconv.Atoi(portVal)
+	if port == 0 {
+		port = 587
+	}
+	enabledVal := getVal("SMTP_ENABLED", "false")
+	enabled := enabledVal == "true" || enabledVal == "1"
+
 	globalConfig = Config{
 		GLPIApiURL:          getVal("GLPI_API_URL", ""),
 		GLPIAppToken:        getVal("GLPI_APP_TOKEN", ""),
@@ -167,6 +184,14 @@ func InitConfig() {
 		TelefoneNotificacao: getVal("TELEFONE_NOTIFICACAO", ""),
 		DarkList:            getVal("DARK_LIST", ""),
 		SupportAgents:       getVal("SUPPORT_AGENTS", ""),
+
+		SMTPHost:            getVal("SMTP_HOST", ""),
+		SMTPPort:            port,
+		SMTPUsername:        getVal("SMTP_USERNAME", ""),
+		SMTPPassword:        getVal("SMTP_PASSWORD", ""),
+		SMTPSender:          getVal("SMTP_SENDER", ""),
+		SMTPReceiver:        getVal("SMTP_RECEIVER", ""),
+		SMTPEnabled:         enabled,
 	}
 	preencherDefaultsMensagens(&globalConfig)
 

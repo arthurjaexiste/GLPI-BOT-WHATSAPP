@@ -12,6 +12,15 @@ async function fetchConfig() {
         document.getElementById('glpi_user_token').value = cfg.glpi_user_token || '';
         document.getElementById('dark_list').value = cfg.dark_list || '';
         document.getElementById('support_agents').value = cfg.support_agents || '';
+
+        // SMTP
+        document.getElementById('smtp_enabled').checked = cfg.smtp_enabled || false;
+        document.getElementById('smtp_host').value = cfg.smtp_host || '';
+        document.getElementById('smtp_port').value = cfg.smtp_port || 587;
+        document.getElementById('smtp_username').value = cfg.smtp_username || '';
+        document.getElementById('smtp_password').value = cfg.smtp_password || '';
+        document.getElementById('smtp_sender').value = cfg.smtp_sender || '';
+        document.getElementById('smtp_receiver').value = cfg.smtp_receiver || '';
     } catch (err) {
         showToast('Erro ao obter as configurações.', '❌');
     }
@@ -27,6 +36,15 @@ async function saveConfig() {
     const dark_list = document.getElementById('dark_list').value.trim();
     const support_agents = document.getElementById('support_agents').value.trim();
 
+    // SMTP
+    const smtp_enabled = document.getElementById('smtp_enabled').checked;
+    const smtp_host = document.getElementById('smtp_host').value.trim();
+    const smtp_port = parseInt(document.getElementById('smtp_port').value) || 587;
+    const smtp_username = document.getElementById('smtp_username').value.trim();
+    const smtp_password = document.getElementById('smtp_password').value.trim();
+    const smtp_sender = document.getElementById('smtp_sender').value.trim();
+    const smtp_receiver = document.getElementById('smtp_receiver').value.trim();
+
     if (!glpi_api_url) {
         showToast('O Link da API do GLPI é obrigatório.', '⚠️');
         return;
@@ -39,7 +57,14 @@ async function saveConfig() {
         glpi_app_token,
         glpi_user_token,
         dark_list,
-        support_agents
+        support_agents,
+        smtp_enabled,
+        smtp_host,
+        smtp_port,
+        smtp_username,
+        smtp_password,
+        smtp_sender,
+        smtp_receiver
     };
 
     try {
