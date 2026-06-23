@@ -348,6 +348,8 @@ func StartWebServer() {
 			}
 		}
 
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(tickets)
 	})
 
 	// API PARA RECONECTAR O WHATSAPP (Protegida)
