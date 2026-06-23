@@ -17,6 +17,8 @@ import (
 	"bot-glpi/internal/config"
 )
 
+var startTime = time.Now()
+
 // recoveryHandler intercepta panics e exibe o erro no navegador em vez de resposta vazia
 type recoveryHandler struct {
 	handler http.Handler
@@ -401,6 +403,7 @@ func StartWebServer() {
 			"ip":       mainIP,
 			"engine":   "Whatsmeow (Multi-Device)",
 			"timezone": "America/Sao_Paulo (UTC-3)",
+			"uptime":   getUptime(),
 		})
 	})
 
@@ -431,4 +434,22 @@ func getLocalIPs() []string {
 		}
 	}
 	return ips
+}
+
+// Formata e retorna o tempo de atividade do bot (uptime)
+func getUptime() string {
+	d := time.Since(startTime)
+	h := d / time.Hour
+	d -= h * time.Hour
+	m := d / time.Minute
+	d -= m * time.Minute
+	s := d / time.Second
+
+	if h > 0 {
+		return fmt.Sprintf("%dh %dm %ds", h, m, s)
+	}
+	if m > 0 {
+		return fmt.Sprintf("%dm %ds", m, s)
+	}
+	return fmt.Sprintf("%ds", s)
 }

@@ -16,6 +16,7 @@ async function checkStatus() {
         const infoIp = document.getElementById('info-ip');
         const infoTimezone = document.getElementById('info-timezone');
         const infoEngine = document.getElementById('info-engine');
+        const infoUptime = document.getElementById('info-uptime');
 
         // Proteção: Se o HTML ainda não carregou, não tenta atualizar
         if (!qrStatusText || !qrCodeDiv) return;
@@ -24,6 +25,7 @@ async function checkStatus() {
         if (infoIp) infoIp.innerText = data.ip || 'localhost';
         if (infoTimezone) infoTimezone.innerText = data.timezone || 'America/Sao_Paulo';
         if (infoEngine) infoEngine.innerText = data.engine || 'Whatsmeow';
+        if (infoUptime) infoUptime.innerText = data.uptime || '0s';
 
         if (data.status === 'qr' && data.qr) {
             // Status: Aguardando leitura do QR Code
@@ -34,7 +36,7 @@ async function checkStatus() {
                 statusText.innerText = "Aguardando QR Code";
                 statusText.className = "text-xs font-semibold text-yellow-400 font-bold";
                 statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-yellow-500";
-                statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75";
+                if (statusPing) statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75";
             }
 
             // Só renderiza e roda a animação se o QR Code mudou
@@ -64,7 +66,7 @@ async function checkStatus() {
                 statusText.innerText = "Conectado";
                 statusText.className = "text-xs font-semibold text-emerald-400 font-bold";
                 statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-500";
-                statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+                if (statusPing) statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
             }
 
             // MATA O LOOP: O bot já conectou, não precisamos mais sobrecarregar a API
@@ -85,7 +87,7 @@ async function checkStatus() {
                 statusText.innerText = "Inicializando...";
                 statusText.className = "text-xs font-semibold text-cyan-400 font-bold";
                 statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-cyan-500";
-                statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75";
+                if (statusPing) statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75";
             }
         }
     } catch (error) {
@@ -95,6 +97,10 @@ async function checkStatus() {
         const statusText = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
         const statusPing = document.querySelector('.animate-ping');
+        const infoIp = document.getElementById('info-ip');
+        const infoTimezone = document.getElementById('info-timezone');
+        const infoEngine = document.getElementById('info-engine');
+        const infoUptime = document.getElementById('info-uptime');
 
         if (qrStatusText) {
             qrStatusText.style.display = 'block';
@@ -107,6 +113,12 @@ async function checkStatus() {
             statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-red-500";
             if (statusPing) statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75";
         }
+
+        // Zera os diagnósticos em caso de erro na conexão
+        if (infoIp) infoIp.innerText = 'Desconectado';
+        if (infoTimezone) infoTimezone.innerText = 'Indisponível';
+        if (infoEngine) infoEngine.innerText = 'Desconectado';
+        if (infoUptime) infoUptime.innerText = 'Offline';
     }
 }
 
