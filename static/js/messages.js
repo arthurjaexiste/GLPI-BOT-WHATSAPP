@@ -15,6 +15,19 @@ async function fetchConfig() {
         document.getElementById('msg_fila_espera').value = currentConfig.msg_fila_espera || '';
         document.getElementById('msg_suporte_assumido').value = currentConfig.msg_suporte_assumido || '';
         document.getElementById('msg_fim_atendimento').value = currentConfig.msg_fim_atendimento || '';
+
+        // Campos novos de Documentos e Mídias
+        document.getElementById('msg_enquete_documentos').value = currentConfig.msg_enquete_documentos || '';
+        document.getElementById('msg_enviar_documentos').value = currentConfig.msg_enviar_documentos || '';
+        document.getElementById('msg_enquete_confirmar_documentos').value = currentConfig.msg_enquete_confirmar_documentos || '';
+        document.getElementById('msg_documento_adicionado').value = currentConfig.msg_documento_adicionado || '';
+        document.getElementById('msg_proximo_documento').value = currentConfig.msg_proximo_documento || '';
+        document.getElementById('msg_enquete_fotos').value = currentConfig.msg_enquete_fotos || '';
+        document.getElementById('msg_enquete_fotos_pos_docs').value = currentConfig.msg_enquete_fotos_pos_docs || '';
+        document.getElementById('msg_enviar_fotos').value = currentConfig.msg_enviar_fotos || '';
+        document.getElementById('msg_enquete_confirmar_fotos').value = currentConfig.msg_enquete_confirmar_fotos || '';
+        document.getElementById('msg_foto_adicionada').value = currentConfig.msg_foto_adicionada || '';
+        document.getElementById('msg_proxima_foto').value = currentConfig.msg_proxima_foto || '';
     } catch (err) {
         showToast('Erro ao obter as mensagens do sistema.', '❌');
     }
@@ -30,6 +43,19 @@ async function saveMessages() {
     currentConfig.msg_fila_espera = document.getElementById('msg_fila_espera').value;
     currentConfig.msg_suporte_assumido = document.getElementById('msg_suporte_assumido').value;
     currentConfig.msg_fim_atendimento = document.getElementById('msg_fim_atendimento').value;
+
+    // Campos novos de Documentos e Mídias
+    currentConfig.msg_enquete_documentos = document.getElementById('msg_enquete_documentos').value;
+    currentConfig.msg_enviar_documentos = document.getElementById('msg_enviar_documentos').value;
+    currentConfig.msg_enquete_confirmar_documentos = document.getElementById('msg_enquete_confirmar_documentos').value;
+    currentConfig.msg_documento_adicionado = document.getElementById('msg_documento_adicionado').value;
+    currentConfig.msg_proximo_documento = document.getElementById('msg_proximo_documento').value;
+    currentConfig.msg_enquete_fotos = document.getElementById('msg_enquete_fotos').value;
+    currentConfig.msg_enquete_fotos_pos_docs = document.getElementById('msg_enquete_fotos_pos_docs').value;
+    currentConfig.msg_enviar_fotos = document.getElementById('msg_enviar_fotos').value;
+    currentConfig.msg_enquete_confirmar_fotos = document.getElementById('msg_enquete_confirmar_fotos').value;
+    currentConfig.msg_foto_adicionada = document.getElementById('msg_foto_adicionada').value;
+    currentConfig.msg_proxima_foto = document.getElementById('msg_proxima_foto').value;
 
     try {
         const response = await fetch('/api/config', {

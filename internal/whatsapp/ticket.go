@@ -181,10 +181,12 @@ func processarGravacaoDescricao(ctx context.Context, client *whatsmeow.Client, v
 	time.Sleep(500 * time.Millisecond)
 
 	if askDocs {
-		pollMsg := client.BuildPollCreation("Você possui arquivos ou documentos (PDF, Word, Excel, etc) para enviar?", []string{"Sim", "Não"}, 1)
+		cfg := config.GetConfig()
+		pollMsg := client.BuildPollCreation(cfg.MsgEnqueteDocumentos, []string{"Sim", "Não"}, 1)
 		client.SendMessage(ctx, v.Info.Chat, pollMsg)
 	} else if askImages {
-		pollMsg := client.BuildPollCreation("Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
+		cfg := config.GetConfig()
+		pollMsg := client.BuildPollCreation(cfg.MsgEnqueteFotos, []string{"Sim", "Não"}, 1)
 		client.SendMessage(ctx, v.Info.Chat, pollMsg)
 	} else {
 		FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
@@ -271,6 +273,7 @@ func processarNovaMensagemChamado(ctx context.Context, client *whatsmeow.Client,
 }
 
 func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, textLower string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage) {
+	cfg := config.GetConfig()
 	if docMsg != nil {
 		docBytes, err := client.Download(ctx, docMsg)
 		if err == nil {
@@ -284,10 +287,10 @@ func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *ev
 			uState.Step = 42
 			state.Mu.Unlock()
 			if stepAnterior != 42 {
-				pollMsg := client.BuildPollCreation("📄 Arquivo recebido! Já terminou de enviar seus documentos?", []string{"Sim", "Não"}, 1)
+				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteConfirmarDocumentos, []string{"Sim", "Não"}, 1)
 				client.SendMessage(ctx, v.Info.Chat, pollMsg)
 			} else {
-				sendTextMessage(ctx, client, v.Info.Chat, "✅ Mais um documento adicionado à lista!")
+				sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgDocumentoAdicionado)
 			}
 		}
 		return
@@ -302,10 +305,10 @@ func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *ev
 			uState.Step = 37
 			state.Mu.Unlock()
 			if stepAnterior != 37 {
-				pollMsg := client.BuildPollCreation("📸 Foto recebida! Já terminou de enviar suas fotos?", []string{"Sim", "Não"}, 1)
+				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteConfirmarFotos, []string{"Sim", "Não"}, 1)
 				client.SendMessage(ctx, v.Info.Chat, pollMsg)
 			} else {
-				sendTextMessage(ctx, client, v.Info.Chat, "✅ Mais uma foto adicionada à lista!")
+				sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgFotoAdicionada)
 			}
 		}
 		return
@@ -325,7 +328,7 @@ func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *ev
 				state.Mu.Lock()
 				uState.Step = 35
 				state.Mu.Unlock()
-				pollMsg := client.BuildPollCreation("Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
+				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteFotos, []string{"Sim", "Não"}, 1)
 				client.SendMessage(ctx, v.Info.Chat, pollMsg)
 			} else {
 				FinalizarChamadoEAlertar(ctx, client, v, uState, sender)

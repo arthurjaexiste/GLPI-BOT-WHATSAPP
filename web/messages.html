@@ -183,6 +183,101 @@
                 </div>
             </div>
 
+            <!-- Section 4: Documentos e Mídias -->
+            <div>
+                <h2 class="text-md font-bold text-zinc-300 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    📁 Envio de Documentos e Mídias
+                </h2>
+                <div class="flex flex-col gap-6">
+                    <!-- Enquetes Principais -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Pergunta Enquete Documentos</span>
+                            </label>
+                            <input type="text" id="msg_enquete_documentos" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Pergunta Enquete Fotos</span>
+                            </label>
+                            <input type="text" id="msg_enquete_fotos" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>Pergunta Enquete Fotos (Após enviar Docs)</span>
+                        </label>
+                        <input type="text" id="msg_enquete_fotos_pos_docs" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                    </div>
+
+                    <!-- Enquetes de Confirmacao de Termino -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Terminou de Enviar Documentos?</span>
+                            </label>
+                            <input type="text" id="msg_enquete_confirmar_documentos" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Terminou de Enviar Fotos?</span>
+                            </label>
+                            <input type="text" id="msg_enquete_confirmar_fotos" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                    </div>
+
+                    <!-- Instruções de Envio -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Instrução para Enviar Documentos</span>
+                            </label>
+                            <input type="text" id="msg_enviar_documentos" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Instrução para Enviar Fotos</span>
+                            </label>
+                            <input type="text" id="msg_enviar_fotos" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                    </div>
+
+                    <!-- Recebimento individual e proximo item -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Documento Adicionado à Lista</span>
+                            </label>
+                            <input type="text" id="msg_documento_adicionado" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Foto Adicionada à Lista</span>
+                            </label>
+                            <input type="text" id="msg_foto_adicionada" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Pedir Próximo Documento</span>
+                            </label>
+                            <input type="text" id="msg_proximo_documento" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Pedir Próxima Foto</span>
+                            </label>
+                            <input type="text" id="msg_proxima_foto" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
     </main>
 

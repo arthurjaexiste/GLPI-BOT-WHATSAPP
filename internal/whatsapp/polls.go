@@ -127,6 +127,8 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 	currentStep := uState.Step
 	state.Mu.Unlock()
 
+	cfg := config.GetConfig()
+
 	switch currentStep {
 	case 30: 
 		if isSim {
@@ -142,7 +144,7 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 	case 40: 
 		if isSim {
 			state.Mu.Lock(); uState.Step = 41; state.Mu.Unlock()
-			sendTextMessage(ctx, client, v.Info.Chat, "Pode enviar seus arquivos ou documentos! 📄")
+			sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgEnviarDocumentos)
 		} else if isNao {
 			node, found := FindNodeByID(uState.CurrentNodeID)
 			askImages := true
@@ -151,7 +153,7 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 			}
 			if askImages {
 				state.Mu.Lock(); uState.Step = 35; state.Mu.Unlock()
-				pollMsg := client.BuildPollCreation("Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
+				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteFotos, []string{"Sim", "Não"}, 1)
 				client.SendMessage(ctx, v.Info.Chat, pollMsg)
 			} else {
 				FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
@@ -167,20 +169,20 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 			}
 			if askImages {
 				state.Mu.Lock(); uState.Step = 35; state.Mu.Unlock()
-				pollMsg := client.BuildPollCreation("Arquivos salvos! Você tem alguma FOTO ou PRINT do problema para enviar?", []string{"Sim", "Não"}, 1)
+				pollMsg := client.BuildPollCreation(cfg.MsgEnqueteFotosPosDocs, []string{"Sim", "Não"}, 1)
 				client.SendMessage(ctx, v.Info.Chat, pollMsg)
 			} else {
 				FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
 			}
 		} else if isNao {
 			state.Mu.Lock(); uState.Step = 41; state.Mu.Unlock()
-			sendTextMessage(ctx, client, v.Info.Chat, "📄 Beleza, pode enviar o próximo arquivo!")
+			sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgProximoDocumento)
 		}
 
 	case 35: 
 		if isSim {
 			state.Mu.Lock(); uState.Step = 36; state.Mu.Unlock()
-			sendTextMessage(ctx, client, v.Info.Chat, "Pode enviar suas fotos! 📸")
+			sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgEnviarFotos)
 		} else if isNao {
 			FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
 		}
@@ -190,7 +192,7 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 			FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
 		} else if isNao {
 			state.Mu.Lock(); uState.Step = 36; state.Mu.Unlock()
-			sendTextMessage(ctx, client, v.Info.Chat, "📸 Beleza, pode enviar a próxima foto!")
+			sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgProximaFoto)
 		}
 
 	case 51: 
