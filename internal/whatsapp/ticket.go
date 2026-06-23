@@ -206,11 +206,7 @@ func processarBuscaChamadoInfo(ctx context.Context, client *whatsmeow.Client, v 
 			sendTextMessage(ctx, client, v.Info.Chat, "❌ Não encontrei nenhum chamado com esse número ou você não tem permissão.")
 
 			time.Sleep(1 * time.Second)
-			state.Mu.Lock()
-			uState.Step = 10
-			state.Mu.Unlock()
-			pollMsg := client.BuildPollCreation("Como posso te ajudar agora?", []string{"Abrir Novo Chamado", "Acompanhar Chamado", "Falar com o Suporte"}, 1)
-			client.SendMessage(ctx, v.Info.Chat, pollMsg)
+			SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
 		} else {
 			mensagemDetalhe := fmt.Sprintf("📋 *Chamado #%d*\n\n*Título:* %s\n*Status:* %s", ticketID, titulo, status)
 			sendTextMessage(ctx, client, v.Info.Chat, mensagemDetalhe)
