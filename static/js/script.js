@@ -54,13 +54,16 @@ async function checkStatus() {
             else if (data.status === 'connected') {
                 // Status: Conectado com sucesso
                 qrCodeDiv.innerHTML = `
-                    <div class="flex flex-col items-center justify-center p-4">
-                        <span class="text-6xl mb-3 animate-bounce">🎉</span>
-                        <span class="text-emerald-500 font-bold text-lg">Sucesso!</span>
+                    <div class="flex flex-col items-center justify-center p-6 text-center">
+                        <div class="h-16 w-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/5 animate-pulse">
+                            <span class="text-3xl text-emerald-400">✔️</span>
+                        </div>
+                        <span class="text-emerald-400 font-bold text-lg tracking-wide">Sessão Ativa</span>
+                        <p class="text-xs text-gray-400 mt-1 font-normal">O bot está pronto e operando</p>
                     </div>
                 `;
                 qrStatusText.style.display = 'block';
-                qrStatusText.innerHTML = `<span class="text-green-600 font-bold text-sm">✅ Bot conectado com sucesso!</span>`;
+                qrStatusText.innerHTML = `<span class="text-emerald-500 font-semibold text-xs">Bot operacional na rede</span>`;
                 
                 if (statusText) {
                     statusText.innerText = "Conectado";
