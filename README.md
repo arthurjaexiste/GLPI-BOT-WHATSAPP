@@ -73,9 +73,7 @@ O usuário associado ao `User-Token` deve ter um perfil atribuído com as seguin
 
 ## 🚀 Passo a Passo de Instalação e Funcionamento
 
-Escolha uma das formas abaixo para executar a aplicação:
-
-### Método A: Executando com Docker (Recomendado)
+A aplicação roda inteiramente via **Docker**, sem necessidade de instalar Go ou qualquer outra dependência.
 
 #### Passo 1: Instalar Docker e Docker Compose
 Certifique-se de ter o Docker instalado em sua máquina ou servidor Linux/Windows.
@@ -84,8 +82,6 @@ Certifique-se de ter o Docker instalado em sua máquina ou servidor Linux/Window
 Crie uma pasta no servidor chamada `glpi-bot` e, dentro dela, crie um arquivo chamado `docker-compose.yml` com o seguinte conteúdo:
 
 ```yaml
-version: '3.8'
-
 services:
   bot:
     image: ghcr.io/arthurjaexiste/glpi-bot:latest
@@ -110,45 +106,9 @@ docker compose ps
 
 ---
 
-### Método B: Compilando e Executando Manualmente da Origem
-
-Se você deseja executar o bot diretamente sem Docker, utilize o compilador do Go.
-
-#### Passo 1: Instalar o Go (Golang)
-Baixe e instale a versão do Go 1.20 ou superior no site oficial: [https://go.dev/dl/](https://go.dev/dl/).
-
-#### Passo 2: Clonar ou Baixar a Pasta do Projeto
-Abra o terminal na pasta raiz do projeto (onde está o arquivo `go.mod`).
-
-#### Passo 3: Baixar as Dependências do Go
-Execute o comando para fazer o download das bibliotecas:
-```bash
-go mod download
-```
-
-#### Passo 4: Compilar o Executável
-Gere o binário compilado otimizado para o seu sistema operacional executando:
-```bash
-go build -o bot ./cmd/bot
-```
-
-#### Passo 5: Iniciar a Aplicação
-Rode o binário gerado:
-- **No Linux/macOS:**
-  ```bash
-  ./bot
-  ```
-- **No Windows:**
-  ```cmd
-  bot.exe
-  ```
-O painel administrativo iniciará na porta padrão `33090`.
-
----
-
 ## ⚙️ Configuração Inicial e Primeiro Acesso
 
-Uma vez que o bot esteja rodando (seja por Docker ou binário manual), siga os passos abaixo para fazê-lo funcionar:
+Uma vez que o bot esteja rodando, siga os passos abaixo para fazê-lo funcionar:
 
 ### Passo 1: Entrar no Painel Web
 1. Abra o navegador e digite o endereço: `http://localhost:33090` (ou o IP do seu servidor).
