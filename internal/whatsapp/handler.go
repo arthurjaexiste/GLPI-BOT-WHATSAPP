@@ -12,6 +12,7 @@ import (
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
+	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	_ "modernc.org/sqlite"
@@ -21,10 +22,11 @@ import (
 // VARIÁVEIS GLOBAIS E ESTADO (COMPARTILHADO)
 // ==========================================
 var (
-	CurrentQR    string
-	IsConnected  bool
-	ClientMu     sync.Mutex
-	GlobalClient *whatsmeow.Client
+	CurrentQR       string
+	IsConnected     bool
+	ClientMu        sync.Mutex
+	GlobalClient    *whatsmeow.Client
+	GlobalContainer *sqlstore.Container
 
 	// Variáveis do Sistema de Login Web
 	webDB      *sql.DB
@@ -321,5 +323,101 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 		processarBuscaChamadoInfo(ctx, client, v, uState, sender, text)
 	case 52:
 		processarNovaMensagemChamado(ctx, client, v, uState, text)
+	}
+}
+
+func StartWhatsApp(ctx context.Context) error {
+	ClientMu.Lock()
+	defer ClientMu.Unlock()
+
+	if GlobalClient != nil {
+		GlobalClient.Disconnect()
+	}
+
+	if GlobalContainer == nil {
+		return fmt.Errorf("GlobalContainer não está configurado")
+	}
+
+	deviceStore, err := GlobalContainer.GetFirstDevice(ctx)
+	if err != nil {
+		return fmt.Errorf("erro ao obter device store: %w", err)
+	}
+
+	client := whatsmeow.NewClient(deviceStore, nil)
+	GlobalClient = client
+	client.AddEventHandler(GetEventHandler(client))
+
+	if client.Store.ID == nil {
+		// Sem sessão salva: vai pedir QR Code
+		qrChan, err := client.GetQRChannel(ctx)
+		if err != nil {
+			return fmt.Errorf("erro ao obter canal de QR Code: %w", err)
+		}
+		err = client.Connect()
+		if err != nil {
+			return fmt.Errorf("erro ao conectar: %w", err)
+		}
+		go func() {
+			for evt := range qrChan {
+				if evt.Event == "code" {
+					CurrentQR = evt.Code
+					IsConnected = false
+					fmt.Println("⚠️  NOVO QR CODE GERADO. VEJA NO PAINEL WEB OU ESCANEIE.")
+				} else if evt.Event == "success" {
+					IsConnected = true
+					CurrentQR = ""
+					fmt.Println("✅ Bot conectado ao WhatsApp via QR Code!")
+				}
+			}
+		}()
+	} else {
+		// Já possui sessão salva: conecta direto
+		err = client.Connect()
+		if err != nil {
+			return fmt.Errorf("erro ao conectar: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func GetEventHandler(client *whatsmeow.Client) func(interface{}) {
+	return func(evt interface{}) {
+		switch v := evt.(type) {
+		case *events.Message:
+			HandleMessage(client, evt)
+
+		case *events.QR:
+			CurrentQR = v.Codes[0]
+			fmt.Println("QR Code gerado! Abra o painel web para escanear.")
+
+		case *events.Connected:
+			if client.IsLoggedIn() {
+				IsConnected = true
+				CurrentQR = ""
+				fmt.Println("✅ Bot conectado ao WhatsApp com sucesso!")
+			}
+
+		case *events.Disconnected:
+			IsConnected = false
+			fmt.Println("❌ Bot desconectado do WhatsApp (queda de rede). Tentando reconexão automática...")
+
+		case *events.LoggedOut:
+			IsConnected = false
+			CurrentQR = ""
+			fmt.Println("❌ O bot foi deslogado do WhatsApp pelo celular. Limpando credenciais locais...")
+			
+			go func() {
+				time.Sleep(1 * time.Second)
+				client.Disconnect()
+				_ = client.Store.Delete(context.Background())
+
+				fmt.Println("🔄 Recriando cliente WhatsApp após logout...")
+				err := StartWhatsApp(context.Background())
+				if err != nil {
+					fmt.Printf("🚨 Erro ao reiniciar cliente WhatsApp pós-logout: %v\n", err)
+				}
+			}()
+		}
 	}
 }

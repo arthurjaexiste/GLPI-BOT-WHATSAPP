@@ -20,7 +20,6 @@ import (
 
 	"bot-glpi/internal/config"
 
-	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 )
@@ -370,7 +369,7 @@ func StartWebServer() {
 		go func() {
 			fmt.Println("🔄 Tentando reconectar ao WhatsApp via solicitação web...")
 			if client.Store.ID == nil {
-				triggerManualQRFlow(client)
+				triggerManualQRFlow()
 			} else {
 				_ = client.Connect()
 			}
@@ -403,12 +402,11 @@ func StartWebServer() {
 				err := client.Logout(context.Background())
 				if err != nil {
 					// Fallback: se falhar o logout remoto, desconecta e limpa o ID da store manualmente
-					client.Disconnect()
-					triggerManualQRFlow(client)
+					triggerManualQRFlow()
 				}
 			} else {
 				// Se já estiver desconectado, limpa a store local e inicia o QR flow
-				triggerManualQRFlow(client)
+				triggerManualQRFlow()
 			}
 		}()
 
@@ -805,36 +803,24 @@ func getUptime() string {
 	return fmt.Sprintf("%ds", s)
 }
 
-func triggerManualQRFlow(client *whatsmeow.Client) {
+func triggerManualQRFlow() {
 	IsConnected = false
 	CurrentQR = ""
 	
-	// Garante desconexão limpa antes de reiniciar
-	client.Disconnect()
-	client.Store.ID = nil
-	_ = client.Store.Delete(context.Background())
+	ClientMu.Lock()
+	client := GlobalClient
+	ClientMu.Unlock()
+
+	if client != nil {
+		client.Disconnect()
+		_ = client.Store.Delete(context.Background())
+	}
 
 	go func() {
 		fmt.Println("🔄 Inicializando novo canal de QR Code para re-pareamento manual...")
-		qrChan, err := client.GetQRChannel(context.Background())
+		err := StartWhatsApp(context.Background())
 		if err != nil {
-			fmt.Printf("🚨 Erro ao obter canal de QR Code: %v\n", err)
-			return
-		}
-		err = client.Connect()
-		if err != nil {
-			fmt.Printf("🚨 Erro ao conectar para pareamento: %v\n", err)
-		}
-		for evt := range qrChan {
-			if evt.Event == "code" {
-				CurrentQR = evt.Code
-				IsConnected = false
-				fmt.Println("⚠️  NOVO QR CODE GERADO. VEJA NO PAINEL WEB OU ESCANEIE.")
-			} else if evt.Event == "success" {
-				IsConnected = true
-				CurrentQR = ""
-				fmt.Println("✅ Bot re-conectado ao WhatsApp com sucesso!")
-			}
+			fmt.Printf("🚨 Erro ao reiniciar cliente WhatsApp no pareamento manual: %v\n", err)
 		}
 	}()
 }
