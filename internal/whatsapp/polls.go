@@ -12,6 +12,7 @@ import (
 	"bot-glpi/internal/state"
 
 	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	"golang.org/x/text/unicode/norm"
@@ -269,6 +270,35 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 
 	fmt.Printf("ℹ️ [FLUXO] Iniciando tratarVotoFluxoDinamico para %s. currentNodeID: %q\n", sender, currentNodeID)
 
+	// 1. VERIFICA SE O USUÁRIO CLICOU EM VOLTAR
+	if matchOptionHash(selectedHash, "⬅️ Voltar") {
+		fmt.Printf("ℹ️ [FLUXO] Usuário %s clicou em voltar a partir do nó %q\n", sender, currentNodeID)
+		parent, found := FindParentNodeByID(currentNodeID)
+		if found && parent.ID != "" {
+			var options []string
+			for _, child := range parent.Children {
+				options = append(options, child.Title)
+			}
+			
+			state.Mu.Lock()
+			uState.CurrentNodeID = parent.ID
+			uState.Step = 1000
+			state.Mu.Unlock()
+
+			var pollMsg *waE2E.Message
+			if parent.ID == "root" {
+				pollMsg = client.BuildPollCreation("Como posso te ajudar hoje?", options, 1)
+			} else {
+				options = append(options, "⬅️ Voltar")
+				pollMsg = client.BuildPollCreation(fmt.Sprintf("Qual o problema com %s?", parent.Title), options, 1)
+			}
+			client.SendMessage(ctx, v.Info.Chat, pollMsg)
+		} else {
+			SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
+		}
+		return
+	}
+
 	currentNode, found := FindNodeByID(currentNodeID)
 	if !found {
 		fmt.Printf("🚨 [FLUXO] Nó corrente %q não encontrado no fluxo para %s!\n", currentNodeID, sender)
@@ -309,6 +339,10 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 		for _, child := range selectedChild.Children {
 			options = append(options, child.Title)
 		}
+		
+		// Sempre adiciona a opção de Voltar para submenus dinâmicos para garantir
+		// navegação amigável e que a enquete tenha pelo menos 2 opções (requisito do WhatsApp)
+		options = append(options, "⬅️ Voltar")
 		
 		state.Mu.Lock()
 		uState.CurrentNodeID = selectedChild.ID
