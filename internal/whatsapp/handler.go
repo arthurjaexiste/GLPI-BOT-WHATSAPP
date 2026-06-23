@@ -146,6 +146,8 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 	client.MarkRead(ctx, []types.MessageID{v.Info.ID}, v.Info.Timestamp, chatJID, v.Info.Sender)
 
+	fmt.Printf("ℹ️ [MENSAGEM] Recebida de %s (Chat: %s) | Texto: %q | PollUpdate: %t | Imagem: %t | Doc: %t\n", sender, chatJID.String(), text, pollUpdate != nil, imgMsg != nil, docMsg != nil)
+
 	state.Mu.Lock()
 	activeUserFull := state.ActiveLiveChatUser
 	state.Mu.Unlock()

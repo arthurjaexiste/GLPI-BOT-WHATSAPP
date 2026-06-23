@@ -60,10 +60,19 @@ func matchOptionHash(selectedHash []byte, optionText string) bool {
 }
 
 func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string) {
+	fmt.Printf("ℹ️ [POLL] Recebido voto de enquete do remetente: %s\n", sender)
 	vote, err := client.DecryptPollVote(ctx, v)
-	if err != nil || len(vote.SelectedOptions) == 0 { return } 
+	if err != nil {
+		fmt.Printf("🚨 [POLL] Erro ao descriptografar voto de enquete: %v\n", err)
+		return
+	}
+	if len(vote.SelectedOptions) == 0 {
+		fmt.Printf("⚠️ [POLL] Voto recebido, mas nenhuma opção selecionada.\n")
+		return
+	}
 	
 	selectedHash := vote.SelectedOptions[0]
+	fmt.Printf("ℹ️ [POLL] Voto descriptografado com sucesso. Hash selecionado: %x\n", selectedHash)
 
 	// 1. CHECA SE FOI A ENQUETE DE ASSUMIR ATENDIMENTO (SUPORTE)
 	agentsStr := config.GetConfig().SupportAgents
@@ -258,16 +267,22 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 		currentNodeID = "root"
 	}
 
+	fmt.Printf("ℹ️ [FLUXO] Iniciando tratarVotoFluxoDinamico para %s. currentNodeID: %q\n", sender, currentNodeID)
+
 	currentNode, found := FindNodeByID(currentNodeID)
 	if !found {
+		fmt.Printf("🚨 [FLUXO] Nó corrente %q não encontrado no fluxo para %s!\n", currentNodeID, sender)
 		SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
 		return
 	}
 
+	fmt.Printf("ℹ️ [FLUXO] Nó corrente %q encontrado. Procurando correspondência para o hash %x entre %d filhos...\n", currentNode.ID, selectedHash, len(currentNode.Children))
 	var selectedChild FlowNode
 	foundChild := false
 	for _, child := range currentNode.Children {
-		if matchOptionHash(selectedHash, child.Title) {
+		matched := matchOptionHash(selectedHash, child.Title)
+		fmt.Printf("   - Testando filho: ID=%s, Title=%q, Type=%s -> Matched: %t\n", child.ID, child.Title, child.Type, matched)
+		if matched {
 			selectedChild = child
 			foundChild = true
 			break
@@ -275,8 +290,11 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 	}
 
 	if !foundChild {
+		fmt.Printf("⚠️ [FLUXO] Nenhuma opção correspondente encontrada para o hash %x no nó %q para %s\n", selectedHash, currentNodeID, sender)
 		return
 	}
+
+	fmt.Printf("✅ [FLUXO] Encontrado filho selecionado: ID=%s, Title=%q, Type=%s\n", selectedChild.ID, selectedChild.Title, selectedChild.Type)
 
 	switch selectedChild.Type {
 	case NodeMenu:
