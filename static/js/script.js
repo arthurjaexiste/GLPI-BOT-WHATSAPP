@@ -1,4 +1,5 @@
 let statusInterval;
+let lastQR = "";
 
 async function checkStatus() {
     try {
@@ -14,8 +15,17 @@ async function checkStatus() {
         if (data.status === 'qr' && data.qr) {
             // Status: Aguardando leitura do QR Code
             qrStatusText.style.display = 'none';
-            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.qr)}`;
-            qrCodeDiv.innerHTML = `<img src="${qrImageUrl}" alt="QR Code do WhatsApp">`;
+            
+            // Só renderiza e roda a animação se o QR Code mudou
+            if (data.qr !== lastQR) {
+                lastQR = data.qr;
+                const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.qr)}`;
+                qrCodeDiv.innerHTML = `
+                    <div class="qr-container-wrapper">
+                        <img src="${qrImageUrl}" alt="QR Code do WhatsApp" class="qr-animate">
+                    </div>
+                `;
+            }
         } 
         else if (data.status === 'connected') {
             // Status: Conectado com sucesso
