@@ -63,6 +63,17 @@ func initWebDB() {
 		fmt.Println("🚨 Erro ao criar tabela users:", err)
 	}
 
+	_, err = webDB.Exec(`CREATE TABLE IF NOT EXISTS tickets_history (
+		id INTEGER PRIMARY KEY AUTOINCREMENT, 
+		ticket_id TEXT, 
+		title TEXT, 
+		requester TEXT, 
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)`)
+	if err != nil {
+		fmt.Println("🚨 Erro ao criar tabela tickets_history:", err)
+	}
+
 	var user string
 	err = webDB.QueryRow("SELECT username FROM users WHERE username = 'admin'").Scan(&user)
 	if err != nil {
@@ -291,6 +302,54 @@ func StartWebServer() {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{"logs": strings.Join(lines, "\n")})
+	})
+
+	// API PARA OBTER OS CHAMADOS RECENTES (Protegida)
+	http.HandleFunc("/api/tickets/recent", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if webDB == nil {
+			http.Error(w, "Banco de dados não disponível", http.StatusInternalServerError)
+			return
+		}
+
+		rows, err := webDB.Query("SELECT ticket_id, title, requester, created_at FROM tickets_history ORDER BY id DESC LIMIT 5")
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao buscar histórico: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		type RecentTicket struct {
+			TicketID  string `json:"ticket_id"`
+			Title     string `json:"title"`
+			Requester string `json:"requester"`
+			CreatedAt string `json:"created_at"`
+		}
+
+		tickets := []RecentTicket{}
+		for rows.Next() {
+			var t RecentTicket
+			var rawTime string
+			if err := rows.Scan(&t.TicketID, &t.Title, &t.Requester, &rawTime); err == nil {
+				if parsed, errTime := time.Parse("2006-01-02 15:04:05", rawTime); errTime == nil {
+					loc, _ := time.LoadLocation("America/Sao_Paulo")
+					if loc != nil {
+						parsed = parsed.In(loc)
+					}
+					t.CreatedAt = parsed.Format("02/01/2006 15:04:05")
+				} else {
+					t.CreatedAt = rawTime
+				}
+				tickets = append(tickets, t)
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(tickets)
 	})
 
 	// API PARA OBTER E SALVAR CONFIGURAÇÕES GERAIS
@@ -619,6 +678,14 @@ func StartWebServer() {
 			fmt.Printf("🚨 [WEBHOOK GLPI] Erro ao enviar mensagem para %s: %v\n", numeroTI, err)
 			http.Error(w, fmt.Sprintf(`{"error": "Erro ao enviar mensagem: %v"}`, err), http.StatusInternalServerError)
 			return
+		}
+
+		// Salva no histórico local para exibição no painel
+		if webDB != nil {
+			_, errDb := webDB.Exec("INSERT INTO tickets_history (ticket_id, title, requester) VALUES (?, ?, ?)", finalID, finalTitle, finalRequester)
+			if errDb != nil {
+				fmt.Printf("🚨 [DATABASE] Erro ao salvar ticket no histórico: %v\n", errDb)
+			}
 		}
 
 		fmt.Printf("✅ [WEBHOOK GLPI] Alerta do chamado #%s enviado com sucesso para %s\n", finalID, numeroTI)

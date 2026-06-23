@@ -135,3 +135,43 @@ statusInterval = setInterval(checkStatus, 1000);
 
 // Faz a primeira checagem imediatamente ao abrir a página
 checkStatus();
+
+// Histórico de chamados recentes
+async function fetchRecentTickets() {
+    try {
+        const response = await fetch('/api/tickets/recent');
+        if (!response.ok) throw new Error("Erro ao buscar chamados recentes");
+        const tickets = await response.json();
+        
+        const body = document.getElementById('recent-tickets-body');
+        if (!body) return;
+
+        if (tickets.length === 0) {
+            body.innerHTML = `
+                <tr>
+                    <td colspan="4" class="py-4 text-center text-zinc-500 italic">Nenhum chamado aberto recentemente.</td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = "";
+        tickets.forEach(t => {
+            html += `
+                <tr class="hover:bg-white/5 transition duration-150">
+                    <td class="py-3.5 font-mono text-indigo-400 font-semibold">#${t.ticket_id}</td>
+                    <td class="py-3.5 font-medium">${t.requester}</td>
+                    <td class="py-3.5 max-w-xs truncate" title="${t.title}">${t.title}</td>
+                    <td class="py-3.5 text-right text-zinc-500">${t.created_at}</td>
+                </tr>
+            `;
+        });
+        body.innerHTML = html;
+    } catch (error) {
+        console.error("Erro ao buscar chamados recentes:", error);
+    }
+}
+
+// Busca os chamados recentes ao iniciar e a cada 10 segundos
+fetchRecentTickets();
+setInterval(fetchRecentTickets, 10000);

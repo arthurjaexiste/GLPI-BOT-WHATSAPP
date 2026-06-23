@@ -411,6 +411,15 @@ func FinalizarChamadoEAlertar(ctx context.Context, client *whatsmeow.Client, v *
 
 	if err == nil {
 		fmt.Printf("✅ [TICKET] Chamado #%d criado com sucesso no GLPI para %s (%s) | Categoria: %s (ID: %d)\n", ticketID, nomeVisitante, sender, subCat, categoriaID)
+		
+		// Salva no histórico local para exibição no painel
+		if webDB != nil {
+			_, errDb := webDB.Exec("INSERT INTO tickets_history (ticket_id, title, requester) VALUES (?, ?, ?)", strconv.Itoa(ticketID), tituloChamado, nomeVisitante)
+			if errDb != nil {
+				fmt.Printf("🚨 [DATABASE] Erro ao salvar ticket no histórico: %v\n", errDb)
+			}
+		}
+
 		for _, doc := range documentosSalvos {
 			_ = glpi.AnexarDocumento(token, ticketID, doc.Bytes, doc.Name)
 		}
