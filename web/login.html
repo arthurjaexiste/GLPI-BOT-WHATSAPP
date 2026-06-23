@@ -9,12 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css?v=1.6">
 </head>
-<body class="text-white min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
-    <!-- Ambient light glow effects (Monochrome/Gray theme) -->
-    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-zinc-500/[0.04] rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="absolute bottom-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-white/[0.01] rounded-full blur-[100px] pointer-events-none"></div>
+<body class="text-white min-h-screen flex items-center justify-center p-6 relative overflow-hidden select-none">
+    <!-- Interactive Canvas background -->
+    <canvas id="interactive-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
 
-    <div class="glass-card p-10 rounded-3xl w-full max-w-md flex flex-col gap-8 relative z-10">
+    <!-- Ambient light glow effects (Monochrome/Gray theme) -->
+    <div id="glow-spotlight" class="absolute w-[450px] h-[450px] bg-white/[0.02] rounded-full blur-[110px] pointer-events-none z-0 transition-all duration-300 ease-out" style="top: 20%; left: 40%;"></div>
+    <div class="absolute bottom-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-white/[0.01] rounded-full blur-[100px] pointer-events-none z-0"></div>
+
+    <div class="glass-card p-10 rounded-3xl w-full max-w-md flex flex-col gap-8 relative z-10 select-text">
         <div class="text-center">
             <div class="relative inline-block mb-4">
                 <div class="absolute inset-0 bg-white/[0.02] rounded-full blur-xl animate-pulse"></div>
@@ -45,5 +48,139 @@
             </button>
         </form>
     </div>
+
+    <!-- Interactive Canvas & Spotlight Logic -->
+    <script>
+        const canvas = document.getElementById('interactive-canvas');
+        const ctx = canvas.getContext('2d');
+        const spotlight = document.getElementById('glow-spotlight');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        let particles = [];
+        let mouse = { x: null, y: null, active: false };
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initParticles();
+        });
+
+        // Track Mouse
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            mouse.active = true;
+
+            // Update smooth ambient spotlight position
+            if (spotlight) {
+                spotlight.style.left = `${mouse.x - 225}px`;
+                spotlight.style.top = `${mouse.y - 225}px`;
+            }
+        });
+
+        window.addEventListener('mouseleave', () => {
+            mouse.active = false;
+        });
+
+        // Particle Class
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.radius = Math.random() * 1.5 + 0.8;
+                this.baseVx = (Math.random() - 0.5) * 0.4;
+                this.baseVy = (Math.random() - 0.5) * 0.4;
+                this.vx = this.baseVx;
+                this.vy = this.baseVy;
+            }
+
+            update() {
+                // Interactive physics - antigravity repulsion / attraction
+                if (mouse.active && mouse.x !== null) {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const dist = Math.hypot(dx, dy);
+                    const limit = 160;
+
+                    if (dist < limit) {
+                        // Repel from mouse to create an antigravity bubble effect
+                        const force = (limit - dist) / limit;
+                        const angle = Math.atan2(dy, dx);
+                        this.vx -= Math.cos(angle) * force * 0.5;
+                        this.vy -= Math.sin(angle) * force * 0.5;
+                    }
+                }
+
+                // Add simple damping and return to base speed
+                this.vx += (this.baseVx - this.vx) * 0.05;
+                this.vy += (this.baseVy - this.vy) * 0.05;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Screen Boundary Wrap-around
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height;
+                if (this.y > height) this.y = 0;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            // Adaptive count based on screen width
+            const count = Math.min(Math.floor((width * height) / 16000), 90);
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function drawLines() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.hypot(dx, dy);
+                    const limit = 110;
+
+                    if (dist < limit) {
+                        const alpha = (1 - (dist / limit)) * 0.07;
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                        ctx.lineWidth = 0.6;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            drawLines();
+
+            requestAnimationFrame(animate);
+        }
+
+        initParticles();
+        animate();
+    </script>
 </body>
 </html>
