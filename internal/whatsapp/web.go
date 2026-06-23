@@ -306,6 +306,77 @@ func StartWebServer() {
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 	})
 
+	// API PARA ALTERAR A SENHA DO ADMIN (Protegido)
+	http.HandleFunc("/api/change-password", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method != "POST" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req struct {
+			CurrentPassword string `json:"current_password"`
+			NewPassword     string `json:"new_password"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "JSON inválido", http.StatusBadRequest)
+			return
+		}
+
+		if req.NewPassword == "" {
+			http.Error(w, "A nova senha não pode ser vazia", http.StatusBadRequest)
+			return
+		}
+
+		var dbPass string
+		err := webDB.QueryRow("SELECT password FROM users WHERE username = 'admin'").Scan(&dbPass)
+		if err != nil {
+			http.Error(w, "Erro ao buscar senha atual", http.StatusInternalServerError)
+			return
+		}
+
+		if dbPass != req.CurrentPassword {
+			http.Error(w, "Senha atual incorreta", http.StatusBadRequest)
+			return
+		}
+
+		_, err = webDB.Exec("UPDATE users SET password = ? WHERE username = 'admin'", req.NewPassword)
+		if err != nil {
+			http.Error(w, "Erro ao atualizar senha", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+
+	// API PARA REINICIAR O BOT (Protegido)
+	http.HandleFunc("/api/restart", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method != "POST" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Bot reiniciando..."})
+
+		go func() {
+			fmt.Println("🔄 Solicitação de reinicialização recebida via painel web. Reiniciando o processo...")
+			time.Sleep(1 * time.Second)
+			os.Exit(0)
+		}()
+	})
+
 	// ROTA DE STATUS DA API
 	http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

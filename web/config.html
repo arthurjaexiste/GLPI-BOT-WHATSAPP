@@ -126,6 +126,50 @@
                 </div>
             </div>
 
+            <!-- Section 4: Alterar Senha -->
+            <div>
+                <h2 class="text-md font-bold text-indigo-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    🔑 Segurança (Alterar Senha do Painel)
+                </h2>
+                <form id="change-password-form" onsubmit="changePassword(event)" class="flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Senha Atual</label>
+                            <input type="password" id="current_password" required placeholder="Sua senha atual" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nova Senha</label>
+                            <input type="password" id="new_password" required placeholder="Nova senha" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Confirmar Nova Senha</label>
+                            <input type="password" id="confirm_password" required placeholder="Confirmar nova senha" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 rounded-lg shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
+                            🔑 Atualizar Senha
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Section 5: Manutenção do Sistema -->
+            <div>
+                <h2 class="text-md font-bold text-red-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                    ⚙️ Manutenção do Sistema
+                </h2>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-red-950/20 border border-red-900/30 p-6 rounded-xl">
+                    <div>
+                        <h3 class="text-sm font-bold text-white mb-1">Reiniciar o Bot de Chamados</h3>
+                        <p class="text-xs text-gray-400">Esta ação irá encerrar e reiniciar a aplicação. O WhatsApp reconectará automaticamente.</p>
+                    </div>
+                    <button type="button" onclick="restartBot()" class="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-lg shadow-lg hover:shadow-red-500/20 transition-all duration-200 transform hover:-translate-y-0.5 whitespace-nowrap shrink-0">
+                        🔄 Reiniciar Bot
+                    </button>
+                </div>
+            </div>
+
         </div>
     </main>
 

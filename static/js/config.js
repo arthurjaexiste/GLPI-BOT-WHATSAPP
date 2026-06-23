@@ -114,5 +114,71 @@ function showToast(message, icon = '✅') {
     }, 3000);
 }
 
+// Altera a senha do administrador
+async function changePassword(event) {
+    event.preventDefault();
+    const current_password = document.getElementById('current_password').value;
+    const new_password = document.getElementById('new_password').value;
+    const confirm_password = document.getElementById('confirm_password').value;
+
+    if (new_password !== confirm_password) {
+        showToast('A nova senha e a confirmação não coincidem!', '⚠️');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ current_password, new_password })
+        });
+
+        if (!response.ok) {
+            const errMsg = await response.text();
+            throw new Error(errMsg || 'Erro ao alterar a senha');
+        }
+
+        showToast('Senha alterada com sucesso!', '✅');
+        document.getElementById('change-password-form').reset();
+    } catch (err) {
+        showToast(err.message || 'Erro ao alterar a senha.', '❌');
+    }
+}
+
+// Reinicia o bot
+async function restartBot() {
+    if (!confirm('Tem certeza de que deseja reiniciar o bot? O painel ficará temporariamente indisponível por alguns segundos.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/restart', {
+            method: 'POST'
+        });
+
+        if (!response.ok) throw new Error('Falha ao enviar sinal de reinício');
+
+        showToast('Sinal de reinício enviado! Aguarde alguns segundos e atualize a página.', '✅');
+        
+        // Bloqueia a tela informando que está reiniciando
+        setTimeout(() => {
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-[#0b0f19] text-white flex-col gap-4">
+                    <span class="text-5xl animate-spin">🔄</span>
+                    <h2 class="text-xl font-bold">Reiniciando o Sistema...</h2>
+                    <p class="text-xs text-gray-400">Aguarde 5 segundos e tente recarregar a página.</p>
+                    <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-bold transition">
+                        Recarregar Página
+                    </button>
+                </div>
+            `;
+        }, 1000);
+    } catch (err) {
+        showToast('Erro ao reiniciar o bot.', '❌');
+    }
+}
+
 // Inicializa buscando as configurações
 window.addEventListener('DOMContentLoaded', fetchConfig);
