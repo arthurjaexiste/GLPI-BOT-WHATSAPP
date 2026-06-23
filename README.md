@@ -37,7 +37,7 @@ No diretório do projeto, certifique-se de que possui o seguinte arquivo `docker
 ```yaml
 services:
   bot:
-    build: .
+    image: ghcr.io/arthurjaexiste/glpi-bot:latest
     container_name: glpi-bot
     restart: unless-stopped
     ports:
@@ -46,11 +46,11 @@ services:
       - ./db:/app/db
 ```
 
-### 2. Iniciar e Compilar o Container
-Para compilar o código em Go e subir o serviço de forma isolada, execute:
+### 2. Iniciar o Container
+Para baixar a imagem pronta do GHCR e iniciar o serviço, execute:
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 ### 3. Acessar o Painel Web
