@@ -14,7 +14,6 @@ async function checkStatus() {
         const statusText = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
         const statusPing = document.querySelector('.animate-ping');
-        const infoIp = document.getElementById('info-ip');
         const infoTimezone = document.getElementById('info-timezone');
         const infoEngine = document.getElementById('info-engine');
         const infoUptime = document.getElementById('info-uptime');
@@ -23,7 +22,6 @@ async function checkStatus() {
         if (!qrStatusText || !qrCodeDiv) return;
 
         // Atualiza os campos que mudam constantemente (sem piscar a tela)
-        if (infoIp) infoIp.innerText = window.location.hostname || data.ip || 'localhost';
         if (infoTimezone) infoTimezone.innerText = data.timezone || 'America/Sao_Paulo';
         if (infoEngine) infoEngine.innerText = data.engine || 'Whatsmeow';
         if (infoUptime) infoUptime.innerText = data.uptime || '0s';
@@ -109,7 +107,6 @@ async function checkStatus() {
         const statusText = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
         const statusPing = document.querySelector('.animate-ping');
-        const infoIp = document.getElementById('info-ip');
         const infoTimezone = document.getElementById('info-timezone');
         const infoEngine = document.getElementById('info-engine');
         const infoUptime = document.getElementById('info-uptime');
@@ -127,7 +124,6 @@ async function checkStatus() {
         }
 
         // Zera os diagnósticos em caso de erro na conexão
-        if (infoIp) infoIp.innerText = 'Desconectado';
         if (infoTimezone) infoTimezone.innerText = 'Indisponível';
         if (infoEngine) infoEngine.innerText = 'Desconectado';
         if (infoUptime) infoUptime.innerText = 'Offline';
