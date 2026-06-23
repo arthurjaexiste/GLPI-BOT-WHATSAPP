@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -372,6 +373,7 @@ func StartWebServer() {
 
 		go func() {
 			fmt.Println("🔄 Solicitação de reinicialização recebida via painel web. Reiniciando o processo...")
+			os.WriteFile("db/.restarted", []byte("1"), 0644)
 			time.Sleep(1 * time.Second)
 			os.Exit(0)
 		}()
@@ -393,9 +395,31 @@ func StartWebServer() {
 		})
 	})
 
-	fmt.Printf("🌐 Painel Web protegido rodando em http://%s\n", porta)
+	fmt.Printf("🌐 Painel Web protegido rodando em:\n")
+	fmt.Printf("   - http://localhost:33090\n")
+	for _, ip := range getLocalIPs() {
+		fmt.Printf("   - http://%s:33090\n", ip)
+	}
+
 	// Usa o recoveryHandler para interceptar panics e mostrar erro no navegador
 	if err := http.ListenAndServe(porta, &recoveryHandler{handler: http.DefaultServeMux}); err != nil {
 		fmt.Printf("🚨 Erro fatal no servidor web: %v\n", err)
 	}
+}
+
+// Retorna todos os IPs de rede locais (não-loopback) do host
+func getLocalIPs() []string {
+	var ips []string
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return []string{"127.0.0.1"}
+	}
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				ips = append(ips, ipnet.IP.String())
+			}
+		}
+	}
+	return ips
 }

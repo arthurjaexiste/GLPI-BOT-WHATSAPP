@@ -45,6 +45,15 @@ func eventHandler(client *whatsmeow.Client) func(interface{}) {
 }
 
 func main() {
+	// Verifica se foi reiniciado pelo painel web
+	restartedFile := "db/.restarted"
+	if _, err := os.Stat(restartedFile); err == nil {
+		fmt.Println("🔄 O bot foi REINICIADO com sucesso pelo Painel Web!")
+		os.Remove(restartedFile)
+	} else {
+		fmt.Println("🚀 O bot foi INICIADO com sucesso!")
+	}
+
 	// 🟢 Inicializa as configurações globais do bot
 	config.InitConfig()
 
