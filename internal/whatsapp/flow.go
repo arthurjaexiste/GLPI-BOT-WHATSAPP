@@ -18,14 +18,15 @@ const (
 )
 
 type FlowNode struct {
-	ID        string     `json:"id"`
-	Title     string     `json:"title"`
-	Type      NodeType   `json:"type"`
-	Content   string     `json:"content,omitempty"`   // Mensagem de texto (se NodeText) ou prompt customizado (se NodeGLPITicket)
-	GLPIID    int        `json:"glpi_id,omitempty"`   // ID da categoria no GLPI
-	Children  []FlowNode `json:"children,omitempty"`  // Filhos (se NodeMenu)
-	AskImages *bool      `json:"ask_images,omitempty"` // Solicitar Imagens/Fotos
-	AskDocs   *bool      `json:"ask_docs,omitempty"`   // Solicitar Documentos/Arquivos
+	ID             string     `json:"id"`
+	Title          string     `json:"title"`
+	Type           NodeType   `json:"type"`
+	Content        string     `json:"content,omitempty"`   // Mensagem de texto (se NodeText) ou prompt customizado (se NodeGLPITicket)
+	GLPIID         int        `json:"glpi_id,omitempty"`   // ID da categoria no GLPI
+	Children       []FlowNode `json:"children,omitempty"`  // Filhos (se NodeMenu)
+	AskImages      *bool      `json:"ask_images,omitempty"` // Solicitar Imagens/Fotos
+	AskDocs        *bool      `json:"ask_docs,omitempty"`   // Solicitar Documentos/Arquivos
+	ShowBackButton *bool      `json:"show_back_button,omitempty"` // Mostrar botão de voltar no submenu
 }
 
 func (n FlowNode) GetAskImages() bool {
@@ -40,6 +41,13 @@ func (n FlowNode) GetAskDocs() bool {
 		return true
 	}
 	return *n.AskDocs
+}
+
+func (n FlowNode) GetShowBackButton() bool {
+	if n.ShowBackButton == nil {
+		return true
+	}
+	return *n.ShowBackButton
 }
 
 func boolPtr(b bool) *bool {
@@ -146,9 +154,10 @@ func findParentRecursive(current FlowNode, childID string) (FlowNode, bool) {
 
 func createDefaultFlowJSON() {
 	defaultRoot := FlowNode{
-		ID:    "root",
-		Title: "Menu Inicial",
-		Type:  NodeMenu,
+		ID:             "root",
+		Title:          "Menu Inicial",
+		Type:           NodeMenu,
+		ShowBackButton: boolPtr(true),
 		Children: []FlowNode{
 			{
 				ID:        "abrir_chamado",

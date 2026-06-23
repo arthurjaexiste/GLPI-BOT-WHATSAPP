@@ -36,7 +36,8 @@ function createNodeUI(node, path, isRoot = false) {
     let badgeHTML = '';
     switch (node.type) {
         case 'menu':
-            badgeHTML = '<span class="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded">📁 Menu</span>';
+            const backInfo = (isRoot || node.show_back_button !== false) ? ' (+Botão Voltar)' : ' (Sem Voltar)';
+            badgeHTML = `<span class="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded">📁 Menu${backInfo}</span>`;
             break;
         case 'ticket':
             const attachmentTypes = [];
@@ -138,6 +139,7 @@ function openEditModal(path) {
     // Configura os checkboxes (padrão é true para nós existentes)
     document.getElementById('node-ask-images').checked = node.ask_images !== false;
     document.getElementById('node-ask-docs').checked = node.ask_docs !== false;
+    document.getElementById('node-show-back').checked = node.show_back_button !== false;
 
     // Raiz não pode ter tipo alterado (sempre menu)
     document.getElementById('node-type').disabled = path.length === 0;
@@ -160,6 +162,7 @@ function openAddModal(path) {
     // Checkboxes marcados por padrão ao adicionar novo nó
     document.getElementById('node-ask-images').checked = true;
     document.getElementById('node-ask-docs').checked = true;
+    document.getElementById('node-show-back').checked = true;
 
     document.getElementById('node-type').disabled = false;
 
@@ -178,10 +181,12 @@ function toggleModalFields() {
     const fieldContent = document.getElementById('field-content');
     const labelContent = document.getElementById('label-content');
     const fieldAttachments = document.getElementById('field-attachments');
+    const fieldMenuOptions = document.getElementById('field-menu-options');
 
     fieldGLPI.classList.add('hidden');
     fieldContent.classList.add('hidden');
     if (fieldAttachments) fieldAttachments.classList.add('hidden');
+    if (fieldMenuOptions) fieldMenuOptions.classList.add('hidden');
 
     if (type === 'ticket') {
         fieldGLPI.classList.remove('hidden');
@@ -193,6 +198,11 @@ function toggleModalFields() {
         fieldContent.classList.remove('hidden');
         labelContent.innerText = "Mensagem de Resposta (FAQ)";
         document.getElementById('node-content').placeholder = "Escreva a resposta automática que o usuário receberá...";
+    } else if (type === 'menu') {
+        const isRoot = activeEditMode === "edit" && activeEditPath.length === 0;
+        if (!isRoot && fieldMenuOptions) {
+            fieldMenuOptions.classList.remove('hidden');
+        }
     }
 }
 
@@ -223,6 +233,13 @@ function confirmModal() {
             delete node.ask_docs;
         }
 
+        const isRoot = activeEditPath.length === 0;
+        if (type === 'menu' && !isRoot) {
+            node.show_back_button = document.getElementById('node-show-back').checked;
+        } else {
+            delete node.show_back_button;
+        }
+
         // Limpar filhos se mudou de menu para outro tipo
         if (type !== 'menu') delete node.children;
     } else if (activeEditMode === "add") {
@@ -245,7 +262,11 @@ function confirmModal() {
             newNode.ask_docs = document.getElementById('node-ask-docs').checked;
         }
         
-        if (type === 'menu') newNode.children = [];
+        if (type === 'menu') {
+            newNode.show_back_button = document.getElementById('node-show-back').checked;
+            newNode.children = [];
+        }
+        
         parent.children.push(newNode);
     }
 

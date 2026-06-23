@@ -289,7 +289,9 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 			if parent.ID == "root" {
 				pollMsg = client.BuildPollCreation("Como posso te ajudar hoje?", options, 1)
 			} else {
-				options = append(options, "⬅️ Voltar")
+				if parent.GetShowBackButton() {
+					options = append(options, "⬅️ Voltar")
+				}
 				pollMsg = client.BuildPollCreation(fmt.Sprintf("Qual o problema com %s?", parent.Title), options, 1)
 			}
 			client.SendMessage(ctx, v.Info.Chat, pollMsg)
@@ -340,9 +342,11 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 			options = append(options, child.Title)
 		}
 		
-		// Sempre adiciona a opção de Voltar para submenus dinâmicos para garantir
+		// Adiciona a opção de Voltar para submenus dinâmicos se configurado para garantir
 		// navegação amigável e que a enquete tenha pelo menos 2 opções (requisito do WhatsApp)
-		options = append(options, "⬅️ Voltar")
+		if selectedChild.GetShowBackButton() {
+			options = append(options, "⬅️ Voltar")
+		}
 		
 		state.Mu.Lock()
 		uState.CurrentNodeID = selectedChild.ID

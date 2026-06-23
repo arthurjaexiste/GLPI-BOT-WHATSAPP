@@ -122,6 +122,18 @@
                     <span class="text-[10px] text-gray-500">Selecione quais mídias o bot deve perguntar do usuário após a descrição.</span>
                 </div>
 
+                <!-- Submenu Options (Only for Menu/Submenu) -->
+                <div id="field-menu-options" class="flex flex-col gap-2 hidden">
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Configuração do Menu (WhatsApp)</label>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-black/20 border border-white/5 p-3 rounded-lg">
+                        <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none">
+                            <input type="checkbox" id="node-show-back" class="w-4 h-4 rounded border-gray-700 bg-black/40 text-indigo-600 focus:ring-indigo-500 focus:ring-opacity-25 transition duration-150">
+                            <span>Adicionar botão "Voltar"</span>
+                        </label>
+                    </div>
+                    <span class="text-[10px] text-gray-500">Permite ao usuário retornar ao menu anterior no WhatsApp.</span>
+                </div>
+
                 <!-- Content/Prompt Field -->
                 <div id="field-content" class="flex flex-col gap-1.5 hidden">
                     <label id="label-content" class="text-xs font-bold text-gray-400 uppercase tracking-wider">Mensagem de Resposta</label>
@@ -146,6 +158,6 @@
         <span id="toast-message">Fluxo salvo com sucesso!</span>
     </div>
 
-    <script src="/static/js/flow.js?v=1.2"></script>
+    <script src="/static/js/flow.js?v=1.3"></script>
 </body>
 </html>
