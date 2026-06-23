@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/img/logo.png" alt="GLPI-BOT Logo" width="150" height="150">
+</p>
+
 # 🤖 GLPI-BOT (WhatsApp & Web Panel)
 
 Um bot de WhatsApp inteligente e de alta performance desenvolvido em **Go**, projetado para integrar fluxos de conversação dinâmicos diretamente com o **GLPI**. Gerencie menus, submenus, formulários de abertura de chamado e anexos através de um painel web moderno.
