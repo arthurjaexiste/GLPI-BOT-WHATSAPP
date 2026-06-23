@@ -219,3 +219,14 @@ func IsOutsideWorkingHours() bool {
 
 	return false
 }
+
+func obterLinkTicketGLPI(ticketID string) string {
+	apiURL := config.GetConfig().GLPIApiURL
+	baseWebURL := apiURL
+	baseWebURL = strings.TrimSuffix(baseWebURL, "/")
+	baseWebURL = strings.Replace(baseWebURL, "/apirest.php", "", 1)
+	baseWebURL = strings.Replace(baseWebURL, "apirest.php", "", 1)
+	baseWebURL = strings.TrimSuffix(baseWebURL, "/")
+	
+	return fmt.Sprintf("%s/index.php?redirect=ticket_%s", baseWebURL, ticketID)
+}

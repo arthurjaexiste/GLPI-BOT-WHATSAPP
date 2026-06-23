@@ -443,14 +443,16 @@ func FinalizarChamadoEAlertar(ctx context.Context, client *whatsmeow.Client, v *
 		numeroTI := cfg.TelefoneNotificacao
 		if numeroTI != "" {
 			targetJID := types.NewJID(numeroTI, types.DefaultUserServer)
+			ticketIDStr := strconv.Itoa(ticketID)
+			linkTicket := obterLinkTicketGLPI(ticketIDStr)
 			textoAlerta := fmt.Sprintf(
 				"🔔 *NOVO CHAMADO VIA WHATSAPP*\n\n"+
-					"📌 *Ticket:* #%d\n"+
+					"📌 *Ticket:* #%s %s\n"+
 					"👤 *Solicitante:* %s\n"+
 					"📁 *Categoria ID:* %d\n"+
 					"📝 *Título:* %s\n\n"+
 					"⚠️ _Abra o painel do GLPI para iniciar as tratativas._",
-				ticketID, nomeVisitante, categoriaID, tituloChamado,
+				ticketIDStr, linkTicket, nomeVisitante, categoriaID, tituloChamado,
 			)
 			sendTextMessage(ctx, client, targetJID, textoAlerta)
 		}

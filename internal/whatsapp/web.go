@@ -760,13 +760,14 @@ func StartWebServer() {
 		}
 
 		targetJID := types.NewJID(numeroTI, types.DefaultUserServer)
+		linkTicket := obterLinkTicketGLPI(finalID)
 		textoAlerta := fmt.Sprintf(
 			"🔔 *NOVO CHAMADO VIA %s*\n\n"+
-				"📌 *Ticket:* #%s\n"+
+				"📌 *Ticket:* #%s %s\n"+
 				"👤 *Solicitante:* %s\n"+
 				"📝 *Título:* %s\n\n"+
 				"⚠️ _Acesse o painel do GLPI para iniciar as tratativas._",
-			strings.ToUpper(finalSource), finalID, finalRequester, finalTitle,
+			strings.ToUpper(finalSource), finalID, linkTicket, finalRequester, finalTitle,
 		)
 
 		_, err := client.SendMessage(context.Background(), targetJID, &waE2E.Message{
