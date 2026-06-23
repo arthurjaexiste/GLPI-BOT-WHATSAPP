@@ -14,13 +14,13 @@
         }
     </style>
 </head>
-<body class="bg-[#0b0f19] bg-gradient-to-br from-[#0b0f19] via-[#111827] to-[#1e1b4b] text-white min-h-screen flex flex-col">
+<body class="bg-[#09090b] bg-gradient-to-br from-[#09090b] via-[#18181b] to-[#27272a] text-white min-h-screen flex flex-col">
     <!-- Header/Navbar -->
-    <header class="bg-gray-900/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+    <header class="bg-zinc-900/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3">
             <img src="/static/img/logo.png" alt="Logo" class="w-10 h-10 rounded-xl object-contain shadow-lg">
             <div>
-                <h1 class="text-lg font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">GLPI-BOT</h1>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">GLPI-BOT</h1>
                 <p class="text-xs text-gray-400">Painel de Controle Inteligente</p>
             </div>
         </div>
@@ -54,7 +54,7 @@
 
     <main class="flex-1 flex max-w-4xl w-full mx-auto p-6 flex-col gap-6">
         <!-- Main Form Card -->
-        <div class="bg-gray-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col gap-8">
+        <div class="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col gap-8">
             
             <!-- Section 1: Identity & Support -->
             <div>
@@ -64,18 +64,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="flex flex-col gap-2">
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nome da Empresa</label>
-                        <input type="text" id="company_name" placeholder="Insira o nome da empresa" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        <input type="text" id="company_name" placeholder="Insira o nome da empresa" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
                         <span class="text-[10px] text-gray-500">Nome exibido nas saudações e rodapés das conversas.</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">WhatsApp do Administrador</label>
-                        <input type="text" id="telefone_notificacao" placeholder="Insira o WhatsApp de alertas (ex: 55...)" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        <input type="text" id="telefone_notificacao" placeholder="Insira o WhatsApp de alertas (ex: 55...)" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
                         <span class="text-[10px] text-gray-500">Número de WhatsApp que receberá as notificações de novos tickets.</span>
                     </div>
                 </div>
                 <div class="flex flex-col gap-2 mt-6">
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Atendentes do Suporte Humano (Separados por vírgula)</label>
-                    <textarea id="support_agents" rows="2" placeholder="Insira os atendentes separados por vírgula" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-none"></textarea>
+                    <textarea id="support_agents" rows="2" placeholder="Insira os atendentes separados por vírgula" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200 resize-none"></textarea>
                     <span class="text-[10px] text-gray-500">Técnicos que aparecerão na enquete do WhatsApp para assumir o atendimento ao vivo.</span>
                 </div>
             </div>
@@ -88,7 +88,7 @@
                 <div class="flex flex-col gap-6">
                     <div class="flex flex-col gap-2">
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Link da API Rest do GLPI</label>
-                        <input type="text" id="glpi_api_url" placeholder="https://seu-glpi/apirest.php" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                        <input type="text" id="glpi_api_url" placeholder="https://seu-glpi/apirest.php" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
                         <span class="text-[10px] text-gray-500">URL absoluta apontando para o endpoint apirest.php de seu GLPI.</span>
                     </div>
                     
@@ -96,7 +96,7 @@
                         <div class="flex flex-col gap-2">
                             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">App-Token da API</label>
                             <div class="flex items-center gap-2">
-                                <input type="password" id="glpi_app_token" placeholder="Insira o Token do App do GLPI" class="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                                <input type="password" id="glpi_app_token" placeholder="Insira o Token do App do GLPI" class="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
                                 <button type="button" onclick="toggleVisibility(this, 'glpi_app_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Visualizar Token">👁️</button>
                                 <button type="button" onclick="copyToClipboard('glpi_app_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Copiar Token">📋</button>
                             </div>
@@ -105,7 +105,7 @@
                         <div class="flex flex-col gap-2">
                             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">User-Token do Usuário API</label>
                             <div class="flex items-center gap-2">
-                                <input type="password" id="glpi_user_token" placeholder="Insira o Token do Usuário" class="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                                <input type="password" id="glpi_user_token" placeholder="Insira o Token do Usuário" class="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
                                 <button type="button" onclick="toggleVisibility(this, 'glpi_user_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Visualizar Token">👁️</button>
                                 <button type="button" onclick="copyToClipboard('glpi_user_token')" class="px-3 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 hover:text-white transition duration-150 text-sm flex items-center justify-center h-10 w-10 shrink-0" title="Copiar Token">📋</button>
                             </div>
@@ -122,33 +122,33 @@
                 </h2>
                 <div class="flex flex-col gap-2">
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Números Bloqueados (Separados por vírgula)</label>
-                    <textarea id="dark_list" rows="3" placeholder="Insira os números bloqueados separados por vírgula" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200 resize-none"></textarea>
+                    <textarea id="dark_list" rows="3" placeholder="Insira os números bloqueados separados por vírgula" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200 resize-none"></textarea>
                     <span class="text-[10px] text-gray-500">Os números listados acima não receberão respostas do bot.</span>
                 </div>
             </div>
 
             <!-- Section 4: Alterar Senha -->
             <div>
-                <h2 class="text-md font-bold text-indigo-400 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
+                <h2 class="text-md font-bold text-zinc-300 mb-4 flex items-center gap-2 border-b border-white/5 pb-2 uppercase tracking-wide">
                     🔑 Segurança (Alterar Senha do Painel)
                 </h2>
                 <form id="change-password-form" onsubmit="changePassword(event)" class="flex flex-col gap-4">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="flex flex-col gap-2">
                             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Senha Atual</label>
-                            <input type="password" id="current_password" required placeholder="Sua senha atual" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                            <input type="password" id="current_password" required placeholder="Sua senha atual" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
                         </div>
                         <div class="flex flex-col gap-2">
                             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nova Senha</label>
-                            <input type="password" id="new_password" required placeholder="Nova senha" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                            <input type="password" id="new_password" required placeholder="Nova senha" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
                         </div>
                         <div class="flex flex-col gap-2">
                             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Confirmar Nova Senha</label>
-                            <input type="password" id="confirm_password" required placeholder="Confirmar nova senha" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                            <input type="password" id="confirm_password" required placeholder="Confirmar nova senha" class="bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition duration-200">
                         </div>
                     </div>
                     <div class="flex justify-end">
-                        <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 rounded-lg shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
+                        <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-zinc-700 to-zinc-800 hover:from-zinc-600 hover:to-zinc-700 rounded-lg shadow-lg hover:shadow-zinc-500/20 transition-all duration-200 transform hover:-translate-y-0.5">
                             🔑 Atualizar Senha
                         </button>
                     </div>

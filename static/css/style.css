@@ -2,27 +2,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --bg-primary: #0b0f19;
-    --bg-secondary: #111827;
-    --accent-indigo: #6366f1;
-    --accent-purple: #8b5cf6;
-    --accent-pink: #ec4899;
+    --bg-primary: #09090b;
+    --bg-secondary: #18181b;
+    --accent-indigo: #a1a1aa;
+    --accent-purple: #d4d4d8;
+    --accent-pink: #f4f4f5;
     --accent-emerald: #10b981;
     --accent-teal: #14b8a6;
-    --text-primary: #f3f4f6;
-    --text-secondary: #9ca3af;
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
 }
 
 body {
     font-family: 'Outfit', sans-serif;
-    background: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%) !important;
+    background: linear-gradient(135deg, #09090b 0%, #18181b 50%, #27272a 100%) !important;
     color: var(--text-primary);
     min-height: 100vh;
 }
 
 /* Glassmorphism Cards */
 .glass-card {
-    background: rgba(17, 24, 39, 0.7) !important;
+    background: rgba(24, 24, 27, 0.7) !important;
     backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -35,7 +35,7 @@ input[type="password"],
 input[type="number"], 
 textarea, 
 select {
-    background: rgba(10, 15, 30, 0.5) !important;
+    background: rgba(9, 9, 11, 0.5) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 10px !important;
     padding: 10px 14px !important;
@@ -48,8 +48,8 @@ select {
 input:focus, 
 textarea:focus, 
 select:focus {
-    border-color: var(--accent-purple) !important;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+    border-color: var(--accent-indigo) !important;
+    box-shadow: 0 0 0 3px rgba(161, 161, 170, 0.15) !important;
     outline: none !important;
 }
 
@@ -88,9 +88,9 @@ select:focus {
 
 /* Badges for Variables */
 .badge {
-    background: rgba(139, 92, 246, 0.15) !important;
-    color: #c4b5fd !important;
-    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+    background: rgba(161, 161, 170, 0.15) !important;
+    color: #e4e4e7 !important;
+    border: 1px solid rgba(161, 161, 170, 0.3) !important;
     padding: 0.2rem 0.5rem;
     border-radius: 6px;
     font-family: monospace;
@@ -100,8 +100,8 @@ select:focus {
     display: inline-block;
 }
 .badge:hover {
-    background: rgba(139, 92, 246, 0.25) !important;
-    border-color: rgba(139, 92, 246, 0.5) !important;
+    background: rgba(161, 161, 170, 0.25) !important;
+    border-color: rgba(161, 161, 170, 0.5) !important;
     color: #ffffff !important;
 }
 
