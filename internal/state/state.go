@@ -5,11 +5,13 @@ import (
 	"time"
 )
 
+// Doc representa um arquivo/documento enviado pelo usuário via WhatsApp.
 type Doc struct {
 	Bytes []byte
 	Name  string
 }
 
+// UserState mantém o estado da conversa de cada usuário durante o atendimento.
 type UserState struct {
 	Step             int
 	Title            string
@@ -21,20 +23,22 @@ type UserState struct {
 	PollIDs          []int
 	CategoryID       int
 	Images           [][]byte
-	Docs             []Doc    
-	SubCategory      string   
+	Docs             []Doc
+	SubCategory      string
 	ActiveTicketID   int
 	CurrentNodeID    string
 }
 
+// ─── Estado global compartilhado ─────────────────────────────────────────────
+
 var (
+	Mu      sync.Mutex
 	Users   = make(map[string]*UserState)
 	Names   = make(map[string]string)
 	UserIDs = make(map[string]int)
-	Mu      sync.Mutex
 
-	// Controle da Fila do Chat ao Vivo
+	// Controle da fila do Chat ao Vivo
 	ActiveLiveChatUser string
-	ActiveAgentName    string // É essa variável aqui que o Go estava sentindo falta!
+	ActiveAgentName    string
 	LiveChatQueue      []string
 )

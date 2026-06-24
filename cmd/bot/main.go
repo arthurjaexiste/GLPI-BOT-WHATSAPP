@@ -14,9 +14,11 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-
+// setupLogRedirection duplica toda a saída padrão (stdout/stderr) para um arquivo de log
+// enquanto mantém a exibição no terminal, permitindo diagnóstico remoto pelo painel web.
 func setupLogRedirection() {
 	_ = os.MkdirAll("db", 0777)
+
 	f, err := os.OpenFile("db/bot.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Printf("🚨 Erro ao criar arquivo de log: %v\n", err)
@@ -24,9 +26,7 @@ func setupLogRedirection() {
 	}
 
 	r, w, _ := os.Pipe()
-
 	origStdout := os.Stdout
-
 	os.Stdout = w
 	os.Stderr = w
 
@@ -48,7 +48,7 @@ func setupLogRedirection() {
 func main() {
 	setupLogRedirection()
 
-	// Verifica se foi reiniciado pelo painel web
+	// Detecta se o bot foi reiniciado pelo painel web
 	restartedFile := "db/.restarted"
 	if _, err := os.Stat(restartedFile); err == nil {
 		fmt.Println("🔄 O bot foi REINICIADO com sucesso pelo Painel Web!")
@@ -57,33 +57,29 @@ func main() {
 		fmt.Println("🚀 O bot foi INICIADO com sucesso!")
 	}
 
-	// 🟢 Inicializa as configurações globais do bot
+	// Inicializa as configurações globais e o fluxo de conversa
 	config.InitConfig()
-
-	// 🟢 Inicializa o fluxo de conversa dinâmico
 	whatsapp.InitFlow()
 
-		// 1. Inicia o servidor do Painel Web em paralelo (porta 33090)
+	// Inicia o servidor do Painel Web em paralelo (porta 33090)
 	go whatsapp.StartWebServer()
 
-	// 2. Prepara o banco de dados da sessão do WhatsApp (SQLite)
+	// Prepara o banco de dados da sessão do WhatsApp (SQLite)
 	os.MkdirAll("db", 0777)
-	
 	container, err := sqlstore.New(context.Background(), "sqlite", "file:db/session.db?_pragma=foreign_keys(1)", nil)
 	if err != nil {
 		panic(err)
 	}
 
 	whatsapp.GlobalContainer = container
-	err = whatsapp.StartWhatsApp(context.Background())
-	if err != nil {
+	if err = whatsapp.StartWhatsApp(context.Background()); err != nil {
 		panic(err)
 	}
 
 	// Inicia o monitor de conexão SMTP em segundo plano
 	go whatsapp.StartSMTPChecker(context.Background())
 
-	// 5. Mantém o bot rodando até você apertar CTRL+C no terminal
+	// Mantém o bot rodando até receber SIGINT ou SIGTERM
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c

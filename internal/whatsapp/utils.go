@@ -16,40 +16,42 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// ─── Helpers de configuração ─────────────────────────────────────────────────
+
+// getEmpresa retorna o nome da empresa configurado, com fallback "TI".
 func getEmpresa() string {
-	nome := config.GetConfig().CompanyName
-	if nome == "" {
-		return "TI"
+	if nome := config.GetConfig().CompanyName; nome != "" {
+		return nome
 	}
-	return nome
+	return "TI"
 }
 
+// getSaudacao retorna a saudação correta conforme o horário de Brasília.
 func getSaudacao() string {
 	loc, err := time.LoadLocation("America/Sao_Paulo")
-	var agora time.Time
-	if err != nil {
-		agora = time.Now()
-	} else {
-		agora = time.Now().In(loc)
+	agora := time.Now()
+	if err == nil {
+		agora = agora.In(loc)
 	}
-	hora := agora.Hour()
-	if hora >= 5 && hora < 12 {
+
+	switch h := agora.Hour(); {
+	case h >= 5 && h < 12:
 		return "Bom dia"
-	} else if hora >= 12 && hora < 18 {
+	case h >= 12 && h < 18:
 		return "Boa tarde"
+	default:
+		return "Boa noite"
 	}
-	return "Boa noite"
 }
 
-// Limpa formatações do número de suporte do .env
+// getSupportNumber retorna o número de suporte configurado, sem formatação.
 func getSupportNumber() string {
 	num := config.GetConfig().TelefoneNotificacao
-	num = strings.ReplaceAll(num, "+", "")
-	num = strings.ReplaceAll(num, "-", "")
-	num = strings.ReplaceAll(num, " ", "")
+	num = strings.NewReplacer("+", "", "-", "", " ", "").Replace(num)
 	return strings.TrimSpace(num)
 }
 
+// isBlacklisted verifica se um número está na lista de bloqueados (DarkList).
 func isBlacklisted(sender string) bool {
 	darkListStr := config.GetConfig().DarkList
 	if darkListStr == "" {
@@ -57,32 +59,106 @@ func isBlacklisted(sender string) bool {
 	}
 
 	senderClean := strings.Split(sender, ":")[0]
-	darkList := strings.Split(darkListStr, ",")
 
-	for _, num := range darkList {
-		num = strings.TrimSpace(num)
-		num = strings.ReplaceAll(num, "+", "")
-		num = strings.ReplaceAll(num, "-", "")
-
+	for _, num := range strings.Split(darkListStr, ",") {
+		num = strings.NewReplacer("+", "", "-", "").Replace(strings.TrimSpace(num))
 		if num == "" {
 			continue
 		}
-
-		if len(senderClean) >= 8 && len(num) >= 8 {
-			if senderClean[len(senderClean)-8:] == num[len(num)-8:] {
-				return true
-			}
-		} else if senderClean == num {
+		if phonesSufixMatch(senderClean, num, 8) {
 			return true
 		}
 	}
+
 	return false
 }
 
+// ─── Envio de mensagens ───────────────────────────────────────────────────────
+
+// sendTextMessage envia uma mensagem de texto simples para um JID.
 func sendTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string) {
 	_, _ = sendMessage(ctx, client, jid, &waE2E.Message{Conversation: proto.String(text)})
 }
 
+// sendMessage envia qualquer tipo de mensagem, simulando digitação para chats de usuário.
+func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, msg *waE2E.Message) (whatsmeow.SendResponse, error) {
+	if client == nil {
+		return whatsmeow.SendResponse{}, fmt.Errorf("cliente whatsmeow nulo")
+	}
+
+	// Não simula digitação para o chat interno do suporte/TI
+	if !strings.Contains(jid.String(), getSupportNumber()) {
+		simularDigitacao(ctx, client, jid, msg)
+	}
+
+	resp, err := client.SendMessage(ctx, jid, msg)
+	if err != nil {
+		fmt.Printf("🚨 [ERRO WHATSAPP] Falha ao enviar mensagem para %s: %v\n", jid.String(), err)
+		if strings.Contains(err.Error(), "463") {
+			fmt.Printf(
+				"💡 [DICA] O número %s pode estar bloqueado como 'contato frio'. "+
+					"Envie 'oi' deste celular para o bot para liberar.\n",
+				jid.String(),
+			)
+		}
+	}
+
+	return resp, err
+}
+
+// simularDigitacao envia o evento de "digitando..." e aguarda um tempo proporcional
+// ao tamanho da mensagem antes de enviá-la, tornando a experiência mais natural.
+func simularDigitacao(ctx context.Context, client *whatsmeow.Client, jid types.JID, msg *waE2E.Message) {
+	mediaType := types.ChatPresenceMediaText
+	if msg.AudioMessage != nil {
+		mediaType = types.ChatPresenceMediaAudio
+	}
+
+	_ = client.SendChatPresence(ctx, jid, types.ChatPresenceComposing, mediaType)
+
+	delay := calcularDelay(msg)
+	time.Sleep(delay)
+
+	_ = client.SendChatPresence(ctx, jid, types.ChatPresencePaused, mediaType)
+}
+
+// calcularDelay estima o tempo de "digitação" com base no tamanho do texto.
+func calcularDelay(msg *waE2E.Message) time.Duration {
+	const (
+		minDelay     = 1000 * time.Millisecond
+		maxDelay     = 2500 * time.Millisecond
+		defaultDelay = 1200 * time.Millisecond
+		audioDelay   = 3000 * time.Millisecond
+		msPerChar    = 12 * time.Millisecond
+	)
+
+	var textLength int
+	switch {
+	case msg.Conversation != nil:
+		textLength = len(*msg.Conversation)
+	case msg.ExtendedTextMessage != nil && msg.ExtendedTextMessage.Text != nil:
+		textLength = len(*msg.ExtendedTextMessage.Text)
+	case msg.AudioMessage != nil:
+		return audioDelay
+	}
+
+	if textLength == 0 {
+		return defaultDelay
+	}
+
+	delay := time.Duration(textLength) * msPerChar
+	if delay < minDelay {
+		return minDelay
+	}
+	if delay > maxDelay {
+		return maxDelay
+	}
+	return delay
+}
+
+// ─── Formatação de mensagens ──────────────────────────────────────────────────
+
+// formatarMensagem substitui placeholders como {empresa}, {saudacao} e chaves customizadas.
 func formatarMensagem(msg string, placeholders map[string]string) string {
 	res := msg
 	for k, v := range placeholders {
@@ -93,78 +169,29 @@ func formatarMensagem(msg string, placeholders map[string]string) string {
 	return res
 }
 
+// extrairConteudoMensagem extrai o texto e possíveis mídias de um evento de mensagem.
 func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *waE2E.DocumentMessage) {
-	var rawText string
 	imgMsg := v.Message.GetImageMessage()
 	docMsg := v.Message.GetDocumentMessage()
 
-	if v.Message.GetExtendedTextMessage() != nil {
+	var rawText string
+	switch {
+	case v.Message.GetExtendedTextMessage() != nil:
 		rawText = v.Message.GetExtendedTextMessage().GetText()
-	} else if imgMsg != nil {
+	case imgMsg != nil:
 		rawText = imgMsg.GetCaption()
-	} else if docMsg != nil {
+	case docMsg != nil:
 		rawText = docMsg.GetCaption()
-	} else if v.Message.GetPollUpdateMessage() == nil {
+	case v.Message.GetPollUpdateMessage() == nil:
 		rawText = v.Message.GetConversation()
 	}
+
 	return rawText, imgMsg, docMsg
 }
 
-func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, msg *waE2E.Message) (whatsmeow.SendResponse, error) {
-	if client == nil {
-		return whatsmeow.SendResponse{}, fmt.Errorf("cliente whatsmeow nulo")
-	}
+// ─── Horário de atendimento ───────────────────────────────────────────────────
 
-	// Não simula digitação para alertas internos (ex: webhook enviado para o suporte/TI)
-	tiNum := getSupportNumber()
-	isTiChat := strings.Contains(jid.String(), tiNum)
-
-	if !isTiChat {
-		presenceState := types.ChatPresenceComposing
-		mediaType := types.ChatPresenceMediaText
-
-		if msg.AudioMessage != nil {
-			mediaType = types.ChatPresenceMediaAudio
-		}
-
-		_ = client.SendChatPresence(ctx, jid, presenceState, mediaType)
-
-		// Calcula tempo baseado na mensagem (velocidade média de escrita)
-		delay := 1200 * time.Millisecond
-		var textLength int
-		if msg.Conversation != nil {
-			textLength = len(*msg.Conversation)
-		} else if msg.ExtendedTextMessage != nil && msg.ExtendedTextMessage.Text != nil {
-			textLength = len(*msg.ExtendedTextMessage.Text)
-		}
-
-		if textLength > 0 {
-			calcDelay := time.Duration(textLength) * 12 * time.Millisecond
-			if calcDelay < 1000*time.Millisecond {
-				delay = 1000 * time.Millisecond
-			} else if calcDelay > 2500*time.Millisecond {
-				delay = 2500 * time.Millisecond
-			} else {
-				delay = calcDelay
-			}
-		} else if msg.AudioMessage != nil {
-			delay = 3000 * time.Millisecond
-		}
-
-		time.Sleep(delay)
-		_ = client.SendChatPresence(ctx, jid, types.ChatPresencePaused, mediaType)
-	}
-
-	resp, err := client.SendMessage(ctx, jid, msg)
-	if err != nil {
-		fmt.Printf("🚨 [ERRO WHATSAPP] Falha ao enviar mensagem para %s: %v\n", jid.String(), err)
-		if strings.Contains(err.Error(), "463") {
-			fmt.Printf("💡 [DICA] O número %s pode estar bloqueado como 'contato frio' pelo WhatsApp após a recriação da sessão. Para liberar, basta enviar qualquer mensagem (ex: 'oi') deste celular para o número do bot.\n", jid.String())
-		}
-	}
-	return resp, err
-}
-
+// IsOutsideWorkingHours retorna true se o momento atual está fora do horário configurado.
 func IsOutsideWorkingHours() bool {
 	cfg := config.GetConfig()
 	if !cfg.WorkingHoursEnabled {
@@ -177,56 +204,55 @@ func IsOutsideWorkingHours() bool {
 	}
 	now := time.Now().In(loc)
 
-	// 1. Verifica se o dia atual da semana é dia útil configurado
-	weekday := int(now.Weekday()) // 0=Domingo, 1=Segunda, ..., 6=Sábado
-	daysParts := strings.Split(cfg.WorkingDays, ",")
-	isWorkingDay := false
-	for _, dayStr := range daysParts {
-		dayStr = strings.TrimSpace(dayStr)
-		if dayStr == "" {
-			continue
+	if !isDiaUtil(now, cfg.WorkingDays) {
+		return true
+	}
+
+	return !estaNoPeriodo(now, cfg.WorkingHoursStart, cfg.WorkingHoursEnd)
+}
+
+// isDiaUtil verifica se o dia da semana atual está na lista de dias de trabalho.
+func isDiaUtil(t time.Time, workingDays string) bool {
+	weekday := int(t.Weekday())
+	for _, dayStr := range strings.Split(workingDays, ",") {
+		if d, err := strconv.Atoi(strings.TrimSpace(dayStr)); err == nil && d == weekday {
+			return true
 		}
-		d, err := strconv.Atoi(dayStr)
-		if err == nil && d == weekday {
-			isWorkingDay = true
-			break
-		}
 	}
-
-	if !isWorkingDay {
-		return true // Fora do expediente porque não é dia de trabalho
-	}
-
-	// 2. Verifica o horário (ex: "08:00" até "18:00")
-	startParts := strings.Split(cfg.WorkingHoursStart, ":")
-	endParts := strings.Split(cfg.WorkingHoursEnd, ":")
-	if len(startParts) != 2 || len(endParts) != 2 {
-		return false // Configuração inválida, considera dentro do horário por segurança
-	}
-
-	startHour, _ := strconv.Atoi(startParts[0])
-	startMin, _ := strconv.Atoi(startParts[1])
-	endHour, _ := strconv.Atoi(endParts[0])
-	endMin, _ := strconv.Atoi(endParts[1])
-
-	currentMinutes := now.Hour()*60 + now.Minute()
-	startMinutes := startHour*60 + startMin
-	endMinutes := endHour*60 + endMin
-
-	if currentMinutes < startMinutes || currentMinutes > endMinutes {
-		return true // Fora do horário de expediente diário
-	}
-
 	return false
 }
 
+// estaNoPeriodo verifica se o horário atual está entre start e end (no formato "HH:MM").
+func estaNoPeriodo(t time.Time, start, end string) bool {
+	parsarMinutos := func(s string) (int, bool) {
+		parts := strings.Split(s, ":")
+		if len(parts) != 2 {
+			return 0, false
+		}
+		h, errH := strconv.Atoi(parts[0])
+		m, errM := strconv.Atoi(parts[1])
+		if errH != nil || errM != nil {
+			return 0, false
+		}
+		return h*60 + m, true
+	}
+
+	startMin, okS := parsarMinutos(start)
+	endMin, okE := parsarMinutos(end)
+	if !okS || !okE {
+		return true // Configuração inválida: considera dentro do horário por segurança
+	}
+
+	current := t.Hour()*60 + t.Minute()
+	return current >= startMin && current <= endMin
+}
+
+// ─── URL do GLPI ──────────────────────────────────────────────────────────────
+
+// obterLinkTicketGLPI monta o link direto para um ticket no painel web do GLPI.
 func obterLinkTicketGLPI(ticketID string) string {
 	apiURL := config.GetConfig().GLPIApiURL
-	baseWebURL := apiURL
-	baseWebURL = strings.TrimSuffix(baseWebURL, "/")
-	baseWebURL = strings.Replace(baseWebURL, "/apirest.php", "", 1)
-	baseWebURL = strings.Replace(baseWebURL, "apirest.php", "", 1)
-	baseWebURL = strings.TrimSuffix(baseWebURL, "/")
-	
-	return fmt.Sprintf("%s/index.php?redirect=ticket_%s", baseWebURL, ticketID)
+	baseURL := strings.TrimSuffix(apiURL, "/")
+	baseURL = strings.TrimSuffix(strings.ReplaceAll(baseURL, "/apirest.php", ""), "/")
+	return fmt.Sprintf("%s/index.php?redirect=ticket_%s", baseURL, ticketID)
 }

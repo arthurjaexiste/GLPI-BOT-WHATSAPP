@@ -3,7 +3,6 @@ package whatsapp
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,29 +14,32 @@ import (
 	"go.mau.fi/whatsmeow/types/events"
 )
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+// obterAtendentesSuporte retorna a lista de atendentes configurados no painel.
 func obterAtendentesSuporte() []string {
 	agentsStr := config.GetConfig().SupportAgents
 	var agents []string
-	if agentsStr != "" {
-		parts := strings.Split(agentsStr, ",")
-		for _, p := range parts {
-			p = strings.TrimSpace(p)
-			if p != "" {
-				agents = append(agents, p)
-			}
+
+	for _, p := range strings.Split(agentsStr, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			agents = append(agents, p)
 		}
 	}
-	if len(agents) == 0 {
-		agents = []string{}
-	}
+
 	return agents
 }
 
+// ─── Operações de chat ao vivo ────────────────────────────────────────────────
+
+// iniciarChatAoVivo coloca o usuário em atendimento direto ou na fila de espera.
 func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID types.JID, sender string) {
 	state.Mu.Lock()
+
 	if state.ActiveLiveChatUser == "" {
+		// Atendimento disponível: inicia direto
 		state.ActiveLiveChatUser = chatJID.String()
-		state.ActiveAgentName = "" // Começa sem ninguém assinando
+		state.ActiveAgentName = ""
 		if uState, ok := state.Users[sender]; ok {
 			uState.Step = 100
 		}
@@ -46,22 +48,9 @@ func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID ty
 
 		fmt.Printf("👥 [LIVECHAT] Novo atendimento ao vivo iniciado para %s (%s)\n", nome, sender)
 		sendTextMessage(ctx, client, chatJID, formatarMensagem(config.GetConfig().MsgFilaSuporte, nil))
-
-		supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
-
-		sendTextMessage(ctx, client, supportJID, fmt.Sprintf("🔔 *NOTIFICAÇÃO:* Novo pedido de chat de *%s*.", nome))
-		time.Sleep(1500 * time.Millisecond)
-
-		atendentes := obterAtendentesSuporte()
-		fmt.Printf("ℹ️ [LIVECHAT] Enviando enquete de suporte para %s. Atendentes: %v\n", supportJID, atendentes)
-
-		textoNotificacao := fmt.Sprintf("Quem vai assumir o atendimento de *%s*?", nome)
-		pollMsg := client.BuildPollCreation(textoNotificacao, atendentes, 1)
-		_, errSend := sendMessage(ctx, client, supportJID, pollMsg)
-		if errSend != nil {
-			fmt.Printf("🚨 [ERRO WHATSMEOW] Falha ao enviar enquete de suporte: %v\n", errSend)
-		}
+		notificarSuporteNovoAtendimento(ctx, client, nome)
 	} else {
+		// Atendimento ocupado: coloca na fila
 		state.LiveChatQueue = append(state.LiveChatQueue, chatJID.String())
 		if uState, ok := state.Users[sender]; ok {
 			uState.Step = 99
@@ -70,11 +59,15 @@ func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID ty
 		nome := state.Names[sender]
 		state.Mu.Unlock()
 
-		fmt.Printf("👥 [LIVECHAT] Atendimento ocupado. Adicionando %s (%s) à fila de espera (Posição: %d)\n", nome, sender, pos)
-		sendTextMessage(ctx, client, chatJID, formatarMensagem(config.GetConfig().MsgFilaEspera, map[string]string{"posicao": strconv.Itoa(pos)}))
+		fmt.Printf("👥 [LIVECHAT] Atendimento ocupado. Adicionando %s (%s) à fila (Posição: %d)\n", nome, sender, pos)
+		sendTextMessage(ctx, client, chatJID, formatarMensagem(
+			config.GetConfig().MsgFilaEspera,
+			map[string]string{"posicao": fmt.Sprintf("%d", pos)},
+		))
 	}
 }
 
+// encerrarChatAoVivo finaliza o atendimento ativo e promove o próximo da fila.
 func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerradoPeloSuporte bool) {
 	state.Mu.Lock()
 	currentUserFull := state.ActiveLiveChatUser
@@ -85,75 +78,95 @@ func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerrado
 	supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
 
 	if currentUserFull != "" {
-		userJID, _ := types.ParseJID(currentUserFull)
-		userNumber := userJID.User
-
-		state.Mu.Lock()
-		nome := state.Names[userNumber]
-		if uState, ok := state.Users[userNumber]; ok {
-			uState.Step = -1
-			uState.LastGreetingTime = time.Now().Add(-1 * time.Minute)
-		}
-		state.Mu.Unlock()
-
-		fmt.Printf("👥 [LIVECHAT] Chat ao vivo encerrado para %s (%s) | Encerrado por suporte: %t\n", nome, userNumber, encerradoPeloSuporte)
-		sendTextMessage(ctx, client, userJID, formatarMensagem(config.GetConfig().MsgFimAtendimento, nil))
-
-		if !encerradoPeloSuporte {
-			sendTextMessage(ctx, client, supportJID, fmt.Sprintf("✅ O usuário *%s* encerrou o chat ao vivo.", nome))
-		}
+		finalizarAtendimentoAtual(ctx, client, currentUserFull, supportJID, encerradoPeloSuporte)
 	}
 
+	promoverProximoDaFila(ctx, client, supportJID)
+}
+
+// finalizarAtendimentoAtual notifica o usuário e o suporte sobre o encerramento.
+func finalizarAtendimentoAtual(ctx context.Context, client *whatsmeow.Client, currentUserFull string, supportJID types.JID, encerradoPeloSuporte bool) {
+	userJID, _ := types.ParseJID(currentUserFull)
+	userNumber := userJID.User
+
 	state.Mu.Lock()
-	if len(state.LiveChatQueue) > 0 {
-		nextUserFull := state.LiveChatQueue[0]
-		state.LiveChatQueue = state.LiveChatQueue[1:]
-		state.ActiveLiveChatUser = nextUserFull
-		state.ActiveAgentName = ""
+	nome := state.Names[userNumber]
+	if uState, ok := state.Users[userNumber]; ok {
+		uState.Step = -1
+		uState.LastGreetingTime = time.Now().Add(-1 * time.Minute)
+	}
+	state.Mu.Unlock()
 
-		nextUserJID, _ := types.ParseJID(nextUserFull)
-		nextUserNumber := nextUserJID.User
+	fmt.Printf("👥 [LIVECHAT] Chat ao vivo encerrado para %s (%s) | Por suporte: %t\n", nome, userNumber, encerradoPeloSuporte)
+	sendTextMessage(ctx, client, userJID, formatarMensagem(config.GetConfig().MsgFimAtendimento, nil))
 
-		if uState, ok := state.Users[nextUserNumber]; ok {
-			uState.Step = 100
-		}
-		nomeProximo := state.Names[nextUserNumber]
-		state.Mu.Unlock()
-
-		fmt.Printf("👥 [LIVECHAT] Próximo da fila de espera puxado para atendimento: %s (%s)\n", nomeProximo, nextUserNumber)
-
-		sendTextMessage(ctx, client, nextUserJID, "⏳ Chegou a sua vez! Aguarde um momento enquanto um técnico assume o seu atendimento.")
-
-		sendTextMessage(ctx, client, supportJID, fmt.Sprintf("🔔 *NOTIFICAÇÃO FILA:* *%s* saiu da fila de espera e aguarda atendimento.", nomeProximo))
-		time.Sleep(1500 * time.Millisecond)
-
-		atendentes := obterAtendentesSuporte()
-		fmt.Printf("ℹ️ [LIVECHAT] Enviando enquete de suporte (fila) para %s. Atendentes: %v\n", supportJID, atendentes)
-
-		textoNotificacao := fmt.Sprintf("Quem vai assumir o atendimento de *%s*?", nomeProximo)
-		pollMsg := client.BuildPollCreation(textoNotificacao, atendentes, 1)
-		_, errSend := sendMessage(ctx, client, supportJID, pollMsg)
-		if errSend != nil {
-			fmt.Printf("🚨 [ERRO WHATSMEOW] Falha ao enviar enquete de suporte (fila): %v\n", errSend)
-		}
-	} else {
-		state.Mu.Unlock()
-		sendTextMessage(ctx, client, supportJID, "✅ Chat encerrado com sucesso. A fila de espera está vazia.")
+	if !encerradoPeloSuporte {
+		sendTextMessage(ctx, client, supportJID, fmt.Sprintf("✅ O usuário *%s* encerrou o chat ao vivo.", nome))
 	}
 }
 
+// promoverProximoDaFila puxa o próximo usuário da fila para atendimento direto.
+func promoverProximoDaFila(ctx context.Context, client *whatsmeow.Client, supportJID types.JID) {
+	state.Mu.Lock()
+
+	if len(state.LiveChatQueue) == 0 {
+		state.Mu.Unlock()
+		sendTextMessage(ctx, client, supportJID, "✅ Chat encerrado com sucesso. A fila de espera está vazia.")
+		return
+	}
+
+	nextUserFull := state.LiveChatQueue[0]
+	state.LiveChatQueue = state.LiveChatQueue[1:]
+	state.ActiveLiveChatUser = nextUserFull
+	state.ActiveAgentName = ""
+
+	nextUserJID, _ := types.ParseJID(nextUserFull)
+	nextUserNumber := nextUserJID.User
+
+	if uState, ok := state.Users[nextUserNumber]; ok {
+		uState.Step = 100
+	}
+	nomeProximo := state.Names[nextUserNumber]
+	state.Mu.Unlock()
+
+	fmt.Printf("👥 [LIVECHAT] Próximo da fila promovido para atendimento: %s (%s)\n", nomeProximo, nextUserNumber)
+
+	sendTextMessage(ctx, client, nextUserJID, "⏳ Chegou a sua vez! Aguarde um momento enquanto um técnico assume o seu atendimento.")
+	sendTextMessage(ctx, client, supportJID, fmt.Sprintf("🔔 *NOTIFICAÇÃO FILA:* *%s* saiu da fila de espera e aguarda atendimento.", nomeProximo))
+	notificarSuporteNovoAtendimento(ctx, client, nomeProximo)
+}
+
+// removerDaFila remove um usuário da fila de espera pelo seu número.
 func removerDaFila(sender string) {
 	state.Mu.Lock()
 	defer state.Mu.Unlock()
+
 	for i, uFull := range state.LiveChatQueue {
-		uJID, _ := types.ParseJID(uFull)
-		if uJID.User == sender {
+		if uJID, _ := types.ParseJID(uFull); uJID.User == sender {
 			state.LiveChatQueue = append(state.LiveChatQueue[:i], state.LiveChatQueue[i+1:]...)
 			break
 		}
 	}
 }
 
+// notificarSuporteNovoAtendimento envia a enquete de atribuição ao número de suporte.
+func notificarSuporteNovoAtendimento(ctx context.Context, client *whatsmeow.Client, nome string) {
+	supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
+	atendentes := obterAtendentesSuporte()
+
+	fmt.Printf("ℹ️ [LIVECHAT] Enviando enquete de suporte para %s. Atendentes: %v\n", supportJID, atendentes)
+
+	texto := fmt.Sprintf("Quem vai assumir o atendimento de *%s*?", nome)
+	pollMsg := client.BuildPollCreation(texto, atendentes, 1)
+
+	if _, err := sendMessage(ctx, client, supportJID, pollMsg); err != nil {
+		fmt.Printf("🚨 [ERRO WHATSMEOW] Falha ao enviar enquete de suporte: %v\n", err)
+	}
+}
+
+// ─── Relay de mensagens do suporte para o usuário ────────────────────────────
+
+// processarMensagemDoSuporte repassa uma mensagem do técnico para o cliente ativo.
 func processarMensagemDoSuporte(ctx context.Context, client *whatsmeow.Client, v *events.Message, textoLimpo string, encerrar bool) {
 	state.Mu.Lock()
 	activeUserFull := state.ActiveLiveChatUser
