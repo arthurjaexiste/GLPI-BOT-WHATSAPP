@@ -4,10 +4,17 @@ on:
   push:
     branches:
       - main
+    # Ignora commits que só alteram arquivos que não afetam a imagem Docker.
+    # Assim o rebuild não é disparado por mudanças em documentação ou configuração.
+    paths-ignore:
+      - "README.md"
+      - "docker-compose.yml"
+      - ".gitignore"
+      - ".dockerignore"
+      - "docs/**"
 
 env:
   REGISTRY: ghcr.io
-  # Define o nome da imagem como proprietario/repositorio em minusculo
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
