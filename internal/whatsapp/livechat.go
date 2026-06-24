@@ -150,17 +150,52 @@ func removerDaFila(sender string) {
 }
 
 // notificarSuporteNovoAtendimento envia a enquete de atribuição ao número de suporte.
+// Se o envio falhar com erro 463 (contato frio / sem conversa recente), faz fallback
+// para uma mensagem de texto listando os atendentes disponíveis.
 func notificarSuporteNovoAtendimento(ctx context.Context, client *whatsmeow.Client, nome string) {
 	supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
 	atendentes := obterAtendentesSuporte()
+
+	if len(atendentes) == 0 {
+		fmt.Printf("⚠️ [LIVECHAT] Nenhum atendente configurado. Enviando aviso de texto.\n")
+		sendTextMessage(ctx, client, supportJID, fmt.Sprintf(
+			"🔔 *NOTIFICAÇÃO:* Novo pedido de chat de *%s*.\n\n"+
+				"⚠️ Nenhum atendente configurado. Configure a lista em Suporte > Atendentes no painel.",
+			nome,
+		))
+		return
+	}
 
 	fmt.Printf("ℹ️ [LIVECHAT] Enviando enquete de suporte para %s. Atendentes: %v\n", supportJID, atendentes)
 
 	texto := fmt.Sprintf("Quem vai assumir o atendimento de *%s*?", nome)
 	pollMsg := client.BuildPollCreation(texto, atendentes, 1)
 
-	if _, err := sendMessage(ctx, client, supportJID, pollMsg); err != nil {
-		fmt.Printf("🚨 [ERRO WHATSMEOW] Falha ao enviar enquete de suporte: %v\n", err)
+	_, err := sendMessage(ctx, client, supportJID, pollMsg)
+	if err == nil {
+		return
+	}
+
+	fmt.Printf("🚨 [ERRO WHATSMEOW] Falha ao enviar enquete de suporte: %v\n", err)
+
+	// Fallback para erro 463: o número de suporte está como 'contato frio' pois
+	// não interagiu com o bot recentemente. Envia texto para que o suporte
+	// responda manualmente com o nome do atendente.
+	if strings.Contains(err.Error(), "463") {
+		fmt.Printf("⚠️ [LIVECHAT] Erro 463 (contato frio). Usando fallback de texto para o suporte.\n")
+
+		lista := ""
+		for i, a := range atendentes {
+			lista += fmt.Sprintf("  *%d.* %s\n", i+1, a)
+		}
+
+		sendTextMessage(ctx, client, supportJID, fmt.Sprintf(
+			"🔔 *NOTIFICAÇÃO:* Novo pedido de chat de *%s*.\n\n"+
+				"📋 *Atendentes disponíveis:*\n%s\n"+
+				"↩️ Responda com o seu nome *exatamente* como listado acima para assumir o atendimento.\n\n"+
+				"💡 _Para restaurar o menu de seleção, envie qualquer mensagem para o bot._",
+			nome, lista,
+		))
 	}
 }
 
