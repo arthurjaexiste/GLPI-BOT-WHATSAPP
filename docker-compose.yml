@@ -1,7 +1,6 @@
 services:
   bot:
-    image: ghcr.io/arthurjaexiste/glpi-bot:latest
-    pull_policy: always
+    build: .
     container_name: glpi-bot
     restart: unless-stopped
     environment:
