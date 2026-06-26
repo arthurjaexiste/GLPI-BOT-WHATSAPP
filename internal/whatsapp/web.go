@@ -482,7 +482,7 @@ func StartWebServer() {
 
 		botJID := ""
 		if client != nil && client.Store != nil && client.Store.ID != nil {
-			botJID = client.Store.ID.ToBare().String()
+			botJID = client.Store.ID.User + "@" + client.Store.ID.Server
 		}
 
 		type ChatInfo struct {
