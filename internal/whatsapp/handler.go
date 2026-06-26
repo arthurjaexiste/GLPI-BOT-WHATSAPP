@@ -141,8 +141,8 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 	}
 
 	ctx := context.Background()
-	sender := v.Info.Chat.User
-	chatJID := v.Info.Chat
+	chatJID := normalizarJID(ctx, client, v.Info.Chat)
+	sender := chatJID.User
 	pollUpdate := v.Message.GetPollUpdateMessage()
 
 	rawText, imgMsg, docMsg := extrairConteudoMensagem(v)
@@ -489,10 +489,48 @@ func logReceivedMessage(sender, userName string, userStep int, activeUserFull, t
 	}
 }
 
-// phonesSufixMatch compara os últimos n dígitos de dois números de telefone.
+// phonesSufixMatch compara dois números de telefone de forma segura,
+// tratando o 9º dígito brasileiro de forma que impeça colisões entre DDDs diferentes.
 func phonesSufixMatch(a, b string, n int) bool {
-	if len(a) >= n && len(b) >= n {
-		return a[len(a)-n:] == b[len(b)-n:]
+	// Limpa formatação e remove JID sufixos
+	clean := func(p string) string {
+		p = strings.Split(p, "@")[0]
+		p = strings.Split(p, ":")[0]
+		return strings.NewReplacer("+", "", "-", "", " ", "").Replace(p)
 	}
-	return false
+
+	numA := clean(a)
+	numB := clean(b)
+
+	if numA == numB {
+		return true
+	}
+
+	// Se ambos são brasileiros (DDI 55)
+	if strings.HasPrefix(numA, "55") && strings.HasPrefix(numB, "55") {
+		// Garante tamanho mínimo para extrair DDD (55 + 2 dígitos DDD = 4 caracteres)
+		if len(numA) >= 4 && len(numB) >= 4 {
+			// Compara o DDD (posições 2 e 3)
+			if numA[2:4] != numB[2:4] {
+				return false // DDDs diferentes, não são a mesma pessoa
+			}
+			// Compara o restante removendo o 9º dígito se presente
+			restA := numA[4:]
+			restB := numB[4:]
+			if len(restA) == 9 && restA[0] == '9' {
+				restA = restA[1:]
+			}
+			if len(restB) == 9 && restB[0] == '9' {
+				restB = restB[1:]
+			}
+			return restA == restB
+		}
+	}
+
+	// Fallback para comparação de sufixo padrão caso um dos números não seja brasileiro ou seja muito curto
+	if len(numA) >= n && len(numB) >= n {
+		return numA[len(numA)-n:] == numB[len(numB)-n:]
+	}
+
+	return numA == numB
 }
