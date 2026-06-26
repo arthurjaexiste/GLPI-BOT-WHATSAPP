@@ -629,6 +629,46 @@ func StartWebServer() {
 		json.NewEncoder(w).Encode(messages)
 	})
 
+	// API PARA APAGAR CONVERSA (Protegida)
+	http.HandleFunc("/api/chats/delete", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method != "DELETE" && r.Method != "POST" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		if webDB == nil {
+			http.Error(w, "Banco de dados não disponível", http.StatusInternalServerError)
+			return
+		}
+
+		jid := r.URL.Query().Get("jid")
+		if jid == "" {
+			http.Error(w, "JID é obrigatório", http.StatusBadRequest)
+			return
+		}
+
+		// Remove todas as mensagens do banco
+		_, err := webDB.Exec("DELETE FROM chat_messages WHERE chat_jid = ?", jid)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao apagar chat: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Reseta o estado do bot do usuário
+		userJIDStr := strings.Split(jid, "@")[0]
+		state.Mu.Lock()
+		delete(state.Users, userJIDStr)
+		state.Mu.Unlock()
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Conversa apagada com sucesso"})
+	})
+
 	// API PARA ENVIAR MENSAGEM DO PAINEL WEB PARA O WHATSAPP (Protegida)
 	http.HandleFunc("/api/chats/send", func(w http.ResponseWriter, r *http.Request) {
 		if !isAuthenticated(r) {

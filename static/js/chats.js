@@ -83,7 +83,7 @@ function renderChatsList(filteredData = null) {
             : "bg-zinc-900/40 hover:bg-white/5 border-white/5";
 
         const card = document.createElement("div");
-        card.className = `p-3 rounded-xl border cursor-pointer transition flex flex-col gap-1.5 ${cardClass}`;
+        card.className = `p-3 rounded-xl border cursor-pointer transition flex flex-col gap-1.5 relative group ${cardClass}`;
         card.onclick = () => selectChat(chat.jid, chat.name, chat.status);
 
         // Limita o tamanho do texto da última mensagem
@@ -99,13 +99,16 @@ function renderChatsList(filteredData = null) {
                 <div class="flex items-center gap-2.5 min-w-0">
                     <img src="/api/chats/avatar?jid=${encodeURIComponent(chat.jid)}&name=${encodeURIComponent(displayName)}" class="w-8 h-8 rounded-lg object-cover border border-white/10 flex-shrink-0" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&color=fff';" />
                     <div class="flex flex-col min-w-0">
-                        <span class="text-xs font-bold text-zinc-200 truncate max-w-[130px]">${displayName}</span>
+                        <span class="text-xs font-bold text-zinc-200 truncate max-w-[125px]">${displayName}</span>
                         ${subText}
                     </div>
                 </div>
                 <div class="flex items-center gap-1.5 flex-shrink-0">
-                    <span class="status-dot ${statusClass}"></span>
-                    <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">${statusText}</span>
+                    <span class="status-dot ${statusClass} group-hover:hidden"></span>
+                    <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest group-hover:hidden">${statusText}</span>
+                    <button onclick="event.stopPropagation(); deleteChat('${chat.jid}');" class="hidden group-hover:inline-flex items-center justify-center text-rose-400 hover:text-rose-300 transition text-xs p-1 hover:bg-white/5 rounded-md" title="Apagar conversa">
+                        🗑️
+                    </button>
                 </div>
             </div>
             <div class="flex items-center justify-between gap-2 mt-1">
@@ -298,4 +301,34 @@ function showToast(message, isSuccess = true) {
     setTimeout(() => {
         toast.classList.add("translate-y-24", "opacity-0");
     }, 3000);
+}
+
+// Apaga uma conversa e limpa o histórico
+async function deleteChat(jid) {
+    if (!confirm("Tem certeza que deseja apagar esta conversa e todo o seu histórico? Esta ação é irreversível e resetará o atendimento do bot para este contato.")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/chats/delete?jid=${encodeURIComponent(jid)}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) throw new Error("Erro ao apagar conversa");
+
+        showToast("Conversa apagada com sucesso!");
+
+        // Se a conversa apagada for a atualmente ativa, limpa a janela de chat e mostra placeholder
+        if (activeChatJID === jid) {
+            activeChatJID = null;
+            activeChatName = "";
+            document.getElementById("chat-placeholder").style.display = "flex";
+        }
+
+        // Recarrega a lista de chats
+        loadChatsList();
+    } catch (error) {
+        console.error(error);
+        showToast("Falha ao apagar conversa.", false);
+    }
 }
