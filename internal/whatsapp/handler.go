@@ -142,7 +142,7 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 	ctx := context.Background()
 	chatJID := normalizarJID(ctx, client, v.Info.Chat)
-	sender := chatJID.User
+	sender := NormalizePhoneLocal(chatJID.User)
 	pollUpdate := v.Message.GetPollUpdateMessage()
 
 	rawText, imgMsg, docMsg := extrairConteudoMensagem(v)
@@ -499,8 +499,16 @@ func phonesSufixMatch(a, b string, n int) bool {
 		return strings.NewReplacer("+", "", "-", "", " ", "").Replace(p)
 	}
 
-	numA := clean(a)
-	numB := clean(b)
+	ensureDDI := func(p string) string {
+		p = clean(p)
+		if !strings.HasPrefix(p, "55") && (len(p) == 10 || len(p) == 11) {
+			return "55" + p
+		}
+		return p
+	}
+
+	numA := ensureDDI(a)
+	numB := ensureDDI(b)
 
 	if numA == numB {
 		return true

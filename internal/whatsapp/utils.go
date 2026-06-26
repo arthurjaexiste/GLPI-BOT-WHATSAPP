@@ -351,3 +351,29 @@ func obterLinkTicketGLPI(ticketID string) string {
 	baseURL = strings.TrimSuffix(strings.ReplaceAll(baseURL, "/apirest.php", ""), "/")
 	return fmt.Sprintf("%s/index.php?redirect=ticket_%s", baseURL, ticketID)
 }
+
+// NormalizePhoneLocal normaliza o número de telefone localmente,
+// removendo formatação, sufixos e padronizando números brasileiros para 8 dígitos.
+func NormalizePhoneLocal(phone string) string {
+	phone = strings.Split(phone, "@")[0]
+	phone = strings.Split(phone, ":")[0]
+	phone = strings.NewReplacer("+", "", "-", "", " ", "").Replace(phone)
+
+	if strings.HasPrefix(phone, "55") && len(phone) >= 12 {
+		ddd := phone[2:4]
+		rest := phone[4:]
+		if len(rest) == 9 && rest[0] == '9' {
+			rest = rest[1:]
+		}
+		return "55" + ddd + rest
+	}
+	if !strings.HasPrefix(phone, "55") && (len(phone) == 10 || len(phone) == 11) {
+		ddd := phone[0:2]
+		rest := phone[2:]
+		if len(rest) == 9 && rest[0] == '9' {
+			rest = rest[1:]
+		}
+		return "55" + ddd + rest
+	}
+	return phone
+}

@@ -519,7 +519,7 @@ func StartWebServer() {
 				}
 
 				c.UserStatus = "bot"
-				userJIDStr := strings.Split(c.JID, "@")[0]
+				userJIDStr := NormalizePhoneLocal(c.JID)
 				state.Mu.Lock()
 				if uState, exists := state.Users[userJIDStr]; exists {
 					if uState.Step == 100 {
@@ -679,7 +679,7 @@ func StartWebServer() {
 		}
 
 		// Reseta o estado do bot do usuário
-		userJIDStr := strings.Split(jid, "@")[0]
+		userJIDStr := NormalizePhoneLocal(jid)
 		state.Mu.Lock()
 		delete(state.Users, userJIDStr)
 		state.Mu.Unlock()

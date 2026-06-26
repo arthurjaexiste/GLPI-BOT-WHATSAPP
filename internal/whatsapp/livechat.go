@@ -87,7 +87,7 @@ func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerrado
 // finalizarAtendimentoAtual notifica o usuário e o suporte sobre o encerramento.
 func finalizarAtendimentoAtual(ctx context.Context, client *whatsmeow.Client, currentUserFull string, supportJID types.JID, encerradoPeloSuporte bool) {
 	userJID, _ := types.ParseJID(currentUserFull)
-	userNumber := userJID.User
+	userNumber := NormalizePhoneLocal(userJID.User)
 
 	state.Mu.Lock()
 	nome := state.Names[userNumber]
@@ -121,7 +121,7 @@ func promoverProximoDaFila(ctx context.Context, client *whatsmeow.Client, suppor
 	state.ActiveAgentName = ""
 
 	nextUserJID, _ := types.ParseJID(nextUserFull)
-	nextUserNumber := nextUserJID.User
+	nextUserNumber := NormalizePhoneLocal(nextUserJID.User)
 
 	if uState, ok := state.Users[nextUserNumber]; ok {
 		uState.Step = 100
@@ -142,7 +142,7 @@ func removerDaFila(sender string) {
 	defer state.Mu.Unlock()
 
 	for i, uFull := range state.LiveChatQueue {
-		if uJID, _ := types.ParseJID(uFull); uJID.User == sender {
+		if uJID, _ := types.ParseJID(uFull); NormalizePhoneLocal(uJID.User) == NormalizePhoneLocal(sender) {
 			state.LiveChatQueue = append(state.LiveChatQueue[:i], state.LiveChatQueue[i+1:]...)
 			break
 		}
