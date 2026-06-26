@@ -2,6 +2,25 @@ let activeChatJID = null;
 let activeChatName = "";
 let chatsData = [];
 
+// Formata JID para exibir o número do telefone de forma legível
+function formatJIDToPhone(jid) {
+    if (!jid) return "";
+    // Remove sufixos como @s.whatsapp.net ou grupos, e também session id :1, :2
+    const num = jid.split('@')[0].split(':')[0];
+    
+    // Formatação de número brasileiro (+55 DD 9XXXX-XXXX ou +55 DD XXXX-XXXX)
+    if (num.startsWith('55') && num.length >= 10) {
+        const ddd = num.substring(2, 4);
+        const rest = num.substring(4);
+        if (rest.length === 9) {
+            return `+55 (${ddd}) ${rest.substring(0, 5)}-${rest.substring(5)}`;
+        } else if (rest.length === 8) {
+            return `+55 (${ddd}) ${rest.substring(0, 4)}-${rest.substring(4)}`;
+        }
+    }
+    return `+${num}`;
+}
+
 // Ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {
     loadChatsList();
@@ -71,16 +90,20 @@ function renderChatsList(filteredData = null) {
         let snippet = chat.last_message || "Nenhuma mensagem...";
         if (snippet.length > 35) snippet = snippet.substring(0, 35) + "...";
 
-        // Extrai o primeiro caractere para o avatar
-        const initial = chat.name ? chat.name.charAt(0).toUpperCase() : "?";
+        const phoneFormatted = formatJIDToPhone(chat.jid);
+        const displayName = chat.name ? chat.name : phoneFormatted;
+        const subText = chat.name ? `<span class="text-[9px] text-zinc-400 font-mono">${phoneFormatted}</span>` : '';
 
         card.innerHTML = `
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-zinc-300">${initial}</div>
-                    <span class="text-xs font-bold text-zinc-200 truncate max-w-[120px]">${chat.name || chat.jid}</span>
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <img src="/api/chats/avatar?jid=${encodeURIComponent(chat.jid)}&name=${encodeURIComponent(displayName)}" class="w-8 h-8 rounded-lg object-cover border border-white/10 flex-shrink-0" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&color=fff';" />
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-xs font-bold text-zinc-200 truncate max-w-[130px]">${displayName}</span>
+                        ${subText}
+                    </div>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 flex-shrink-0">
                     <span class="status-dot ${statusClass}"></span>
                     <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">${statusText}</span>
                 </div>
@@ -118,9 +141,15 @@ async function selectChat(jid, name, status) {
     document.getElementById("chat-placeholder").style.display = "none";
     
     // Configura o cabeçalho do chat ativo
-    document.getElementById("active-chat-name").textContent = activeChatName;
-    document.getElementById("active-chat-jid").textContent = jid;
-    document.getElementById("active-chat-avatar").textContent = activeChatName.charAt(0).toUpperCase();
+    const phoneFormatted = formatJIDToPhone(jid);
+    const displayName = name ? name : phoneFormatted;
+
+    document.getElementById("active-chat-name").textContent = displayName;
+    document.getElementById("active-chat-jid").textContent = phoneFormatted;
+    
+    // Configura o avatar no cabeçalho
+    const avatarContainer = document.getElementById("active-chat-avatar");
+    avatarContainer.innerHTML = `<img src="/api/chats/avatar?jid=${encodeURIComponent(jid)}&name=${encodeURIComponent(displayName)}" class="w-full h-full rounded-xl object-cover" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&color=fff';" />`;
 
     const statusDot = document.getElementById("active-chat-status-dot");
     const statusText = document.getElementById("active-chat-status-text");

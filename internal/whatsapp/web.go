@@ -11,6 +11,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -21,6 +22,7 @@ import (
 	"bot-glpi/internal/config"
 	"bot-glpi/internal/state"
 
+	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 )
@@ -515,6 +517,52 @@ func StartWebServer() {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(chats)
+	})
+
+	// API PARA IMAGEM DE PERFIL DO CONTATO (Protegida)
+	http.HandleFunc("/api/chats/avatar", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		jidParam := r.URL.Query().Get("jid")
+		nameParam := r.URL.Query().Get("name")
+		if nameParam == "" {
+			nameParam = "U"
+		}
+
+		fallbackURL := fmt.Sprintf("https://ui-avatars.com/api/?name=%s&background=random&color=fff", url.QueryEscape(nameParam))
+
+		if jidParam == "" {
+			http.Redirect(w, r, fallbackURL, http.StatusTemporaryRedirect)
+			return
+		}
+
+		ClientMu.Lock()
+		client := GlobalClient
+		ClientMu.Unlock()
+
+		if client == nil || !client.IsConnected() {
+			http.Redirect(w, r, fallbackURL, http.StatusTemporaryRedirect)
+			return
+		}
+
+		targetJID, err := types.ParseJID(jidParam)
+		if err != nil {
+			http.Redirect(w, r, fallbackURL, http.StatusTemporaryRedirect)
+			return
+		}
+
+		// Obtém a imagem de perfil do WhatsApp
+		avatarInfo, err := client.GetProfilePictureInfo(r.Context(), targetJID, nil)
+		if err != nil || avatarInfo == nil || avatarInfo.URL == "" {
+			http.Redirect(w, r, fallbackURL, http.StatusTemporaryRedirect)
+			return
+		}
+
+		// Redireciona para o link direto do avatar hospedado nos servidores do WhatsApp
+		http.Redirect(w, r, avatarInfo.URL, http.StatusTemporaryRedirect)
 	})
 
 	// API PARA OBTER HISTÓRICO DE MENSAGENS (Protegida)
