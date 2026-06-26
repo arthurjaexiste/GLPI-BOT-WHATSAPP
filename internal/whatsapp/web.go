@@ -555,7 +555,7 @@ func StartWebServer() {
 		}
 
 		// Obtém a imagem de perfil do WhatsApp
-		avatarInfo, err := client.GetProfilePictureInfo(r.Context(), targetJID, nil)
+		avatarInfo, err := client.GetProfilePictureInfo(r.Context(), targetJID, &whatsmeow.GetProfilePictureParams{})
 		if err != nil || avatarInfo == nil || avatarInfo.URL == "" {
 			http.Redirect(w, r, fallbackURL, http.StatusTemporaryRedirect)
 			return
