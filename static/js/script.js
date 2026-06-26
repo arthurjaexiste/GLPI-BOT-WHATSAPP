@@ -66,9 +66,14 @@ async function checkStatus() {
                         </div>
                         <span class="text-emerald-400 font-bold text-lg tracking-wide">Sessão Ativa</span>
                         <p class="text-xs text-gray-400 mt-1 font-normal">O bot está pronto e operando</p>
-                        <button onclick="whatsappLogout()" class="mt-5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 rounded-xl text-xs font-semibold transition duration-150 flex items-center gap-1.5 shadow-lg">
-                            ❌ Desconectar Bot
-                        </button>
+                        <div class="mt-5 flex gap-2 w-full justify-center">
+                            <a href="/chats" class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white rounded-xl text-xs font-semibold transition duration-150 flex items-center gap-1.5 shadow-md">
+                                💬 Abrir Conversas
+                            </a>
+                            <button onclick="whatsappLogout()" class="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 rounded-xl text-xs font-semibold transition duration-150 flex items-center gap-1.5 shadow-lg">
+                                ❌ Desconectar
+                            </button>
+                        </div>
                     </div>
                 `;
                 qrStatusText.style.display = 'block';
