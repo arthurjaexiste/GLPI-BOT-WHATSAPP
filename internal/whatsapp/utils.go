@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"bot-glpi/internal/config"
@@ -75,6 +76,67 @@ func isBlacklisted(sender string) bool {
 
 // ─── Envio de mensagens ───────────────────────────────────────────────────────
 
+var (
+	normalizedJIDsMu sync.RWMutex
+	normalizedJIDs   = make(map[string]types.JID)
+)
+
+// normalizarJID verifica se o JID é brasileiro e resolve o formato correto (8 ou 9 dígitos)
+// consultando o servidor do WhatsApp caso não esteja em cache.
+func normalizarJID(ctx context.Context, client *whatsmeow.Client, jid types.JID) types.JID {
+	if client == nil || jid.Server != types.DefaultUserServer {
+		return jid
+	}
+
+	// Verifica se é um número brasileiro (DDI 55)
+	if !strings.HasPrefix(jid.User, "55") {
+		return jid
+	}
+
+	normalizedJIDsMu.RLock()
+	cached, exists := normalizedJIDs[jid.User]
+	normalizedJIDsMu.RUnlock()
+	if exists {
+		return cached
+	}
+
+	var queryNumbers []string
+	user := jid.User
+
+	// Determina variantes (com e sem o 9º dígito)
+	if len(user) == 13 && user[4] == '9' {
+		// Formato 9 dígitos: e.g. 55 11 9 1234 5678
+		// Variante 8 dígitos: e.g. 55 11 1234 5678
+		eightDigit := user[:4] + user[5:]
+		queryNumbers = []string{"+" + user, "+" + eightDigit}
+	} else if len(user) == 12 {
+		// Formato 8 dígitos: e.g. 55 11 1234 5678
+		// Variante 9 dígitos: e.g. 55 11 9 1234 5678
+		nineDigit := user[:4] + "9" + user[4:]
+		queryNumbers = []string{"+" + user, "+" + nineDigit}
+	} else {
+		queryNumbers = []string{"+" + user}
+	}
+
+	// Consulta o WhatsApp para validar qual versão é a registrada
+	resp, err := client.IsOnWhatsApp(ctx, queryNumbers)
+	if err == nil {
+		for _, r := range resp {
+			if r.IsIn {
+				normalizedJIDsMu.Lock()
+				normalizedJIDs[user] = r.JID
+				normalizedJIDs[r.JID.User] = r.JID
+				normalizedJIDsMu.Unlock()
+				fmt.Printf("ℹ️ [JID NORMALIZER] JID original: %s | JID resolvido/correto: %s\n", jid.String(), r.JID.String())
+				return r.JID
+			}
+		}
+	}
+
+	// Caso falhe ou não encontre, retorna o JID original como fallback
+	return jid
+}
+
 // sendTextMessage envia uma mensagem de texto simples para um JID.
 func sendTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string) {
 	_, _ = sendMessage(ctx, client, jid, &waE2E.Message{Conversation: proto.String(text)})
@@ -85,6 +147,9 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 	if client == nil {
 		return whatsmeow.SendResponse{}, fmt.Errorf("cliente whatsmeow nulo")
 	}
+
+	// Normaliza o JID antes de qualquer operação (incluindo simulação de digitação)
+	jid = normalizarJID(ctx, client, jid)
 
 	// Não simula digitação para o chat interno do suporte/TI
 	if !strings.Contains(jid.String(), getSupportNumber()) {
