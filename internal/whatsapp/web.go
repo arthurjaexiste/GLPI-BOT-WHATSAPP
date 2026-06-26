@@ -808,6 +808,107 @@ func StartWebServer() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
+	// API PARA LISTAR OS ATENDENTES/TÉCNICOS (Protegida)
+	http.HandleFunc("/api/agents", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method != "GET" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		agents := obterAtendentesSuporte()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(agents)
+	})
+
+	// API PARA ASSUMIR UM ATENDIMENTO PELO PAINEL (Protegida)
+	http.HandleFunc("/api/chats/assume", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method != "POST" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req struct {
+			JID   string `json:"jid"`
+			Agent string `json:"agent"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "JSON inválido", http.StatusBadRequest)
+			return
+		}
+
+		targetJID, err := types.ParseJID(req.JID)
+		if err != nil {
+			http.Error(w, "JID inválido", http.StatusBadRequest)
+			return
+		}
+
+		userNumber := NormalizePhoneLocal(targetJID.User)
+
+		state.Mu.Lock()
+		uState, exists := state.Users[userNumber]
+		if !exists {
+			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
+			state.Users[userNumber] = uState
+		}
+		uState.Step = 100
+
+		state.ActiveAgentName = req.Agent
+		state.ActiveLiveChatUser = targetJID.String()
+
+		// Remove da fila de espera se estiver nela
+		for i, uFull := range state.LiveChatQueue {
+			if uJID, _ := types.ParseJID(uFull); NormalizePhoneLocal(uJID.User) == userNumber {
+				state.LiveChatQueue = append(state.LiveChatQueue[:i], state.LiveChatQueue[i+1:]...)
+				break
+			}
+		}
+
+		nomeUsuario := state.Names[userNumber]
+		if nomeUsuario == "" {
+			nomeUsuario = userNumber
+		}
+		state.Mu.Unlock()
+
+		ClientMu.Lock()
+		client := GlobalClient
+		ClientMu.Unlock()
+
+		if client != nil && client.IsConnected() {
+			// Envia a mensagem de suporte assumido para o usuário
+			msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": req.Agent})
+			sendTextMessage(context.Background(), client, targetJID, msgAssumido)
+
+			// Notifica o grupo/número de suporte
+			supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
+			sendTextMessage(context.Background(), client, supportJID, fmt.Sprintf(
+				"✅ O atendimento de *%s* foi assumido via Painel por *%s*.",
+				nomeUsuario, req.Agent,
+			))
+		} else {
+			// Se o bot estiver desconectado, podemos pelo menos inserir a mensagem de sistema no banco para que o painel mostre
+			if webDB != nil {
+				msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": req.Agent})
+				_, _ = webDB.Exec(
+					"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me) VALUES (?, ?, ?, ?, ?, 1)",
+					targetJID.String(), "GLPI-BOT (Bot)", "", msgAssumido, "text",
+				)
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+
 	// API PARA OBTER E SALVAR CONFIGURAÇÕES GERAIS
 	http.HandleFunc("/api/config", func(w http.ResponseWriter, r *http.Request) {
 		if !isAuthenticated(r) {
