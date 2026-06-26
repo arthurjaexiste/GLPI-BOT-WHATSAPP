@@ -332,3 +332,9 @@ async function deleteChat(jid) {
         showToast("Falha ao apagar conversa.", false);
     }
 }
+
+// Apaga a conversa ativa atualmente
+async function deleteActiveChat() {
+    if (!activeChatJID) return;
+    await deleteChat(activeChatJID);
+}

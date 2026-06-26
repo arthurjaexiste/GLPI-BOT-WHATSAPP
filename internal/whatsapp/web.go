@@ -476,6 +476,15 @@ func StartWebServer() {
 		}
 		defer rows.Close()
 
+		ClientMu.Lock()
+		client := GlobalClient
+		ClientMu.Unlock()
+
+		botJID := ""
+		if client != nil && client.Store != nil && client.Store.ID != nil {
+			botJID = client.Store.ID.ToBare().String()
+		}
+
 		type ChatInfo struct {
 			JID        string `json:"jid"`
 			Name       string `json:"name"`
@@ -489,6 +498,16 @@ func StartWebServer() {
 			var c ChatInfo
 			var rawTime string
 			if err := rows.Scan(&c.JID, &c.Name, &c.LastMsg, &rawTime); err == nil {
+				// Ignora o número do bot
+				if botJID != "" && (c.JID == botJID || strings.Split(c.JID, "@")[0] == strings.Split(botJID, "@")[0]) {
+					continue
+				}
+				// Ignora o número de suporte
+				supportNum := getSupportNumber()
+				if supportNum != "" && strings.Split(c.JID, "@")[0] == supportNum {
+					continue
+				}
+
 				if parsed, errTime := time.Parse("2006-01-02 15:04:05", rawTime); errTime == nil {
 					loc, _ := time.LoadLocation("America/Sao_Paulo")
 					if loc != nil {
