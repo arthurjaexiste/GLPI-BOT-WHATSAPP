@@ -1,5 +1,7 @@
 let activeChatJID = null;
 let activeChatName = "";
+let activeChatStatus = null;
+let agentsList = [];
 let chatsData = [];
 
 // Formata JID para exibir o número do telefone de forma legível
@@ -24,6 +26,7 @@ function formatJIDToPhone(jid) {
 // Ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {
     loadChatsList();
+    loadAgentsList();
     
     // Inicia polling periódico (atualiza mensagens a cada 3s e lista de chats a cada 6s)
     setInterval(() => {
@@ -139,6 +142,7 @@ function filterChats() {
 async function selectChat(jid, name, status) {
     activeChatJID = jid;
     activeChatName = name || jid;
+    activeChatStatus = status;
     
     // Esconde o placeholder
     document.getElementById("chat-placeholder").style.display = "none";
@@ -161,12 +165,15 @@ async function selectChat(jid, name, status) {
     if (status === "live_chat") {
         statusDot.classList.add("status-live_chat");
         statusText.textContent = "Live Chat / Suporte";
+        document.getElementById("assume-chat-banner").style.display = "none";
     } else if (status === "queue") {
         statusDot.classList.add("status-queue");
         statusText.textContent = "Fila de Espera";
+        document.getElementById("assume-chat-banner").style.display = "flex";
     } else {
         statusDot.classList.add("status-bot");
         statusText.textContent = "Interação Bot";
+        document.getElementById("assume-chat-banner").style.display = "flex";
     }
 
     // Limpa a tela
@@ -238,6 +245,11 @@ function renderMessages(messages, forceScroll = false) {
 
 // Envia mensagem via Painel Console
 async function sendConsoleMessage() {
+    if (activeChatStatus === "queue" || activeChatStatus === "bot") {
+        showToast("Selecione um técnico e clique em 'Assumir' antes de enviar mensagens.", false);
+        return;
+    }
+
     const input = document.getElementById("chat-message-input");
     const text = input.value.trim();
     
@@ -359,6 +371,8 @@ async function closeChat(jid) {
         if (!response.ok) throw new Error("Erro ao finalizar atendimento");
 
         showToast("Atendimento finalizado. Bot reativado!");
+        activeChatStatus = "bot";
+        document.getElementById("assume-chat-banner").style.display = "flex";
 
         // Recarrega a lista de chats para atualizar o status visual
         loadChatsList();
@@ -373,5 +387,74 @@ async function closeChat(jid) {
     } catch (error) {
         console.error(error);
         showToast("Falha ao finalizar atendimento.", false);
+    }
+}
+
+// Carrega a lista de atendentes/técnicos
+async function loadAgentsList() {
+    try {
+        const response = await fetch("/api/agents");
+        if (!response.ok) throw new Error("Erro ao buscar atendentes");
+        agentsList = await response.json();
+        
+        const select = document.getElementById("agent-select");
+        if (select) {
+            select.innerHTML = '<option value="">Selecione o Técnico...</option>';
+            agentsList.forEach(agent => {
+                const opt = document.createElement("option");
+                opt.value = agent;
+                opt.textContent = agent;
+                select.appendChild(opt);
+            });
+        }
+    } catch (error) {
+        console.error("Erro ao carregar atendentes:", error);
+    }
+}
+
+// Assume o chat ativo para o técnico selecionado
+async function assumeActiveChat() {
+    if (!activeChatJID) return;
+    
+    const select = document.getElementById("agent-select");
+    const selectedAgent = select.value;
+    
+    if (!selectedAgent) {
+        showToast("Selecione um técnico primeiro.", false);
+        return;
+    }
+    
+    try {
+        const response = await fetch("/api/chats/assume", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                jid: activeChatJID,
+                agent: selectedAgent
+            })
+        });
+        
+        if (!response.ok) throw new Error("Erro ao assumir atendimento");
+        
+        showToast(`Atendimento assumido por ${selectedAgent}!`);
+        document.getElementById("assume-chat-banner").style.display = "none";
+        
+        // Atualiza o status localmente para live_chat
+        activeChatStatus = "live_chat";
+        const statusDot = document.getElementById("active-chat-status-dot");
+        const statusText = document.getElementById("active-chat-status-text");
+        if (statusDot && statusText) {
+            statusDot.className = "w-1.5 h-1.5 rounded-full status-live_chat";
+            statusText.textContent = "Live Chat / Suporte";
+        }
+        
+        // Recarrega a lista de chats e as mensagens
+        loadChatsList(true);
+        refreshActiveMessages(true);
+    } catch (error) {
+        console.error("Erro ao assumir chat:", error);
+        showToast("Falha ao assumir atendimento.", false);
     }
 }
