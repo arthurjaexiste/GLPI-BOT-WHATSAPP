@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"bot-glpi/internal/config"
+	"bot-glpi/internal/state"
 
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
@@ -72,6 +73,20 @@ func initWebDB() {
 	)`)
 	if err != nil {
 		fmt.Println("🚨 Erro ao criar tabela tickets_history:", err)
+	}
+
+	_, err = webDB.Exec(`CREATE TABLE IF NOT EXISTS chat_messages (
+		id INTEGER PRIMARY KEY AUTOINCREMENT, 
+		chat_jid TEXT, 
+		sender_name TEXT, 
+		sender_jid TEXT, 
+		message_text TEXT, 
+		message_type TEXT, 
+		is_from_me INTEGER, 
+		timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)`)
+	if err != nil {
+		fmt.Println("🚨 Erro ao criar tabela chat_messages:", err)
 	}
 
 	var user string
@@ -414,6 +429,198 @@ func StartWebServer() {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Desconectando e iniciando novo QR Code..."})
+	})
+
+	// ROTA DE CHATS DO BOT (Protegido)
+	http.HandleFunc("/chats", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		tmpl, err := template.ParseFiles(filepath.Join(webDir, "chats.html"))
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao carregar a interface de chats: %v", err), http.StatusInternalServerError)
+			return
+		}
+		tmpl.Execute(w, nil)
+	})
+
+	// API PARA LISTAR AS CONVERSAS ATIVAS (Protegida)
+	http.HandleFunc("/api/chats", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if webDB == nil {
+			http.Error(w, "Banco de dados não disponível", http.StatusInternalServerError)
+			return
+		}
+
+		query := `
+			SELECT c.chat_jid, c.sender_name, c.message_text, c.timestamp
+			FROM chat_messages c
+			INNER JOIN (
+				SELECT chat_jid, MAX(id) as max_id
+				FROM chat_messages
+				GROUP BY chat_jid
+			) m ON c.id = m.max_id
+			ORDER BY c.timestamp DESC
+		`
+		rows, err := webDB.Query(query)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao buscar chats: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		type ChatInfo struct {
+			JID        string `json:"jid"`
+			Name       string `json:"name"`
+			LastMsg    string `json:"last_message"`
+			Timestamp  string `json:"timestamp"`
+			UserStatus string `json:"status"` // "live_chat", "queue", "bot"
+		}
+
+		chats := []ChatInfo{}
+		for rows.Next() {
+			var c ChatInfo
+			var rawTime string
+			if err := rows.Scan(&c.JID, &c.Name, &c.LastMsg, &rawTime); err == nil {
+				if parsed, errTime := time.Parse("2006-01-02 15:04:05", rawTime); errTime == nil {
+					loc, _ := time.LoadLocation("America/Sao_Paulo")
+					if loc != nil {
+						parsed = parsed.In(loc)
+					}
+					c.Timestamp = parsed.Format("02/01 15:04")
+				} else {
+					c.Timestamp = rawTime
+				}
+
+				c.UserStatus = "bot"
+				userJIDStr := strings.Split(c.JID, "@")[0]
+				state.Mu.Lock()
+				if uState, exists := state.Users[userJIDStr]; exists {
+					if uState.Step == 100 {
+						c.UserStatus = "live_chat"
+					} else if uState.Step == 99 {
+						c.UserStatus = "queue"
+					}
+				}
+				state.Mu.Unlock()
+
+				chats = append(chats, c)
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(chats)
+	})
+
+	// API PARA OBTER HISTÓRICO DE MENSAGENS (Protegida)
+	http.HandleFunc("/api/chats/messages", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if webDB == nil {
+			http.Error(w, "Banco de dados não disponível", http.StatusInternalServerError)
+			return
+		}
+
+		jid := r.URL.Query().Get("jid")
+		if jid == "" {
+			http.Error(w, "JID é obrigatório", http.StatusBadRequest)
+			return
+		}
+
+		rows, err := webDB.Query(`
+			SELECT id, sender_name, sender_jid, message_text, message_type, is_from_me, timestamp 
+			FROM chat_messages 
+			WHERE chat_jid = ? 
+			ORDER BY id ASC
+		`, jid)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao buscar mensagens: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		type MsgInfo struct {
+			ID         int    `json:"id"`
+			SenderName string `json:"sender_name"`
+			SenderJID  string `json:"sender_jid"`
+			Text       string `json:"text"`
+			Type       string `json:"type"`
+			IsFromMe   bool   `json:"is_from_me"`
+			Timestamp  string `json:"timestamp"`
+		}
+
+		messages := []MsgInfo{}
+		for rows.Next() {
+			var m MsgInfo
+			var rawTime string
+			var isFromMeInt int
+			if err := rows.Scan(&m.ID, &m.SenderName, &m.SenderJID, &m.Text, &m.Type, &isFromMeInt, &rawTime); err == nil {
+				m.IsFromMe = isFromMeInt == 1
+				if parsed, errTime := time.Parse("2006-01-02 15:04:05", rawTime); errTime == nil {
+					loc, _ := time.LoadLocation("America/Sao_Paulo")
+					if loc != nil {
+						parsed = parsed.In(loc)
+					}
+					m.Timestamp = parsed.Format("15:04")
+				} else {
+					m.Timestamp = rawTime
+				}
+				messages = append(messages, m)
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(messages)
+	})
+
+	// API PARA ENVIAR MENSAGEM DO PAINEL WEB PARA O WHATSAPP (Protegida)
+	http.HandleFunc("/api/chats/send", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method != "POST" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		ClientMu.Lock()
+		client := GlobalClient
+		ClientMu.Unlock()
+
+		if client == nil || !client.IsConnected() {
+			http.Error(w, "WhatsApp desconectado", http.StatusServiceUnavailable)
+			return
+		}
+
+		var req struct {
+			JID  string `json:"jid"`
+			Text string `json:"text"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "JSON inválido", http.StatusBadRequest)
+			return
+		}
+
+		targetJID, err := types.ParseJID(req.JID)
+		if err != nil {
+			http.Error(w, "JID inválido", http.StatusBadRequest)
+			return
+		}
+
+		sendTextMessage(context.Background(), client, targetJID, req.Text)
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
 	// API PARA OBTER E SALVAR CONFIGURAÇÕES GERAIS

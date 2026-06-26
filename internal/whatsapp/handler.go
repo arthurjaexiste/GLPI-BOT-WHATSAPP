@@ -163,6 +163,38 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 	logReceivedMessage(sender, userName, userStep, activeUserFull, text, imgMsg, docMsg, pollUpdate)
 
+	// Salva a mensagem recebida no banco para visualização no painel
+	if webDB != nil {
+		senderName := userName
+		if senderName == "" {
+			senderName = v.Info.PushName
+		}
+		if senderName == "" {
+			senderName = sender
+		}
+
+		msgText := text
+		msgType := "text"
+		if imgMsg != nil {
+			msgText = "[Imagem]"
+			if imgMsg.Caption != nil {
+				msgText = "[Imagem] " + *imgMsg.Caption
+			}
+			msgType = "image"
+		} else if docMsg != nil {
+			msgText = "[Documento] " + docMsg.GetFileName()
+			msgType = "document"
+		} else if pollUpdate != nil {
+			msgText = "[Voto em Enquete]"
+			msgType = "poll"
+		}
+
+		_, _ = webDB.Exec(
+			"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me) VALUES (?, ?, ?, ?, ?, 0)",
+			chatJID.String(), senderName, v.Info.Sender.String(), msgText, msgType,
+		)
+	}
+
 	// Verifica se o remetente é o número de suporte configurado
 	supportNumber := getSupportNumber()
 	isSupport := phonesSufixMatch(sender, supportNumber, 8)

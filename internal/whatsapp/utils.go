@@ -157,6 +157,36 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 	}
 
 	resp, err := client.SendMessage(ctx, jid, msg)
+	if err == nil {
+		if webDB != nil {
+			msgText := ""
+			msgType := "text"
+			if msg.Conversation != nil {
+				msgText = *msg.Conversation
+			} else if msg.ExtendedTextMessage != nil && msg.ExtendedTextMessage.Text != nil {
+				msgText = *msg.ExtendedTextMessage.Text
+			} else if msg.AudioMessage != nil {
+				msgText = "[Áudio]"
+				msgType = "audio"
+			} else if msg.ImageMessage != nil {
+				msgText = "[Imagem]"
+				msgType = "image"
+			} else if msg.DocumentMessage != nil {
+				msgText = "[Documento]"
+				msgType = "document"
+			} else if msg.PollCreationMessage != nil {
+				msgText = "[Enquete]"
+				msgType = "poll"
+			}
+
+			if msgText != "" {
+				_, _ = webDB.Exec(
+					"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me) VALUES (?, ?, ?, ?, ?, 1)",
+					jid.String(), "GLPI-BOT (Bot)", "", msgText, msgType,
+				)
+			}
+		}
+	}
 	if err != nil {
 		fmt.Printf("🚨 [ERRO WHATSAPP] Falha ao enviar mensagem para %s: %v\n", jid.String(), err)
 		if strings.Contains(err.Error(), "463") {
