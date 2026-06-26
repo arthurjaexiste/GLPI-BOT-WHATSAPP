@@ -338,3 +338,40 @@ async function deleteActiveChat() {
     if (!activeChatJID) return;
     await deleteChat(activeChatJID);
 }
+
+// Finaliza o atendimento ativo atualmente
+async function closeActiveChat() {
+    if (!activeChatJID) return;
+    await closeChat(activeChatJID);
+}
+
+// Finaliza o atendimento (devolve para o Bot)
+async function closeChat(jid) {
+    if (!confirm("Deseja finalizar o atendimento humano e reativar o Bot para esta conversa?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/chats/close?jid=${encodeURIComponent(jid)}`, {
+            method: "POST"
+        });
+
+        if (!response.ok) throw new Error("Erro ao finalizar atendimento");
+
+        showToast("Atendimento finalizado. Bot reativado!");
+
+        // Recarrega a lista de chats para atualizar o status visual
+        loadChatsList();
+        
+        // Atualiza cabeçalho do chat ativo para mostrar "Interação Bot"
+        const statusDot = document.getElementById("active-chat-status-dot");
+        const statusText = document.getElementById("active-chat-status-text");
+        if (statusDot && statusText) {
+            statusDot.className = "w-1.5 h-1.5 rounded-full status-bot";
+            statusText.textContent = "Interação Bot";
+        }
+    } catch (error) {
+        console.error(error);
+        showToast("Falha ao finalizar atendimento.", false);
+    }
+}

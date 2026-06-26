@@ -688,6 +688,68 @@ func StartWebServer() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Conversa apagada com sucesso"})
 	})
 
+	// API PARA FINALIZAR ATENDIMENTO / REATIVAR BOT (Protegida)
+	http.HandleFunc("/api/chats/close", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method != "POST" && r.Method != "DELETE" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		jid := r.URL.Query().Get("jid")
+		if jid == "" {
+			http.Error(w, "JID é obrigatório", http.StatusBadRequest)
+			return
+		}
+
+		targetJID, err := types.ParseJID(jid)
+		if err != nil {
+			http.Error(w, "JID inválido", http.StatusBadRequest)
+			return
+		}
+
+		userNumber := NormalizePhoneLocal(targetJID.User)
+
+		state.Mu.Lock()
+		uState, exists := state.Users[userNumber]
+		if exists {
+			// Reseta o passo para voltar ao bot
+			uState.Step = -1
+			uState.LastGreetingTime = time.Now().Add(-15 * time.Minute) // permite saudação imediata
+		}
+
+		// Se era o usuário ativo do live chat, libera
+		if state.ActiveLiveChatUser == targetJID.String() {
+			state.ActiveLiveChatUser = ""
+			state.ActiveAgentName = ""
+		}
+
+		// Também remove da fila se estivesse nela
+		for i, uFull := range state.LiveChatQueue {
+			if uJID, _ := types.ParseJID(uFull); NormalizePhoneLocal(uJID.User) == userNumber {
+				state.LiveChatQueue = append(state.LiveChatQueue[:i], state.LiveChatQueue[i+1:]...)
+				break
+			}
+		}
+		state.Mu.Unlock()
+
+		ClientMu.Lock()
+		client := GlobalClient
+		ClientMu.Unlock()
+
+		// Envia mensagem de encerramento para o usuário informando que o bot voltou
+		if client != nil && client.IsConnected() {
+			sendTextMessage(context.Background(), client, targetJID, "🤖 *Atendimento finalizado.* O bot automático foi reativado para esta conversa!")
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Atendimento finalizado com sucesso"})
+	})
+
 	// API PARA ENVIAR MENSAGEM DO PAINEL WEB PARA O WHATSAPP (Protegida)
 	http.HandleFunc("/api/chats/send", func(w http.ResponseWriter, r *http.Request) {
 		if !isAuthenticated(r) {
@@ -723,6 +785,22 @@ func StartWebServer() {
 			http.Error(w, "JID inválido", http.StatusBadRequest)
 			return
 		}
+
+		// Coloca o usuário em chat ao vivo/pausa o bot automático
+		userNumber := NormalizePhoneLocal(targetJID.User)
+		state.Mu.Lock()
+		uState, exists := state.Users[userNumber]
+		if !exists {
+			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
+			state.Users[userNumber] = uState
+		}
+		uState.Step = 100
+
+		// Define como o usuário ativo do Chat ao Vivo se não houver outro ativo
+		if state.ActiveLiveChatUser == "" {
+			state.ActiveLiveChatUser = targetJID.String()
+		}
+		state.Mu.Unlock()
 
 		sendTextMessage(context.Background(), client, targetJID, req.Text)
 
