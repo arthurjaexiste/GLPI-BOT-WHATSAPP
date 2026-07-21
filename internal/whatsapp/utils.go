@@ -220,11 +220,11 @@ func simularDigitacao(ctx context.Context, client *whatsmeow.Client, jid types.J
 // calcularDelay estima o tempo de "digitação" com base no tamanho do texto.
 func calcularDelay(msg *waE2E.Message) time.Duration {
 	const (
-		minDelay     = 1000 * time.Millisecond
-		maxDelay     = 2500 * time.Millisecond
-		defaultDelay = 1200 * time.Millisecond
-		audioDelay   = 3000 * time.Millisecond
-		msPerChar    = 12 * time.Millisecond
+		minDelay     = 150 * time.Millisecond
+		maxDelay     = 350 * time.Millisecond
+		defaultDelay = 150 * time.Millisecond
+		audioDelay   = 500 * time.Millisecond
+		msPerChar    = 2 * time.Millisecond
 	)
 
 	var textLength int
