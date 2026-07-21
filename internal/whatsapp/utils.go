@@ -265,9 +265,10 @@ func formatarMensagem(msg string, placeholders map[string]string) string {
 }
 
 // extrairConteudoMensagem extrai o texto e possíveis mídias de um evento de mensagem.
-func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *waE2E.DocumentMessage) {
+func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *waE2E.DocumentMessage, *waE2E.VideoMessage) {
 	imgMsg := v.Message.GetImageMessage()
 	docMsg := v.Message.GetDocumentMessage()
+	videoMsg := v.Message.GetVideoMessage()
 
 	var rawText string
 	switch {
@@ -277,11 +278,13 @@ func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *w
 		rawText = imgMsg.GetCaption()
 	case docMsg != nil:
 		rawText = docMsg.GetCaption()
+	case videoMsg != nil:
+		rawText = videoMsg.GetCaption()
 	case v.Message.GetPollUpdateMessage() == nil:
 		rawText = v.Message.GetConversation()
 	}
 
-	return rawText, imgMsg, docMsg
+	return rawText, imgMsg, docMsg, videoMsg
 }
 
 // ─── Horário de atendimento ───────────────────────────────────────────────────

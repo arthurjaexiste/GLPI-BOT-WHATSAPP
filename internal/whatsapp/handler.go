@@ -145,7 +145,7 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 	sender := NormalizePhoneLocal(chatJID.User)
 	pollUpdate := v.Message.GetPollUpdateMessage()
 
-	rawText, imgMsg, docMsg := extrairConteudoMensagem(v)
+	rawText, imgMsg, docMsg, videoMsg := extrairConteudoMensagem(v)
 	text := strings.TrimSpace(rawText)
 	textLower := strings.ToLower(text)
 
@@ -261,7 +261,7 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 	// ── Recebimento de mídias/anexos ──────────────────────────────────────
 	if currentStep >= 35 && currentStep <= 42 {
-		processarMidiasEAnexos(ctx, client, v, uState, sender, textLower, imgMsg, docMsg)
+		processarMidiasEAnexos(ctx, client, v, uState, sender, textLower, imgMsg, docMsg, videoMsg)
 		return
 	}
 

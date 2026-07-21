@@ -294,8 +294,32 @@ func processarNovaMensagemChamado(ctx context.Context, client *whatsmeow.Client,
 
 // processarMidiasEAnexos trata o envio de documentos e fotos durante a abertura
 // do chamado, controlando o fluxo de passos conforme as mídias chegam.
-func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, textLower string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage) {
+func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, textLower string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage, videoMsg *waE2E.VideoMessage) {
 	cfg := config.GetConfig()
+
+	state.Mu.Lock()
+	currentStep := uState.Step
+	state.Mu.Unlock()
+
+	// Verifica se a mídia enviada é um vídeo (mensagem nativa de vídeo ou arquivo com extensão/mime de vídeo)
+	isVideo := videoMsg != nil
+	if docMsg != nil {
+		mime := strings.ToLower(docMsg.GetMimetype())
+		fileName := strings.ToLower(docMsg.GetFileName())
+		if strings.HasPrefix(mime, "video/") ||
+			strings.HasSuffix(fileName, ".mp4") || strings.HasSuffix(fileName, ".avi") ||
+			strings.HasSuffix(fileName, ".mov") || strings.HasSuffix(fileName, ".mkv") ||
+			strings.HasSuffix(fileName, ".webm") || strings.HasSuffix(fileName, ".3gp") ||
+			strings.HasSuffix(fileName, ".m4v") || strings.HasSuffix(fileName, ".flv") {
+			isVideo = true
+		}
+	}
+
+	// Se o bot está no passo de solicitar fotos/imagens (passos 35, 36, 37) e o usuário envia um vídeo:
+	if (currentStep == 35 || currentStep == 36 || currentStep == 37) && isVideo {
+		sendTextMessage(ctx, client, v.Info.Chat, "⚠️ Não é permitido enviar vídeos. Por favor, envie somente fotos ou imagens (prints)! 📸")
+		return
+	}
 
 	if docMsg != nil {
 		processarDocumento(ctx, client, v, uState, docMsg, cfg)
