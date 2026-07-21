@@ -142,7 +142,11 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 	ctx := context.Background()
 	chatJID := normalizarJID(ctx, client, v.Info.Chat)
-	sender := NormalizePhoneLocal(chatJID.User)
+	senderJID := v.Info.Sender.User
+	if senderJID == "" {
+		senderJID = v.Info.Chat.User
+	}
+	sender := NormalizePhoneLocal(senderJID)
 	pollUpdate := v.Message.GetPollUpdateMessage()
 
 	rawText, imgMsg, docMsg, videoMsg := extrairConteudoMensagem(v)

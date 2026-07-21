@@ -264,24 +264,52 @@ func formatarMensagem(msg string, placeholders map[string]string) string {
 	return res
 }
 
+// unwrapMessage desembrulha mensagens do WhatsApp envoltas em contêineres como Ephemeral, ViewOnce, etc.
+func unwrapMessage(msg *waE2E.Message) *waE2E.Message {
+	if msg == nil {
+		return nil
+	}
+	if msg.GetEphemeralMessage() != nil && msg.GetEphemeralMessage().GetMessage() != nil {
+		return unwrapMessage(msg.GetEphemeralMessage().GetMessage())
+	}
+	if msg.GetViewOnceMessage() != nil && msg.GetViewOnceMessage().GetMessage() != nil {
+		return unwrapMessage(msg.GetViewOnceMessage().GetMessage())
+	}
+	if msg.GetViewOnceMessageV2() != nil && msg.GetViewOnceMessageV2().GetMessage() != nil {
+		return unwrapMessage(msg.GetViewOnceMessageV2().GetMessage())
+	}
+	if msg.GetViewOnceMessageV2Extension() != nil && msg.GetViewOnceMessageV2Extension().GetMessage() != nil {
+		return unwrapMessage(msg.GetViewOnceMessageV2Extension().GetMessage())
+	}
+	if msg.GetDocumentWithCaptionMessage() != nil && msg.GetDocumentWithCaptionMessage().GetMessage() != nil {
+		return unwrapMessage(msg.GetDocumentWithCaptionMessage().GetMessage())
+	}
+	return msg
+}
+
 // extrairConteudoMensagem extrai o texto e possíveis mídias de um evento de mensagem.
 func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *waE2E.DocumentMessage, *waE2E.VideoMessage) {
-	imgMsg := v.Message.GetImageMessage()
-	docMsg := v.Message.GetDocumentMessage()
-	videoMsg := v.Message.GetVideoMessage()
+	msg := unwrapMessage(v.Message)
+	if msg == nil {
+		return "", nil, nil, nil
+	}
+
+	imgMsg := msg.GetImageMessage()
+	docMsg := msg.GetDocumentMessage()
+	videoMsg := msg.GetVideoMessage()
 
 	var rawText string
 	switch {
-	case v.Message.GetExtendedTextMessage() != nil:
-		rawText = v.Message.GetExtendedTextMessage().GetText()
+	case msg.GetExtendedTextMessage() != nil:
+		rawText = msg.GetExtendedTextMessage().GetText()
 	case imgMsg != nil:
 		rawText = imgMsg.GetCaption()
 	case docMsg != nil:
 		rawText = docMsg.GetCaption()
 	case videoMsg != nil:
 		rawText = videoMsg.GetCaption()
-	case v.Message.GetPollUpdateMessage() == nil:
-		rawText = v.Message.GetConversation()
+	case msg.GetPollUpdateMessage() == nil:
+		rawText = msg.GetConversation()
 	}
 
 	return rawText, imgMsg, docMsg, videoMsg
