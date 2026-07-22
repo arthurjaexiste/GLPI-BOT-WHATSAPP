@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: ticket.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package whatsapp
 
 import (
@@ -23,6 +28,8 @@ import (
 
 // processarSaudacaoInicial exibe a mensagem de boas-vindas e inicia o fluxo de
 // identificação do usuário (novo ou retornante).
+
+// Função processarSaudacaoInicial executa a regra de negócio/rotina correspondente
 func processarSaudacaoInicial(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string) {
 	state.Mu.Lock()
 	nomeCompleto, jaConhece := state.Names[sender]
@@ -54,6 +61,8 @@ func processarSaudacaoInicial(ctx context.Context, client *whatsmeow.Client, v *
 
 // processarBuscaNomeGLPI busca o usuário no GLPI pelo nome digitado e apresenta
 // as opções encontradas em uma enquete.
+
+// Função processarBuscaNomeGLPI executa a regra de negócio/rotina correspondente
 func processarBuscaNomeGLPI(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, text string) {
 	sendTextMessage(ctx, client, v.Info.Chat, "🔍 Aguarde, estou buscando o seu cadastro...")
 
@@ -93,6 +102,8 @@ func processarBuscaNomeGLPI(ctx context.Context, client *whatsmeow.Client, v *ev
 }
 
 // processarNomeManual registra o nome digitado manualmente pelo usuário.
+
+// Função processarNomeManual executa a regra de negócio/rotina correspondente
 func processarNomeManual(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, text string) {
 	primeiroNome := strings.Split(text, " ")[0]
 
@@ -112,6 +123,8 @@ func processarNomeManual(ctx context.Context, client *whatsmeow.Client, v *event
 
 // obterPromptDescricaoDinamico retorna o texto de prompt configurado para o nó
 // atual do fluxo, ou um texto padrão se não houver configuração.
+
+// Função obterPromptDescricaoDinamico executa a regra de negócio/rotina correspondente
 func obterPromptDescricaoDinamico(uState *state.UserState) string {
 	if uState.CurrentNodeID != "" {
 		if node, found := FindNodeByID(uState.CurrentNodeID); found && node.Type == NodeGLPITicket && node.Content != "" {
@@ -122,6 +135,8 @@ func obterPromptDescricaoDinamico(uState *state.UserState) string {
 }
 
 // processarGravacaoTitulo valida e armazena o título do chamado.
+
+// Função processarGravacaoTitulo executa a regra de negócio/rotina correspondente
 func processarGravacaoTitulo(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, text string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage) {
 	if !temLetra(text) && imgMsg == nil && docMsg == nil {
 		sendTextMessage(ctx, client, v.Info.Chat, "⚠️ O título precisa ser um texto descritivo.")
@@ -138,6 +153,8 @@ func processarGravacaoTitulo(ctx context.Context, client *whatsmeow.Client, v *e
 
 // processarGravacaoDescricao valida e armazena a descrição do chamado, em seguida
 // pergunta sobre documentos e/ou fotos conforme a configuração do nó.
+
+// Função processarGravacaoDescricao executa a regra de negócio/rotina correspondente
 func processarGravacaoDescricao(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, text string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage) {
 	if !descricaoValida(text) && imgMsg == nil && docMsg == nil {
 		state.Mu.Lock()
@@ -196,6 +213,8 @@ func processarGravacaoDescricao(ctx context.Context, client *whatsmeow.Client, v
 
 // processarBuscaChamadoInfo busca as informações de um chamado pelo ID e pergunta
 // ao usuário se deseja adicionar uma nova mensagem.
+
+// Função processarBuscaChamadoInfo executa a regra de negócio/rotina correspondente
 func processarBuscaChamadoInfo(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, text string) {
 	ticketID, err := strconv.Atoi(text)
 	if err != nil {
@@ -244,6 +263,8 @@ func processarBuscaChamadoInfo(ctx context.Context, client *whatsmeow.Client, v 
 }
 
 // chamadoFinalizado retorna true se o chamado está em status de solucionado/fechado.
+
+// Função chamadoFinalizado executa a regra de negócio/rotina correspondente
 func chamadoFinalizado(statusInt int, statusStr string) bool {
 	if statusInt == 5 || statusInt == 6 {
 		return true
@@ -261,6 +282,8 @@ func chamadoFinalizado(statusInt int, statusStr string) bool {
 }
 
 // processarNovaMensagemChamado envia a mensagem digitada como followup do chamado ativo.
+
+// Função processarNovaMensagemChamado executa a regra de negócio/rotina correspondente
 func processarNovaMensagemChamado(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, text string) {
 	sendTextMessage(ctx, client, v.Info.Chat, "Aguarde, enviando mensagem para o chamado...")
 
@@ -294,6 +317,8 @@ func processarNovaMensagemChamado(ctx context.Context, client *whatsmeow.Client,
 
 // processarMidiasEAnexos trata o envio de documentos e fotos durante a abertura
 // do chamado, controlando o fluxo de passos conforme as mídias chegam.
+
+// Função processarMidiasEAnexos executa a regra de negócio/rotina correspondente
 func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, textLower string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage, videoMsg *waE2E.VideoMessage) {
 	cfg := config.GetConfig()
 
@@ -337,6 +362,8 @@ func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *ev
 	}
 }
 
+
+// Função processarDocumento executa a regra de negócio/rotina correspondente
 func processarDocumento(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, docMsg *waE2E.DocumentMessage, cfg config.Config) {
 	docBytes, err := client.Download(ctx, docMsg)
 	if err != nil {
@@ -362,6 +389,8 @@ func processarDocumento(ctx context.Context, client *whatsmeow.Client, v *events
 	}
 }
 
+
+// Função processarImagem executa a regra de negócio/rotina correspondente
 func processarImagem(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, imgMsg *waE2E.ImageMessage, cfg config.Config) {
 	imageBytes, err := client.Download(ctx, imgMsg)
 	if err != nil {
@@ -382,6 +411,8 @@ func processarImagem(ctx context.Context, client *whatsmeow.Client, v *events.Me
 	}
 }
 
+
+// Função processarConfirmacaoMidia executa a regra de negócio/rotina correspondente
 func processarConfirmacaoMidia(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, cfg config.Config) {
 	state.Mu.Lock()
 	currentStep := uState.Step
@@ -413,6 +444,8 @@ func processarConfirmacaoMidia(ctx context.Context, client *whatsmeow.Client, v 
 
 // FinalizarChamadoEAlertar cria o chamado no GLPI com todas as mídias coletadas,
 // notifica o usuário e envia um alerta interno para o suporte.
+
+// Função FinalizarChamadoEAlertar executa a regra de negócio/rotina correspondente
 func FinalizarChamadoEAlertar(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string) {
 	sendTextMessage(ctx, client, v.Info.Chat, "Aguarde um momento, registrando seu chamado no sistema...")
 
@@ -489,6 +522,8 @@ func FinalizarChamadoEAlertar(ctx context.Context, client *whatsmeow.Client, v *
 }
 
 // montarDescricaoHTML converte a descrição em HTML e embute as imagens em Base64.
+
+// Função montarDescricaoHTML executa a regra de negócio/rotina correspondente
 func montarDescricaoHTML(descricao string, imagens [][]byte) string {
 	html := "<div>" + strings.ReplaceAll(descricao, "\n", "<br>") + "</div>"
 
@@ -504,6 +539,8 @@ func montarDescricaoHTML(descricao string, imagens [][]byte) string {
 }
 
 // salvarHistoricoTicket persiste o ticket no banco de dados do painel web, se disponível.
+
+// Função salvarHistoricoTicket executa a regra de negócio/rotina correspondente
 func salvarHistoricoTicket(ticketID int, titulo, solicitante string) {
 	if webDB == nil {
 		return
@@ -518,6 +555,8 @@ func salvarHistoricoTicket(ticketID int, titulo, solicitante string) {
 }
 
 // notificarUsuarioTicketCriado envia a confirmação do ticket ao usuário.
+
+// Função notificarUsuarioTicketCriado executa a regra de negócio/rotina correspondente
 func notificarUsuarioTicketCriado(ctx context.Context, client *whatsmeow.Client, chatJID types.JID, ticketID int, titulo string, cfg config.Config) {
 	ticketIDStr := strconv.Itoa(ticketID)
 
@@ -539,6 +578,8 @@ func notificarUsuarioTicketCriado(ctx context.Context, client *whatsmeow.Client,
 }
 
 // notificarSuporteTicketCriado envia o alerta interno de novo chamado para o suporte.
+
+// Função notificarSuporteTicketCriado executa a regra de negócio/rotina correspondente
 func notificarSuporteTicketCriado(ctx context.Context, client *whatsmeow.Client, ticketID int, titulo, solicitante string, categoriaID int, cfg config.Config) {
 	targetJID := types.NewJID(cfg.TelefoneNotificacao, types.DefaultUserServer)
 	ticketIDStr := strconv.Itoa(ticketID)
@@ -560,6 +601,8 @@ func notificarSuporteTicketCriado(ctx context.Context, client *whatsmeow.Client,
 // ─── Validações ───────────────────────────────────────────────────────────────
 
 // temLetra verifica se uma string contém pelo menos uma letra.
+
+// Função temLetra executa a regra de negócio/rotina correspondente
 func temLetra(s string) bool {
 	for _, r := range s {
 		if unicode.IsLetter(r) {
@@ -571,6 +614,8 @@ func temLetra(s string) bool {
 
 // descricaoValida verifica se a descrição tem conteúdo mínimo aceitável
 // (evita mensagens com caracteres repetidos ou textos muito curtos).
+
+// Função descricaoValida executa a regra de negócio/rotina correspondente
 func descricaoValida(text string) bool {
 	if !temLetra(text) || len([]rune(text)) <= 10 {
 		return false

@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: main.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package main
 
 import (
@@ -16,6 +21,8 @@ import (
 
 // setupLogRedirection duplica toda a saída padrão (stdout/stderr) para um arquivo de log
 // enquanto mantém a exibição no terminal, permitindo diagnóstico remoto pelo painel web.
+
+// Função setupLogRedirection executa a regra de negócio/rotina correspondente
 func setupLogRedirection() {
 	_ = os.MkdirAll("db", 0777)
 
@@ -45,6 +52,8 @@ func setupLogRedirection() {
 	}()
 }
 
+
+// Função main executa a regra de negócio/rotina correspondente
 func main() {
 	setupLogRedirection()
 

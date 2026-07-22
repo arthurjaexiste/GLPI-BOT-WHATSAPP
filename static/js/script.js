@@ -1,8 +1,15 @@
+/**
+ * SCRIPT: script.js
+ * Descrição: Lógica de controle de frontend para a interface administrativa do GLPI-BOT.
+ */
+
 let statusInterval;
 let lastQR = "";
 let lastStatus = "";
 
-async function checkStatus() {
+async 
+// Função checkStatus manipula a rotina correspondente na interface do painel
+function checkStatus() {
     try {
         const response = await fetch('/api/status');
         const data = await response.json();
@@ -169,7 +176,9 @@ statusInterval = setInterval(checkStatus, 1000);
 checkStatus();
 
 // Histórico de chamados recentes
-async function fetchRecentTickets() {
+async 
+// Função fetchRecentTickets manipula a rotina correspondente na interface do painel
+function fetchRecentTickets() {
     try {
         const response = await fetch('/api/tickets/recent');
         if (!response.ok) throw new Error("Erro ao buscar chamados recentes");
@@ -209,7 +218,9 @@ fetchRecentTickets();
 setInterval(fetchRecentTickets, 10000);
 
 // Chamadas de controle de conexao do WhatsApp
-async function whatsappConnect() {
+async 
+// Função whatsappConnect manipula a rotina correspondente na interface do painel
+function whatsappConnect() {
     try {
         const res = await fetch('/api/whatsapp/connect', { method: 'POST' });
         const data = await res.json();
@@ -225,7 +236,9 @@ async function whatsappConnect() {
     }
 }
 
-async function whatsappLogout() {
+async 
+// Função whatsappLogout manipula a rotina correspondente na interface do painel
+function whatsappLogout() {
     if (!confirm("Tem certeza que deseja desconectar o bot e limpar a sessão ativa? Isso irá gerar um novo QR Code.")) {
         return;
     }

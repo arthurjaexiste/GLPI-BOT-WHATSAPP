@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: glpi.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package glpi
 
 import (
@@ -20,11 +25,15 @@ import (
 var httpClient = &http.Client{}
 
 // getBaseURL retorna a URL base da API do GLPI sem barra final.
+
+// Função getBaseURL executa a regra de negócio/rotina correspondente
 func getBaseURL() string {
 	return strings.TrimSuffix(config.GetConfig().GLPIApiURL, "/")
 }
 
 // setCommonHeaders adiciona os cabeçalhos obrigatórios para todas as requisições GLPI.
+
+// Função setCommonHeaders executa a regra de negócio/rotina correspondente
 func setCommonHeaders(req *http.Request, appToken, sessionToken string) {
 	req.Header.Set("App-Token", appToken)
 	req.Header.Set("Content-Type", "application/json")
@@ -36,6 +45,8 @@ func setCommonHeaders(req *http.Request, appToken, sessionToken string) {
 // ─── Sessão ───────────────────────────────────────────────────────────────────
 
 // GetGLPISession inicia uma sessão na API do GLPI e retorna o session_token.
+
+// Função GetGLPISession executa a regra de negócio/rotina correspondente
 func GetGLPISession() (string, error) {
 	cfg := config.GetConfig()
 	urlStr := fmt.Sprintf("%s/initSession", getBaseURL())
@@ -81,6 +92,8 @@ func GetGLPISession() (string, error) {
 // ─── Chamados ─────────────────────────────────────────────────────────────────
 
 // CriarChamado abre um novo ticket no GLPI e retorna o ID gerado.
+
+// Função CriarChamado executa a regra de negócio/rotina correspondente
 func CriarChamado(sessionToken, titulo, descricao string, urgencia, requesterID, categoryID int) (int, error) {
 	cfg := config.GetConfig()
 	urlStr := fmt.Sprintf("%s/Ticket", getBaseURL())
@@ -130,6 +143,8 @@ func CriarChamado(sessionToken, titulo, descricao string, urgencia, requesterID,
 }
 
 // BuscarChamado retorna status (string), código numérico do status e título de um ticket.
+
+// Função BuscarChamado executa a regra de negócio/rotina correspondente
 func BuscarChamado(sessionToken string, ticketID int) (string, int, string, error) {
 	cfg := config.GetConfig()
 	urlStr := fmt.Sprintf("%s/Ticket/%d", getBaseURL(), ticketID)
@@ -177,6 +192,8 @@ var mapaStatusGLPI = map[int]string{
 }
 
 // extrairStatusInt lida com a diversidade de tipos que o campo "status" pode ter na API.
+
+// Função extrairStatusInt executa a regra de negócio/rotina correspondente
 func extrairStatusInt(statusVal interface{}) int {
 	switch val := statusVal.(type) {
 	case float64:
@@ -193,6 +210,8 @@ func extrairStatusInt(statusVal interface{}) int {
 }
 
 // AdicionarMensagemChamado acrescenta um followup (acompanhamento) a um ticket existente.
+
+// Função AdicionarMensagemChamado executa a regra de negócio/rotina correspondente
 func AdicionarMensagemChamado(sessionToken string, ticketID int, mensagem string) error {
 	cfg := config.GetConfig()
 	urlStr := fmt.Sprintf("%s/ITILFollowup", getBaseURL())
@@ -232,6 +251,8 @@ func AdicionarMensagemChamado(sessionToken string, ticketID int, mensagem string
 // ─── Documentos ───────────────────────────────────────────────────────────────
 
 // AnexarDocumento faz o upload de um arquivo e o associa a um ticket no GLPI.
+
+// Função AnexarDocumento executa a regra de negócio/rotina correspondente
 func AnexarDocumento(sessionToken string, ticketID int, fileBytes []byte, filename string) error {
 	cfg := config.GetConfig()
 	urlStr := fmt.Sprintf("%s/Document", getBaseURL())
@@ -276,6 +297,8 @@ func AnexarDocumento(sessionToken string, ticketID int, fileBytes []byte, filena
 
 // BuscarUsuariosPorNome pesquisa usuários no GLPI por nome, sobrenome ou login.
 // Retorna até 10 resultados, excluindo visitantes automáticos.
+
+// Função BuscarUsuariosPorNome executa a regra de negócio/rotina correspondente
 func BuscarUsuariosPorNome(sessionToken, nomeBusca string) ([]string, []int, error) {
 	cfg := config.GetConfig()
 
@@ -320,6 +343,8 @@ func BuscarUsuariosPorNome(sessionToken, nomeBusca string) ([]string, []int, err
 
 // extrairLinhasUsuario normaliza a resposta da API (array ou objeto com "data")
 // em uma slice de mapas uniforme.
+
+// Função extrairLinhasUsuario executa a regra de negócio/rotina correspondente
 func extrairLinhasUsuario(bodyBytes []byte) ([]map[string]interface{}, error) {
 	var raw interface{}
 	if err := json.Unmarshal(bodyBytes, &raw); err != nil {
@@ -349,6 +374,8 @@ func extrairLinhasUsuario(bodyBytes []byte) ([]map[string]interface{}, error) {
 
 // processarLinhasUsuario extrai nomes e IDs da lista de linhas retornadas pela busca,
 // eliminando duplicatas e usuários visitantes gerados automaticamente.
+
+// Função processarLinhasUsuario executa a regra de negócio/rotina correspondente
 func processarLinhasUsuario(rows []map[string]interface{}) ([]string, []int, error) {
 	var nomes []string
 	var ids []int
@@ -383,6 +410,8 @@ func processarLinhasUsuario(rows []map[string]interface{}) ([]string, []int, err
 }
 
 // montarNome combina primeiro nome e sobrenome; usa o username como fallback.
+
+// Função montarNome executa a regra de negócio/rotina correspondente
 func montarNome(nomePrincipal, sobrenome, username string) string {
 	if nomePrincipal != "" {
 		if sobrenome != "" && sobrenome != nomePrincipal {
@@ -394,6 +423,8 @@ func montarNome(nomePrincipal, sobrenome, username string) string {
 }
 
 // CriarUsuarioVisitante cria um usuário temporário no GLPI para solicitantes não cadastrados.
+
+// Função CriarUsuarioVisitante executa a regra de negócio/rotina correspondente
 func CriarUsuarioVisitante(sessionToken, nomeCompleto string) (int, error) {
 	cfg := config.GetConfig()
 	urlStr := fmt.Sprintf("%s/User", getBaseURL())

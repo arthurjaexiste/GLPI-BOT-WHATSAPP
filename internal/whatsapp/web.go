@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: web.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package whatsapp
 
 import (
@@ -30,10 +35,13 @@ import (
 var startTime = time.Now()
 
 // recoveryHandler intercepta panics e exibe o erro no navegador em vez de resposta vazia
+// Struct recoveryHandler define a estrutura de dados e mapeamento correspondente
 type recoveryHandler struct {
 	handler http.Handler
 }
 
+
+// Função ServeHTTP executa a regra de negócio/rotina correspondente
 func (h *recoveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -45,6 +53,8 @@ func (h *recoveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Inicializa o banco de dados do painel web e cria o usuário padrão
+
+// Função initWebDB executa a regra de negócio/rotina correspondente
 func initWebDB() {
 	os.MkdirAll("db", 0777)
 	var err error
@@ -107,6 +117,8 @@ func initWebDB() {
 }
 
 // Gera um token de sessão aleatório
+
+// Função generateToken executa a regra de negócio/rotina correspondente
 func generateToken() string {
 	b := make([]byte, 16)
 	rand.Read(b)
@@ -114,6 +126,8 @@ func generateToken() string {
 }
 
 // Verifica se o usuário tem um cookie válido
+
+// Função isAuthenticated executa a regra de negócio/rotina correspondente
 func isAuthenticated(r *http.Request) bool {
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
@@ -128,6 +142,8 @@ func isAuthenticated(r *http.Request) bool {
 	return true
 }
 
+
+// Função getWebDir executa a regra de negócio/rotina correspondente
 func getWebDir() string {
 	paths := []string{".", "..", "../..", "../../.."}
 	for _, p := range paths {
@@ -139,6 +155,8 @@ func getWebDir() string {
 	return "."
 }
 
+
+// Função StartWebServer executa a regra de negócio/rotina correspondente
 func StartWebServer() {
 	initWebDB()
 	porta := "0.0.0.0:33090"
@@ -340,7 +358,8 @@ func StartWebServer() {
 		}
 		defer rows.Close()
 
-		type RecentTicket struct {
+		// Struct RecentTicket define a estrutura de dados e mapeamento correspondente
+type RecentTicket struct {
 			TicketID  string `json:"ticket_id"`
 			Title     string `json:"title"`
 			Requester string `json:"requester"`
@@ -485,7 +504,8 @@ func StartWebServer() {
 			botJID = client.Store.ID.User + "@" + client.Store.ID.Server
 		}
 
-		type ChatInfo struct {
+		// Struct ChatInfo define a estrutura de dados e mapeamento correspondente
+type ChatInfo struct {
 			JID        string `json:"jid"`
 			Name       string `json:"name"`
 			LastMsg    string `json:"last_message"`
@@ -614,7 +634,8 @@ func StartWebServer() {
 		}
 		defer rows.Close()
 
-		type MsgInfo struct {
+		// Struct MsgInfo define a estrutura de dados e mapeamento correspondente
+type MsgInfo struct {
 			ID         int    `json:"id"`
 			SenderName string `json:"sender_name"`
 			SenderJID  string `json:"sender_jid"`
@@ -1301,6 +1322,8 @@ func StartWebServer() {
 }
 
 // Retorna todos os IPs de rede locais (não-loopback) do host
+
+// Função getLocalIPs executa a regra de negócio/rotina correspondente
 func getLocalIPs() []string {
 	var ips []string
 	addrs, err := net.InterfaceAddrs()
@@ -1318,6 +1341,8 @@ func getLocalIPs() []string {
 }
 
 // Formata e retorna o tempo de atividade do bot (uptime)
+
+// Função getUptime executa a regra de negócio/rotina correspondente
 func getUptime() string {
 	d := time.Since(startTime)
 	h := d / time.Hour
@@ -1335,6 +1360,8 @@ func getUptime() string {
 	return fmt.Sprintf("%ds", s)
 }
 
+
+// Função triggerManualQRFlow executa a regra de negócio/rotina correspondente
 func triggerManualQRFlow() {
 	IsConnected = false
 	CurrentQR = ""

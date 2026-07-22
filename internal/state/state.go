@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: state.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package state
 
 import (
@@ -6,12 +11,14 @@ import (
 )
 
 // Doc representa um arquivo/documento enviado pelo usuário via WhatsApp.
+// Struct Doc define a estrutura de dados e mapeamento correspondente
 type Doc struct {
 	Bytes []byte
 	Name  string
 }
 
 // UserState mantém o estado da conversa de cada usuário durante o atendimento.
+// Struct UserState define a estrutura de dados e mapeamento correspondente
 type UserState struct {
 	Step             int
 	Title            string

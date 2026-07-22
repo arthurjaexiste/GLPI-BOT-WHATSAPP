@@ -1,5 +1,7 @@
 // Carrega as configurações atuais da API
-async function fetchConfig() {
+async 
+// Função fetchConfig manipula a rotina correspondente na interface do painel
+function fetchConfig() {
     try {
         const response = await fetch('/api/config');
         if (!response.ok) throw new Error('Falha ao obter configurações');
@@ -40,7 +42,9 @@ async function fetchConfig() {
 }
 
 // Salva as configurações via POST na API
-async function saveConfig() {
+async 
+// Função saveConfig manipula a rotina correspondente na interface do painel
+function saveConfig() {
     const company_name = document.getElementById('company_name').value.trim();
     const telefone_notificacao = document.getElementById('telefone_notificacao').value.trim();
     const glpi_api_url = document.getElementById('glpi_api_url').value.trim();
@@ -118,6 +122,8 @@ async function saveConfig() {
 }
 
 // Alterna entre mostrar e esconder a senha (tipo password / text)
+
+// Função toggleVisibility manipula a rotina correspondente na interface do painel
 function toggleVisibility(btn, id) {
     const input = document.getElementById(id);
     if (input.type === "password") {
@@ -132,7 +138,9 @@ function toggleVisibility(btn, id) {
 }
 
 // Copia o valor do token para a área de transferência
-async function copyToClipboard(id) {
+async 
+// Função copyToClipboard manipula a rotina correspondente na interface do painel
+function copyToClipboard(id) {
     const input = document.getElementById(id);
     const value = input.value;
     if (!value) {
@@ -148,6 +156,8 @@ async function copyToClipboard(id) {
 }
 
 // Exibe um toast temporário
+
+// Função showToast manipula a rotina correspondente na interface do painel
 function showToast(message, icon = '✅') {
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toast-icon');
@@ -176,7 +186,9 @@ function showToast(message, icon = '✅') {
 }
 
 // Altera a senha do administrador
-async function changePassword(event) {
+async 
+// Função changePassword manipula a rotina correspondente na interface do painel
+function changePassword(event) {
     event.preventDefault();
     const current_password = document.getElementById('current_password').value;
     const new_password = document.getElementById('new_password').value;
@@ -209,7 +221,9 @@ async function changePassword(event) {
 }
 
 // Reinicia o bot
-async function restartBot() {
+async 
+// Função restartBot manipula a rotina correspondente na interface do painel
+function restartBot() {
     if (!confirm('Tem certeza de que deseja reiniciar o bot? O painel ficará temporariamente indisponível por alguns segundos.')) {
         return;
     }
@@ -242,7 +256,9 @@ async function restartBot() {
 }
 
 // Tenta se reconectar ao bot em loop até o painel voltar, então redireciona para a home
-async function autoReconnect() {
+async 
+// Função autoReconnect manipula a rotina correspondente na interface do painel
+function autoReconnect() {
     const msgEl = document.getElementById('restart-msg');
     try {
         // Tenta buscar o status da API
@@ -267,7 +283,9 @@ async function autoReconnect() {
 window.addEventListener('DOMContentLoaded', fetchConfig);
 
 // Testar conexão SMTP antes de salvar
-async function testSMTP() {
+async 
+// Função testSMTP manipula a rotina correspondente na interface do painel
+function testSMTP() {
     const company_name = document.getElementById('company_name').value.trim();
     const smtp_host = document.getElementById('smtp_host').value.trim();
     const smtp_port = parseInt(document.getElementById('smtp_port').value) || 587;

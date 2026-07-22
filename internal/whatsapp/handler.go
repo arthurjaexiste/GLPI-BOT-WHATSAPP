@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: handler.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package whatsapp
 
 import (
@@ -36,6 +41,8 @@ var (
 // ─── Gerenciamento de estado do usuário ───────────────────────────────────────
 
 // resetarEstadoUsuario volta o usuário ao passo inicial, limpando dados parciais.
+
+// Função resetarEstadoUsuario executa a regra de negócio/rotina correspondente
 func resetarEstadoUsuario(sender string, uState *state.UserState) {
 	state.Mu.Lock()
 	defer state.Mu.Unlock()
@@ -49,6 +56,8 @@ func resetarEstadoUsuario(sender string, uState *state.UserState) {
 }
 
 // retrocederPasso trata o comando "*" enviado pelo usuário para navegar de volta.
+
+// Função retrocederPasso executa a regra de negócio/rotina correspondente
 func retrocederPasso(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string) {
 	state.Mu.Lock()
 	passoAtual := uState.Step
@@ -115,6 +124,8 @@ func retrocederPasso(ctx context.Context, client *whatsmeow.Client, v *events.Me
 }
 
 // buildChildOptions extrai os títulos dos filhos de um nó para montar a enquete.
+
+// Função buildChildOptions executa a regra de negócio/rotina correspondente
 func buildChildOptions(node FlowNode) []string {
 	options := make([]string, 0, len(node.Children))
 	for _, child := range node.Children {
@@ -124,6 +135,8 @@ func buildChildOptions(node FlowNode) []string {
 }
 
 // buildMenuPoll cria a enquete do WhatsApp para um nó de menu.
+
+// Função buildMenuPoll executa a regra de negócio/rotina correspondente
 func buildMenuPoll(client *whatsmeow.Client, node FlowNode, options []string) *waE2E.Message {
 	if node.ID == "root" {
 		return client.BuildPollCreation("Como posso te ajudar hoje?", options, 1)
@@ -134,6 +147,8 @@ func buildMenuPoll(client *whatsmeow.Client, node FlowNode, options []string) *w
 // ─── Handler principal de mensagens ───────────────────────────────────────────
 
 // HandleMessage é o ponto de entrada para todas as mensagens recebidas pelo bot.
+
+// Função HandleMessage executa a regra de negócio/rotina correspondente
 func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 	v, ok := evt.(*events.Message)
 	if !ok || v.Info.IsFromMe || v.Info.IsGroup {
@@ -290,6 +305,8 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 // ─── Handlers auxiliares do fluxo principal ───────────────────────────────────
 
+
+// Função handleSupportCommand executa a regra de negócio/rotina correspondente
 func handleSupportCommand(ctx context.Context, client *whatsmeow.Client, v *events.Message, text, sender string, isSupport bool, activeUserFull string) {
 	if activeUserFull == "" {
 		if isSupport {
@@ -315,6 +332,8 @@ func handleSupportCommand(ctx context.Context, client *whatsmeow.Client, v *even
 	processarMensagemDoSuporte(ctx, client, v, textoLimpo, false)
 }
 
+
+// Função handleUserInLiveChat executa a regra de negócio/rotina correspondente
 func handleUserInLiveChat(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, chatJID types.JID, text, textLower string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage) {
 	if textLower == "#encerrar" || textLower == "cancelar" || textLower == "sair" || text == "#" {
 		encerrarChatAoVivo(ctx, client, false)
@@ -340,6 +359,8 @@ func handleUserInLiveChat(ctx context.Context, client *whatsmeow.Client, v *even
 	}
 }
 
+
+// Função handleUserInQueue executa a regra de negócio/rotina correspondente
 func handleUserInQueue(ctx context.Context, client *whatsmeow.Client, uState *state.UserState, sender string, chatJID types.JID, textLower, text string) {
 	if textLower == "#cancelar" || textLower == "cancelar" || textLower == "sair" || text == "#" {
 		removerDaFila(sender)
@@ -357,6 +378,8 @@ func handleUserInQueue(ctx context.Context, client *whatsmeow.Client, uState *st
 
 // StartWhatsApp inicializa o cliente whatsmeow e conecta ao WhatsApp.
 // Se não houver sessão salva, inicia o processo de geração de QR Code.
+
+// Função StartWhatsApp executa a regra de negócio/rotina correspondente
 func StartWhatsApp(ctx context.Context) error {
 	ClientMu.Lock()
 	defer ClientMu.Unlock()
@@ -389,6 +412,8 @@ func StartWhatsApp(ctx context.Context) error {
 }
 
 // conectarComQR inicia a conexão via QR Code e publica os códigos no canal global.
+
+// Função conectarComQR executa a regra de negócio/rotina correspondente
 func conectarComQR(ctx context.Context, client *whatsmeow.Client) error {
 	qrChan, err := client.GetQRChannel(ctx)
 	if err != nil {
@@ -418,6 +443,8 @@ func conectarComQR(ctx context.Context, client *whatsmeow.Client) error {
 }
 
 // GetEventHandler retorna o handler de eventos do whatsmeow para o cliente fornecido.
+
+// Função GetEventHandler executa a regra de negócio/rotina correspondente
 func GetEventHandler(client *whatsmeow.Client) func(interface{}) {
 	return func(evt interface{}) {
 		switch v := evt.(type) {
@@ -449,6 +476,8 @@ func GetEventHandler(client *whatsmeow.Client) func(interface{}) {
 }
 
 // handleLogout aguarda um segundo, limpa as credenciais e reinicia o cliente.
+
+// Função handleLogout executa a regra de negócio/rotina correspondente
 func handleLogout(client *whatsmeow.Client) {
 	time.Sleep(1 * time.Second)
 	client.Disconnect()
@@ -462,6 +491,8 @@ func handleLogout(client *whatsmeow.Client) {
 
 // ─── Helpers de log ───────────────────────────────────────────────────────────
 
+
+// Função logReceivedMessage executa a regra de negócio/rotina correspondente
 func logReceivedMessage(sender, userName string, userStep int, activeUserFull, text string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage, pollUpdate interface{}) {
 	debugName := sender
 	if userName != "" {
@@ -495,6 +526,8 @@ func logReceivedMessage(sender, userName string, userStep int, activeUserFull, t
 
 // phonesSufixMatch compara dois números de telefone de forma segura,
 // tratando o 9º dígito brasileiro de forma que impeça colisões entre DDDs diferentes.
+
+// Função phonesSufixMatch executa a regra de negócio/rotina correspondente
 func phonesSufixMatch(a, b string, n int) bool {
 	// Limpa formatação e remove JID sufixos
 	clean := func(p string) string {

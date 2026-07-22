@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: livechat.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package whatsapp
 
 import (
@@ -17,6 +22,8 @@ import (
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 // obterAtendentesSuporte retorna a lista de atendentes configurados no painel.
+
+// Função obterAtendentesSuporte executa a regra de negócio/rotina correspondente
 func obterAtendentesSuporte() []string {
 	agentsStr := config.GetConfig().SupportAgents
 	var agents []string
@@ -33,6 +40,8 @@ func obterAtendentesSuporte() []string {
 // ─── Operações de chat ao vivo ────────────────────────────────────────────────
 
 // iniciarChatAoVivo coloca o usuário em atendimento direto ou na fila de espera.
+
+// Função iniciarChatAoVivo executa a regra de negócio/rotina correspondente
 func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID types.JID, sender string) {
 	state.Mu.Lock()
 
@@ -68,6 +77,8 @@ func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID ty
 }
 
 // encerrarChatAoVivo finaliza o atendimento ativo e promove o próximo da fila.
+
+// Função encerrarChatAoVivo executa a regra de negócio/rotina correspondente
 func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerradoPeloSuporte bool) {
 	state.Mu.Lock()
 	currentUserFull := state.ActiveLiveChatUser
@@ -85,6 +96,8 @@ func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerrado
 }
 
 // finalizarAtendimentoAtual notifica o usuário e o suporte sobre o encerramento.
+
+// Função finalizarAtendimentoAtual executa a regra de negócio/rotina correspondente
 func finalizarAtendimentoAtual(ctx context.Context, client *whatsmeow.Client, currentUserFull string, supportJID types.JID, encerradoPeloSuporte bool) {
 	userJID, _ := types.ParseJID(currentUserFull)
 	userNumber := NormalizePhoneLocal(userJID.User)
@@ -106,6 +119,8 @@ func finalizarAtendimentoAtual(ctx context.Context, client *whatsmeow.Client, cu
 }
 
 // promoverProximoDaFila puxa o próximo usuário da fila para atendimento direto.
+
+// Função promoverProximoDaFila executa a regra de negócio/rotina correspondente
 func promoverProximoDaFila(ctx context.Context, client *whatsmeow.Client, supportJID types.JID) {
 	state.Mu.Lock()
 
@@ -137,6 +152,8 @@ func promoverProximoDaFila(ctx context.Context, client *whatsmeow.Client, suppor
 }
 
 // removerDaFila remove um usuário da fila de espera pelo seu número.
+
+// Função removerDaFila executa a regra de negócio/rotina correspondente
 func removerDaFila(sender string) {
 	state.Mu.Lock()
 	defer state.Mu.Unlock()
@@ -152,6 +169,8 @@ func removerDaFila(sender string) {
 // notificarSuporteNovoAtendimento envia a enquete de atribuição ao número de suporte.
 // Se o envio falhar com erro 463 (contato frio / sem conversa recente), faz fallback
 // para uma mensagem de texto listando os atendentes disponíveis.
+
+// Função notificarSuporteNovoAtendimento executa a regra de negócio/rotina correspondente
 func notificarSuporteNovoAtendimento(ctx context.Context, client *whatsmeow.Client, nome string) {
 	supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
 	atendentes := obterAtendentesSuporte()
@@ -202,6 +221,8 @@ func notificarSuporteNovoAtendimento(ctx context.Context, client *whatsmeow.Clie
 // ─── Relay de mensagens do suporte para o usuário ────────────────────────────
 
 // processarMensagemDoSuporte repassa uma mensagem do técnico para o cliente ativo.
+
+// Função processarMensagemDoSuporte executa a regra de negócio/rotina correspondente
 func processarMensagemDoSuporte(ctx context.Context, client *whatsmeow.Client, v *events.Message, textoLimpo string, encerrar bool) {
 	state.Mu.Lock()
 	activeUserFull := state.ActiveLiveChatUser

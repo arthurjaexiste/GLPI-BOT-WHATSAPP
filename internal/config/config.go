@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: config.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package config
 
 import (
@@ -9,6 +14,7 @@ import (
 )
 
 // Config reúne todas as configurações do bot, persistidas em db/config.json.
+// Struct Config define a estrutura de dados e mapeamento correspondente
 type Config struct {
 	// Integração GLPI
 	GLPIApiURL    string `json:"glpi_api_url"`
@@ -69,6 +75,8 @@ var (
 
 // InitConfig carrega a configuração do disco. Se o arquivo não existir ou for
 // inválido, faz a migração automática a partir de variáveis de ambiente / .env.
+
+// Função InitConfig executa a regra de negócio/rotina correspondente
 func InitConfig() {
 	mu.Lock()
 	defer mu.Unlock()
@@ -95,6 +103,8 @@ func InitConfig() {
 // ─── API pública ──────────────────────────────────────────────────────────────
 
 // GetConfig retorna uma cópia thread-safe da configuração atual.
+
+// Função GetConfig executa a regra de negócio/rotina correspondente
 func GetConfig() Config {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -102,6 +112,8 @@ func GetConfig() Config {
 }
 
 // SaveConfig persiste uma nova configuração e atualiza os valores em memória.
+
+// Função SaveConfig executa a regra de negócio/rotina correspondente
 func SaveConfig(cfg Config) error {
 	mu.Lock()
 	defer mu.Unlock()
@@ -113,6 +125,8 @@ func SaveConfig(cfg Config) error {
 // ─── Persistência ─────────────────────────────────────────────────────────────
 
 // saveConfigLocked grava globalConfig em disco. Deve ser chamada com mu travado.
+
+// Função saveConfigLocked executa a regra de negócio/rotina correspondente
 func saveConfigLocked() error {
 	data, err := json.MarshalIndent(globalConfig, "", "  ")
 	if err != nil {
@@ -125,6 +139,8 @@ func saveConfigLocked() error {
 
 // carregarConfigDoAmbiente constrói uma Config a partir de variáveis de ambiente
 // e de um arquivo .env opcional (usado apenas na primeira execução).
+
+// Função carregarConfigDoAmbiente executa a regra de negócio/rotina correspondente
 func carregarConfigDoAmbiente() Config {
 	envMap := parseEnvFile()
 
@@ -174,6 +190,8 @@ func carregarConfigDoAmbiente() Config {
 
 // parseEnvFile lê manualmente um arquivo .env, se existir, retornando suas
 // chaves e valores. Usado apenas na migração inicial.
+
+// Função parseEnvFile executa a regra de negócio/rotina correspondente
 func parseEnvFile() map[string]string {
 	env := make(map[string]string)
 
@@ -214,6 +232,8 @@ func parseEnvFile() map[string]string {
 
 // preencherDefaultsMensagens garante que nenhum campo de mensagem fique vazio,
 // aplicando textos padrão caso o usuário não tenha configurado.
+
+// Função preencherDefaultsMensagens executa a regra de negócio/rotina correspondente
 func preencherDefaultsMensagens(cfg *Config) {
 	defaults := map[*string]string{
 		&cfg.MsgNovoUsuario: "{saudacao}! Sou o bot de chamados da {empresa} 😎\n\n" +

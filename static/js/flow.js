@@ -1,9 +1,16 @@
+/**
+ * SCRIPT: flow.js
+ * Descrição: Lógica de controle de frontend para a interface administrativa do GLPI-BOT.
+ */
+
 let flowRoot = null;
 let activeEditPath = []; // Caminho de índices para localizar o nó na árvore
 let activeEditMode = "edit"; // "edit" ou "add"
 
 // Carrega o fluxo de conversa via API
-async function fetchFlow() {
+async 
+// Função fetchFlow manipula a rotina correspondente na interface do painel
+function fetchFlow() {
     try {
         const response = await fetch('/api/flow');
         if (!response.ok) throw new Error('Erro ao obter fluxo');
@@ -16,6 +23,8 @@ async function fetchFlow() {
 }
 
 // Renderiza a árvore recursivamente
+
+// Função renderTree manipula a rotina correspondente na interface do painel
 function renderTree() {
     const treeContainer = document.getElementById('flow-tree');
     treeContainer.innerHTML = '';
@@ -28,6 +37,8 @@ function renderTree() {
 }
 
 // Gera o HTML do nó
+
+// Função createNodeUI manipula a rotina correspondente na interface do painel
 function createNodeUI(node, path, isRoot = false) {
     const div = document.createElement('div');
     div.className = `flex flex-col gap-3 rounded-2xl p-5 transition duration-200 ${isRoot ? 'bg-indigo-950/20 border border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-zinc-900/40 border border-white/5 ml-6 hover:border-white/10'}`;
@@ -36,7 +47,9 @@ function createNodeUI(node, path, isRoot = false) {
     let badgeHTML = '';
     switch (node.type) {
         case 'menu':
-            const backInfo = (isRoot || node.show_back_button !== false) ? ' (+Botão Voltar)' : ' (Sem Voltar)';
+            
+// Constante backInfo trata a execução de callback ou fluxo assíncrono
+const backInfo =isRoot || node.show_back_button !== false) ? ' (+Botão Voltar)' : ' (Sem Voltar)';
             badgeHTML = `<span class="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded">📁 Menu${backInfo}</span>`;
             break;
         case 'ticket':
@@ -116,6 +129,8 @@ function createNodeUI(node, path, isRoot = false) {
 }
 
 // Localiza um nó na árvore pelo caminho de índices
+
+// Função funcNodeByPath manipula a rotina correspondente na interface do painel
 function funcNodeByPath(path) {
     let cur = flowRoot;
     for (let idx of path) {
@@ -125,6 +140,8 @@ function funcNodeByPath(path) {
 }
 
 // Abre o modal de edição
+
+// Função openEditModal manipula a rotina correspondente na interface do painel
 function openEditModal(path) {
     activeEditPath = path;
     activeEditMode = "edit";
@@ -149,6 +166,8 @@ function openEditModal(path) {
 }
 
 // Abre o modal para adicionar
+
+// Função openAddModal manipula a rotina correspondente na interface do painel
 function openAddModal(path) {
     activeEditPath = path;
     activeEditMode = "add";
@@ -170,11 +189,15 @@ function openAddModal(path) {
     document.getElementById('edit-modal').classList.remove('hidden');
 }
 
+
+// Função closeModal manipula a rotina correspondente na interface do painel
 function closeModal() {
     document.getElementById('edit-modal').classList.add('hidden');
 }
 
 // Esconde ou mostra os campos de acordo com o tipo
+
+// Função toggleModalFields manipula a rotina correspondente na interface do painel
 function toggleModalFields() {
     const type = document.getElementById('node-type').value;
     const fieldGLPI = document.getElementById('field-glpi');
@@ -207,6 +230,8 @@ function toggleModalFields() {
 }
 
 // Confirma as alterações no modal
+
+// Função confirmModal manipula a rotina correspondente na interface do painel
 function confirmModal() {
     const title = document.getElementById('node-title').value.trim();
     const type = document.getElementById('node-type').value;
@@ -275,6 +300,8 @@ function confirmModal() {
 }
 
 // Exclui um nó
+
+// Função deleteNode manipula a rotina correspondente na interface do painel
 function deleteNode(parentPath, idx) {
     if (!confirm('Deseja realmente remover esta opção e todos os seus submenus?')) return;
     const parent = funcNodeByPath(parentPath);
@@ -283,6 +310,8 @@ function deleteNode(parentPath, idx) {
 }
 
 // Move a posição do nó para cima ou para baixo
+
+// Função moveNode manipula a rotina correspondente na interface do painel
 function moveNode(parentPath, idx, direction) {
     const parent = funcNodeByPath(parentPath);
     const targetIdx = idx + direction;
@@ -297,7 +326,9 @@ function moveNode(parentPath, idx, direction) {
 }
 
 // Salva a árvore na API
-async function saveFlow() {
+async 
+// Função saveFlow manipula a rotina correspondente na interface do painel
+function saveFlow() {
     try {
         const response = await fetch('/api/flow', {
             method: 'POST',
@@ -316,6 +347,8 @@ async function saveFlow() {
 }
 
 // Toast visual
+
+// Função showToast manipula a rotina correspondente na interface do painel
 function showToast(message, icon = '✅') {
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toast-icon');

@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: smtp.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package whatsapp
 
 import (
@@ -22,6 +27,8 @@ var (
 // StartSMTPChecker inicia o monitor de conexão do bot em segundo plano.
 // A cada 30 segundos verifica se o bot está online; após 10 minutos offline,
 // envia um e-mail de alerta (se o SMTP estiver configurado).
+
+// Função StartSMTPChecker executa a regra de negócio/rotina correspondente
 func StartSMTPChecker(ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -40,6 +47,8 @@ func StartSMTPChecker(ctx context.Context) {
 
 // checkConnectionAndSendEmail avalia o estado da conexão e dispara o alerta
 // se o bot estiver offline por mais de 10 minutos.
+
+// Função checkConnectionAndSendEmail executa a regra de negócio/rotina correspondente
 func checkConnectionAndSendEmail() {
 	ClientMu.Lock()
 	connected := IsConnected
@@ -78,12 +87,15 @@ func checkConnectionAndSendEmail() {
 // ─── Envio de e-mails ─────────────────────────────────────────────────────────
 
 // emailPayload agrupa os dados necessários para compor e enviar um e-mail.
+// Struct emailPayload define a estrutura de dados e mapeamento correspondente
 type emailPayload struct {
 	subject string
 	body    string
 }
 
 // sendSMTPEmail envia um e-mail HTML usando as configurações SMTP do bot.
+
+// Função sendSMTPEmail executa a regra de negócio/rotina correspondente
 func sendSMTPEmail(cfg config.Config, payload emailPayload) error {
 	host := smtpHost(cfg.SMTPHost)
 	auth := smtp.PlainAuth("", cfg.SMTPUsername, cfg.SMTPPassword, host)
@@ -94,6 +106,8 @@ func sendSMTPEmail(cfg config.Config, payload emailPayload) error {
 }
 
 // smtpHost extrai apenas o hostname de uma string que pode conter "host:porta".
+
+// Função smtpHost executa a regra de negócio/rotina correspondente
 func smtpHost(hostPort string) string {
 	if strings.Contains(hostPort, ":") {
 		return strings.Split(hostPort, ":")[0]
@@ -102,6 +116,8 @@ func smtpHost(hostPort string) string {
 }
 
 // smtpAlertPayload monta o e-mail de alerta de desconexão do bot.
+
+// Função smtpAlertPayload executa a regra de negócio/rotina correspondente
 func smtpAlertPayload(cfg config.Config) emailPayload {
 	subject := fmt.Sprintf("Subject: 🚨 ALERTA: Bot GLPI do WhatsApp Desconectado! (%s)\r\n", cfg.CompanyName)
 	body := fmt.Sprintf(`
@@ -134,6 +150,8 @@ func smtpAlertPayload(cfg config.Config) emailPayload {
 }
 
 // smtpTestPayload monta o e-mail de teste de configuração SMTP.
+
+// Função smtpTestPayload executa a regra de negócio/rotina correspondente
 func smtpTestPayload(cfg config.Config) emailPayload {
 	subject := fmt.Sprintf("Subject: 🧪 TESTE: Envio SMTP do Bot GLPI (%s)\r\n", cfg.CompanyName)
 	body := fmt.Sprintf(`
@@ -162,6 +180,8 @@ func smtpTestPayload(cfg config.Config) emailPayload {
 // ─── API pública ──────────────────────────────────────────────────────────────
 
 // SendSMTPTestEmail envia um e-mail de teste para validar as configurações SMTP.
+
+// Função SendSMTPTestEmail executa a regra de negócio/rotina correspondente
 func SendSMTPTestEmail(cfg config.Config) error {
 	return sendSMTPEmail(cfg, smtpTestPayload(cfg))
 }

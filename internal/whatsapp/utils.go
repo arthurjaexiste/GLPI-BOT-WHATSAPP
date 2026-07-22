@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: utils.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package whatsapp
 
 import (
@@ -20,6 +25,8 @@ import (
 // ─── Helpers de configuração ─────────────────────────────────────────────────
 
 // getEmpresa retorna o nome da empresa configurado, com fallback "TI".
+
+// Função getEmpresa executa a regra de negócio/rotina correspondente
 func getEmpresa() string {
 	if nome := config.GetConfig().CompanyName; nome != "" {
 		return nome
@@ -28,6 +35,8 @@ func getEmpresa() string {
 }
 
 // getSaudacao retorna a saudação correta conforme o horário de Brasília.
+
+// Função getSaudacao executa a regra de negócio/rotina correspondente
 func getSaudacao() string {
 	loc, err := time.LoadLocation("America/Sao_Paulo")
 	agora := time.Now()
@@ -46,6 +55,8 @@ func getSaudacao() string {
 }
 
 // getSupportNumber retorna o número de suporte configurado, sem formatação.
+
+// Função getSupportNumber executa a regra de negócio/rotina correspondente
 func getSupportNumber() string {
 	num := config.GetConfig().TelefoneNotificacao
 	num = strings.NewReplacer("+", "", "-", "", " ", "").Replace(num)
@@ -53,6 +64,8 @@ func getSupportNumber() string {
 }
 
 // isBlacklisted verifica se um número está na lista de bloqueados (DarkList).
+
+// Função isBlacklisted executa a regra de negócio/rotina correspondente
 func isBlacklisted(sender string) bool {
 	darkListStr := config.GetConfig().DarkList
 	if darkListStr == "" {
@@ -83,6 +96,8 @@ var (
 
 // normalizarJID verifica se o JID é brasileiro e resolve o formato correto (8 ou 9 dígitos)
 // consultando o servidor do WhatsApp caso não esteja em cache.
+
+// Função normalizarJID executa a regra de negócio/rotina correspondente
 func normalizarJID(ctx context.Context, client *whatsmeow.Client, jid types.JID) types.JID {
 	if client == nil || jid.Server != types.DefaultUserServer {
 		return jid
@@ -138,11 +153,15 @@ func normalizarJID(ctx context.Context, client *whatsmeow.Client, jid types.JID)
 }
 
 // sendTextMessage envia uma mensagem de texto simples para um JID.
+
+// Função sendTextMessage executa a regra de negócio/rotina correspondente
 func sendTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string) {
 	_, _ = sendMessage(ctx, client, jid, &waE2E.Message{Conversation: proto.String(text)})
 }
 
 // sendMessage envia qualquer tipo de mensagem, simulando digitação para chats de usuário.
+
+// Função sendMessage executa a regra de negócio/rotina correspondente
 func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, msg *waE2E.Message) (whatsmeow.SendResponse, error) {
 	if client == nil {
 		return whatsmeow.SendResponse{}, fmt.Errorf("cliente whatsmeow nulo")
@@ -203,6 +222,8 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 
 // simularDigitacao envia o evento de "digitando..." e aguarda um tempo proporcional
 // ao tamanho da mensagem antes de enviá-la, tornando a experiência mais natural.
+
+// Função simularDigitacao executa a regra de negócio/rotina correspondente
 func simularDigitacao(ctx context.Context, client *whatsmeow.Client, jid types.JID, msg *waE2E.Message) {
 	mediaType := types.ChatPresenceMediaText
 	if msg.AudioMessage != nil {
@@ -218,6 +239,8 @@ func simularDigitacao(ctx context.Context, client *whatsmeow.Client, jid types.J
 }
 
 // calcularDelay estima o tempo de "digitação" com base no tamanho do texto.
+
+// Função calcularDelay executa a regra de negócio/rotina correspondente
 func calcularDelay(msg *waE2E.Message) time.Duration {
 	const (
 		minDelay     = 150 * time.Millisecond
@@ -254,6 +277,8 @@ func calcularDelay(msg *waE2E.Message) time.Duration {
 // ─── Formatação de mensagens ──────────────────────────────────────────────────
 
 // formatarMensagem substitui placeholders como {empresa}, {saudacao} e chaves customizadas.
+
+// Função formatarMensagem executa a regra de negócio/rotina correspondente
 func formatarMensagem(msg string, placeholders map[string]string) string {
 	res := msg
 	for k, v := range placeholders {
@@ -265,6 +290,8 @@ func formatarMensagem(msg string, placeholders map[string]string) string {
 }
 
 // unwrapMessage desembrulha mensagens do WhatsApp envoltas em contêineres como Ephemeral, ViewOnce, etc.
+
+// Função unwrapMessage executa a regra de negócio/rotina correspondente
 func unwrapMessage(msg *waE2E.Message) *waE2E.Message {
 	if msg == nil {
 		return nil
@@ -288,6 +315,8 @@ func unwrapMessage(msg *waE2E.Message) *waE2E.Message {
 }
 
 // extrairConteudoMensagem extrai o texto e possíveis mídias de um evento de mensagem.
+
+// Função extrairConteudoMensagem executa a regra de negócio/rotina correspondente
 func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *waE2E.DocumentMessage, *waE2E.VideoMessage) {
 	msg := unwrapMessage(v.Message)
 	if msg == nil {
@@ -318,6 +347,8 @@ func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *w
 // ─── Horário de atendimento ───────────────────────────────────────────────────
 
 // IsOutsideWorkingHours retorna true se o momento atual está fora do horário configurado.
+
+// Função IsOutsideWorkingHours executa a regra de negócio/rotina correspondente
 func IsOutsideWorkingHours() bool {
 	cfg := config.GetConfig()
 	if !cfg.WorkingHoursEnabled {
@@ -338,6 +369,8 @@ func IsOutsideWorkingHours() bool {
 }
 
 // isDiaUtil verifica se o dia da semana atual está na lista de dias de trabalho.
+
+// Função isDiaUtil executa a regra de negócio/rotina correspondente
 func isDiaUtil(t time.Time, workingDays string) bool {
 	weekday := int(t.Weekday())
 	for _, dayStr := range strings.Split(workingDays, ",") {
@@ -349,6 +382,8 @@ func isDiaUtil(t time.Time, workingDays string) bool {
 }
 
 // estaNoPeriodo verifica se o horário atual está entre start e end (no formato "HH:MM").
+
+// Função estaNoPeriodo executa a regra de negócio/rotina correspondente
 func estaNoPeriodo(t time.Time, start, end string) bool {
 	parsarMinutos := func(s string) (int, bool) {
 		parts := strings.Split(s, ":")
@@ -376,6 +411,8 @@ func estaNoPeriodo(t time.Time, start, end string) bool {
 // ─── URL do GLPI ──────────────────────────────────────────────────────────────
 
 // obterLinkTicketGLPI monta o link direto para um ticket no painel web do GLPI.
+
+// Função obterLinkTicketGLPI executa a regra de negócio/rotina correspondente
 func obterLinkTicketGLPI(ticketID string) string {
 	apiURL := config.GetConfig().GLPIApiURL
 	baseURL := strings.TrimSuffix(apiURL, "/")
@@ -385,6 +422,8 @@ func obterLinkTicketGLPI(ticketID string) string {
 
 // NormalizePhoneLocal normaliza o número de telefone localmente,
 // removendo formatação, sufixos e padronizando números brasileiros para 8 dígitos.
+
+// Função NormalizePhoneLocal executa a regra de negócio/rotina correspondente
 func NormalizePhoneLocal(phone string) string {
 	phone = strings.Split(phone, "@")[0]
 	phone = strings.Split(phone, ":")[0]

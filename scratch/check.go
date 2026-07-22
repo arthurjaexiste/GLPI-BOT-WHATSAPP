@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: check.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package main
 
 import (
@@ -6,6 +11,8 @@ import (
 	"go.mau.fi/whatsmeow/types"
 )
 
+
+// Função main executa a regra de negócio/rotina correspondente
 func main() {
 	var info types.ProfilePictureInfo
 	t := reflect.TypeOf(info)

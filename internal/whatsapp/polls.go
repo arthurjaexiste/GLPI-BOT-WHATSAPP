@@ -1,3 +1,8 @@
+// ============================================================================
+// ARQUIVO: polls.go
+// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
+// ============================================================================
+
 package whatsapp
 
 import (
@@ -24,6 +29,8 @@ import (
 //
 // Inclui normalizações NFC/NFD para garantir compatibilidade com dispositivos
 // iOS/macOS, que decompõem caracteres acentuados (ex: "Não", "Impressoras").
+
+// Função matchOptionHash executa a regra de negócio/rotina correspondente
 func matchOptionHash(selectedHash []byte, optionText string) bool {
 	// Variantes a testar: original, sem espaços nas pontas, NFC e NFD
 	candidates := []string{
@@ -48,6 +55,8 @@ func matchOptionHash(selectedHash []byte, optionText string) bool {
 // ─── Handler principal de enquetes ───────────────────────────────────────────
 
 // HandlePollUpdate processa os votos recebidos em enquetes do WhatsApp.
+
+// Função HandlePollUpdate executa a regra de negócio/rotina correspondente
 func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string) {
 	fmt.Printf("ℹ️ [POLL] Recebido voto de enquete do remetente: %s\n", sender)
 
@@ -103,6 +112,8 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 
 // tratarVotoAtribuicaoAgente verifica se o voto é de um atendente assumindo o chat.
 // Retorna true se o voto foi processado como atribuição, false caso contrário.
+
+// Função tratarVotoAtribuicaoAgente executa a regra de negócio/rotina correspondente
 func tratarVotoAtribuicaoAgente(ctx context.Context, client *whatsmeow.Client, v *events.Message, selectedHash []byte) bool {
 	supportAgents := parsearAtendentes(config.GetConfig().SupportAgents)
 
@@ -133,6 +144,8 @@ func tratarVotoAtribuicaoAgente(ctx context.Context, client *whatsmeow.Client, v
 	return false
 }
 
+
+// Função tratarVotoConfirmacaoIdentidade executa a regra de negócio/rotina correspondente
 func tratarVotoConfirmacaoIdentidade(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool) {
 	if isSim {
 		state.Mu.Lock()
@@ -154,6 +167,8 @@ func tratarVotoConfirmacaoIdentidade(ctx context.Context, client *whatsmeow.Clie
 	}
 }
 
+
+// Função tratarVotoEnqueteDocumentos executa a regra de negócio/rotina correspondente
 func tratarVotoEnqueteDocumentos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
 		state.Mu.Lock()
@@ -175,6 +190,8 @@ func tratarVotoEnqueteDocumentos(ctx context.Context, client *whatsmeow.Client, 
 	}
 }
 
+
+// Função tratarVotoConfirmacaoDocumentos executa a regra de negócio/rotina correspondente
 func tratarVotoConfirmacaoDocumentos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
 		node, found := FindNodeByID(uState.CurrentNodeID)
@@ -196,6 +213,8 @@ func tratarVotoConfirmacaoDocumentos(ctx context.Context, client *whatsmeow.Clie
 	}
 }
 
+
+// Função tratarVotoEnqueteFotos executa a regra de negócio/rotina correspondente
 func tratarVotoEnqueteFotos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
 		state.Mu.Lock()
@@ -207,6 +226,8 @@ func tratarVotoEnqueteFotos(ctx context.Context, client *whatsmeow.Client, v *ev
 	}
 }
 
+
+// Função tratarVotoConfirmacaoFotos executa a regra de negócio/rotina correspondente
 func tratarVotoConfirmacaoFotos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
 		FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
@@ -218,6 +239,8 @@ func tratarVotoConfirmacaoFotos(ctx context.Context, client *whatsmeow.Client, v
 	}
 }
 
+
+// Função tratarVotoNovaMensagemChamado executa a regra de negócio/rotina correspondente
 func tratarVotoNovaMensagemChamado(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, isSim, isNao bool) {
 	if isSim {
 		state.Mu.Lock()
@@ -238,6 +261,8 @@ func tratarVotoNovaMensagemChamado(ctx context.Context, client *whatsmeow.Client
 // ─── Enquete de seleção de nome ───────────────────────────────────────────────
 
 // tratarVotoNomeSistema processa a seleção do nome do usuário na lista do GLPI.
+
+// Função tratarVotoNomeSistema executa a regra de negócio/rotina correspondente
 func tratarVotoNomeSistema(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, selectedHash []byte) {
 	state.Mu.Lock()
 	opcoesSalvas := uState.PollOptions
@@ -285,6 +310,8 @@ func tratarVotoNomeSistema(ctx context.Context, client *whatsmeow.Client, v *eve
 // ─── Menu raiz e fluxo dinâmico ───────────────────────────────────────────────
 
 // SendRootFlowPoll envia a enquete do menu raiz (nível 0) do fluxo configurado.
+
+// Função SendRootFlowPoll executa a regra de negócio/rotina correspondente
 func SendRootFlowPoll(ctx context.Context, client *whatsmeow.Client, jid types.JID, uState *state.UserState) {
 	root := GetFlowConfig()
 	options := make([]string, 0, len(root.Children))
@@ -302,6 +329,8 @@ func SendRootFlowPoll(ctx context.Context, client *whatsmeow.Client, jid types.J
 }
 
 // tratarVotoFluxoDinamico processa o voto no menu de navegação do fluxo configurável.
+
+// Função tratarVotoFluxoDinamico executa a regra de negócio/rotina correspondente
 func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, selectedHash []byte) {
 	state.Mu.Lock()
 	currentNodeID := uState.CurrentNodeID
@@ -337,6 +366,8 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 }
 
 // tratarNavegacaoVoltar volta ao nó pai na hierarquia do fluxo.
+
+// Função tratarNavegacaoVoltar executa a regra de negócio/rotina correspondente
 func tratarNavegacaoVoltar(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, currentNodeID string) {
 	fmt.Printf("ℹ️ [FLUXO] Usuário %s clicou em voltar a partir do nó %q\n", sender, currentNodeID)
 
@@ -357,6 +388,8 @@ func tratarNavegacaoVoltar(ctx context.Context, client *whatsmeow.Client, v *eve
 }
 
 // encontrarFilhoSelecionado percorre os filhos do nó atual procurando a opção votada.
+
+// Função encontrarFilhoSelecionado executa a regra de negócio/rotina correspondente
 func encontrarFilhoSelecionado(currentNode FlowNode, selectedHash []byte, sender string) (FlowNode, bool) {
 	fmt.Printf("ℹ️ [FLUXO] Nó %q encontrado. Procurando entre %d filhos...\n", currentNode.ID, len(currentNode.Children))
 
@@ -372,6 +405,8 @@ func encontrarFilhoSelecionado(currentNode FlowNode, selectedHash []byte, sender
 }
 
 // executarAcaoNodo executa a ação correspondente ao tipo do nó selecionado.
+
+// Função executarAcaoNodo executa a regra de negócio/rotina correspondente
 func executarAcaoNodo(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, node FlowNode) {
 	switch node.Type {
 	case NodeMenu:
@@ -423,6 +458,8 @@ func executarAcaoNodo(ctx context.Context, client *whatsmeow.Client, v *events.M
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 // parsearAtendentes converte a string de atendentes separada por vírgula em uma slice.
+
+// Função parsearAtendentes executa a regra de negócio/rotina correspondente
 func parsearAtendentes(agentsStr string) []string {
 	var agents []string
 	for _, p := range strings.Split(agentsStr, ",") {

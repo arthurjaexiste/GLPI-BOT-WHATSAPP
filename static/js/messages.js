@@ -1,7 +1,14 @@
+/**
+ * SCRIPT: messages.js
+ * Descrição: Lógica de controle de frontend para a interface administrativa do GLPI-BOT.
+ */
+
 let currentConfig = {};
 
 // Carrega as configurações atuais da API
-async function fetchConfig() {
+async 
+// Função fetchConfig manipula a rotina correspondente na interface do painel
+function fetchConfig() {
     try {
         const response = await fetch('/api/config');
         if (!response.ok) throw new Error('Falha ao obter configurações');
@@ -34,7 +41,9 @@ async function fetchConfig() {
 }
 
 // Salva as configurações via POST na API
-async function saveMessages() {
+async 
+// Função saveMessages manipula a rotina correspondente na interface do painel
+function saveMessages() {
     currentConfig.msg_novo_usuario = document.getElementById('msg_novo_usuario').value;
     currentConfig.msg_usuario_existente = document.getElementById('msg_usuario_existente').value;
     currentConfig.msg_menu_inicial = document.getElementById('msg_menu_inicial').value;
@@ -74,6 +83,8 @@ async function saveMessages() {
 }
 
 // Exibe um toast temporário
+
+// Função showToast manipula a rotina correspondente na interface do painel
 function showToast(message, icon = '✅') {
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toast-icon');
