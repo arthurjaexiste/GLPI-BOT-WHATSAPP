@@ -84,6 +84,12 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 
 	state.Mu.Lock()
 	currentStep := uState.Step
+	if currentStep == -1 {
+		// Fallback: se o bot reiniciou ou a sessão expirou, mas o usuário respondeu à enquete do menu principal, recupera a navegação
+		uState.Step = 1000
+		uState.CurrentNodeID = "root"
+		currentStep = 1000
+	}
 	state.Mu.Unlock()
 
 	cfg := config.GetConfig()

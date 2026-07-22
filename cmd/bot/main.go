@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"bot-glpi/internal/config"
+	"bot-glpi/internal/state"
 	"bot-glpi/internal/whatsapp"
 
 	"go.mau.fi/whatsmeow/store/sqlstore"
@@ -68,6 +69,8 @@ func main() {
 
 	// Inicializa as configurações globais e o fluxo de conversa
 	config.InitConfig()
+	state.LoadState()
+	state.StartPersister()
 	whatsapp.InitFlow()
 
 	// Inicia o servidor do Painel Web em paralelo (porta 33090)
