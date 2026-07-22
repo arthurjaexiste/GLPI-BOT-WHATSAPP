@@ -4,86 +4,107 @@
 
 # 🤖 GLPI-BOT: WhatsApp & Web Admin Panel
 
-Um ecossistema robusto e de alta performance desenvolvido em **Go (Golang)** que conecta o **WhatsApp** diretamente ao seu sistema de chamados **GLPI**. Com uma interface administrativa moderna e intuitiva, o bot gerencia fluxos dinâmicos de atendimento, abre chamados automaticamente com suporte a anexos (fotos e documentos), e envia alertas aos técnicos com links diretos.
+Um ecossistema robusto de alta performance desenvolvido em **Go (Golang)** projetado para conectar o **WhatsApp** diretamente ao sistema de chamados **GLPI**. Através de uma interface web administrativa moderna, responsiva e elegante, os administradores de TI podem estruturar árvores de conversação dinâmicas, gerenciar atendimentos humanos ao vivo (transbordo), configurar parâmetros de conexão GLPI e acompanhar logs operacionais em tempo real.
 
 ---
 
-## 🌟 Funcionalidades Detalhadas do Bot
+## 🚀 Arquitetura Geral & Estrutura de Pastas
 
-O **GLPI-BOT** oferece recursos completos para automatizar e otimizar o suporte de TI pelo WhatsApp:
+O projeto segue a estrutura padrão recomendada para aplicações Go modernas, separando o ponto de entrada (`cmd`) da lógica interna reutilizável (`internal`) e das interfaces de frontend (`web` / `static`):
 
-### 1. 💬 Fluxo Interativo de Conversação (Visual Flow Builder)
-- **Menu Principal e Submenus Ilimitados:** Estruture a árvore de decisão do bot através do painel. A navegação no WhatsApp é feita por **enquetes interativas (WhatsApp Polls)** nativas do aplicativo, eliminando erros de digitação.
-- **Botão "Voltar":** Habilite opcionalmente botões de retorno nas enquetes para facilitar a navegação do usuário.
-- **Acompanhamento de Tickets:** Permite ao usuário do WhatsApp consultar seus chamados abertos e o status de cada um no GLPI em tempo real.
+```
+GLPI-BOT/
+├── cmd/
+│   └── bot/
+│       └── main.go                 # Ponto de entrada do bot, redirecionamento de logs e inicialização dos serviços
+├── internal/
+│   ├── config/
+│   │   └── config.go               # Definição do schema de configurações, migração automática e valores padrões
+│   ├── glpi/
+│   │   └── glpi.go                 # Integração direta com a API Rest do GLPI (Abertura de chamados, envio de mídias e busca de usuários)
+│   ├── state/
+│   │   └── state.go                # Máquina de estados para rastrear o contexto de atendimento de cada número no WhatsApp
+│   └── whatsapp/
+│       ├── flow.go                 # Lógica de árvore de fluxo de navegação e enquetes interativas (WhatsApp Polls)
+│       ├── handler.go              # Ouvinte de mensagens do whatsmeow, tratando reconexões, recebimento de mídias e mensagens de ausência
+│       ├── livechat.go             # Fila de atendimento humano ao vivo, transbordo e controle de atendentes ativos
+│       ├── polls.go                # Utilitários para criação e processamento de votos/interações de enquetes
+│       ├── smtp.go                 # Verificador de saúde da conexão que envia e-mails em caso de queda do bot
+│       ├── ticket.go               # Fluxo passo a passo de coleta de dados de ticket (título, descrição, fotos e documentos)
+│       ├── utils.go                # Funções utilitárias como sanitização de números, validação de horários e tratamento de mídias
+│       └── web.go                  # Painel Web administrativo rodando em servidor HTTP nativo com endpoints REST JSON
+├── static/                         # Ativos estáticos do painel administrativo (CSS, JS, Imagens, Ícones PWA)
+├── web/                            # Templates HTML das páginas administrativas do painel
+├── Dockerfile                      # Dockerfile otimizado para build multi-stage gerando uma imagem final ultra-leve
+├── docker-compose.yml              # Arquivo de orquestração local para execução do banco e do bot
+├── go.mod                          # Módulo Go contendo todas as dependências declaradas (whatsmeow, SQLite)
+└── README.md                       # Documentação mestre do projeto
+```
 
-### 2. 🎫 Coleta Inteligente e Abertura de Chamados (Integração GLPI)
-- **Vínculo por Usuário:** O bot pesquisa o número de telefone no cadastro de usuários do GLPI para identificar o solicitante.
-- **Coleta de Informações Passo a Passo:** Solicita ao usuário um título resumido e uma descrição detalhada do problema.
-- **Upload Automático de Anexos:** Habilite se o bot deve pedir **fotos/prints** da tela e/ou **documentos** (PDF, Word, planilhas) após a descrição. Os arquivos são carregados diretamente na aba de Documentos do GLPI e vinculados ao ticket criado.
-- **Confirmação com ID:** O usuário recebe a confirmação imediata da abertura do chamado com o número do ticket.
+---
 
-### 3. 📅 Controle de Expediente e Ausência (Filtro de Horário)
-- **Configuração de Dias de Trabalho:** Marque no painel quais dias da semana a TI atende (Segunda a Domingo).
-- **Faixa de Horário Útil:** Configure a hora de início e fim do atendimento (ex: `08:00` às `18:00`).
-- **Mensagem de Ausência Automática:** Fora do expediente ou em dias não úteis, o bot continuará abrindo chamados, mas enviará um alerta amigável de ausência ("Nosso expediente é de Segunda a Sexta...").
+## 🌟 Funcionalidades Detalhadas
 
-### 4. 🔔 Notificação para a Equipe Técnica
-- **Aviso no WhatsApp do Técnico:** Quando um usuário abre um chamado no WhatsApp, o bot envia um alerta direto para o telefone configurado para a equipe de suporte.
-- **Link Direto Clicável:** O alerta contém o link direto para o chamado no painel do GLPI:
-  ```
-  📌 Ticket: #1245 http://seu-glpi/index.php?redirect=ticket_1245
-  ```
+### 1. 💬 Fluxo Interativo com WhatsApp Polls (Enquetes)
+Diferente dos bots legados baseados em digitação de números ("Digite 1 para suporte..."), o **GLPI-BOT** utiliza **enquetes nativas do WhatsApp (Polls)** para renderizar opções clicáveis de menu. Isso reduz a zero a taxa de erro do usuário e torna o fluxo extremamente ágil no celular.
+- **Voltar ao Menu:** Permite configurar botões especiais para retornar ao nó pai da árvore de navegação de maneira imediata.
+- **Visual Flow Builder:** Árvore de navegação customizável diretamente no painel administrativo.
 
-### 5. 👥 Fila de Suporte Humano (Transbordo)
-- **Direcionamento ao Técnico:** Uma das opções do fluxo pode ser "Falar com Suporte".
-- **Fila de Atendimento:** O usuário entra em uma fila de espera temporária com controle de posição ("Sua posição na fila é 2º").
-- **Técnicos Configurados:** Permite definir atendentes humanos para assumir o chat diretamente no WhatsApp.
+### 2. 🎫 Coleta Inteligente de Tickets & Envio de Mídias
+- **Abertura Passo a Passo:** O robô conduz a conversa coletando um título resumido e uma descrição detalhada do incidente.
+- **Validação Automática de Solicitante:** Busca o número do remetente no banco de dados do GLPI e vincula o ticket ao colaborador correto automaticamente.
+- **Suporte a Múltiplos Anexos:** Permite habilitar o envio opcional ou obrigatório de **imagens (prints)** e/ou **documentos (PDF, DOCX, XLSX)**. O bot faz o download da mídia do WhatsApp, converte-a e insere-a na aba de Documentos do GLPI, vinculando-a diretamente ao ticket gerado.
 
-### 6. 🛡️ Segurança, Alertas e Manutenção
-- **Alerta de Queda por E-mail (SMTP):** Configuração de servidor de e-mail (SMTP) para alertar os gestores se a sessão do WhatsApp do bot for desconectada.
-- **Blacklist (Lista de Bloqueio):** Cadastre números indesejados (como grupos ou números spam) para serem sumariamente ignorados pelo bot.
-- **Logs em Tempo Real:** Console interativo no painel administrativo para visualizar o processamento e comportamento do robô linha por linha.
-- **Reinício Remoto:** Botão para reiniciar o executável do bot remotamente através do painel.
+### 3. 📅 Controle de Expediente & Mensagem de Ausência
+O administrador define os dias úteis e a faixa de horário em que o suporte funciona. 
+- **Fora do expediente:** O chamado ainda pode ser aberto, mas o usuário recebe uma notificação configurável de ausência para alinhar expectativas de atendimento.
+
+### 4. 🔔 Alertas para Equipes Técnicas
+- Assim que um ticket é gerado, o bot dispara um alerta no WhatsApp do técnico designado contendo o número do chamado e um link clicável direto para a página do ticket no GLPI.
+
+### 5. 👥 Fila de Atendimento Humano (Transbordo Livechat)
+- Usuários podem ser direcionados para conversar diretamente com atendentes humanos. O bot gerencia uma fila de espera ordenada em tempo real, informando a posição do usuário na fila enquanto notifica os técnicos registrados para assumirem o chat.
+
+### 6. 🛡️ Monitoramento SMTP & Blacklist
+- **E-mails de Queda:** Emite alertas para os administradores caso a sessão do bot caia.
+- **Blacklist:** Números indesejados (como robôs de spam ou grupos) adicionados à blacklist são totalmente ignorados para preservar recursos.
 
 ---
 
 ## 🔑 Requisitos de Configuração no GLPI
 
-Para integrar o bot com sucesso, você precisará configurar o acesso à API Rest do GLPI e garantir as permissões de usuário adequadas.
+A integração depende inteiramente do módulo de **API REST** do GLPI. Para configurar:
 
-### 1. Habilitar a API Rest no GLPI
-1. Acesse o GLPI com perfil administrador.
-2. Vá em **Configurar > Geral > API**.
-3. Ative a opção **Habilitar API Rest**.
-4. Habilite **Habilitar login com credenciais de usuário** ou **Habilitar login com tokens externos**.
-5. Clique em **Adicionar Token de API** (App-Token). Copie este token (você o usará na aba de configurações do bot).
+1. **Ative a API REST:**
+   - Acesse o GLPI como Admin e vá em **Configurar > Geral > API**.
+   - Habilite a opção **Habilitar API Rest**.
+   - Ative **Habilitar login com credenciais de usuário** ou **external tokens**.
+   - Adicione um novo cliente e obtenha o **App-Token** correspondente.
 
-### 2. Obter o User-Token (Token de Usuário)
-1. Vá nas preferências do usuário que servirá para a integração (geralmente uma conta exclusiva do bot ou do administrador de TI).
-2. Na aba **Chaves de Acesso Remoto**, gere um **Token de API** (User-Token). Copie esta chave.
+2. **Gere o User-Token:**
+   - Acesse as preferências do usuário administrador (ou conta dedicada à automação do bot) no GLPI.
+   - Vá na aba **Chaves de acesso remoto** (Remote Access Keys) e crie um **Token de API** (User-Token).
 
-### 3. Permissões Necessárias para o Perfil (Profile) no GLPI
-O usuário associado ao `User-Token` deve ter um perfil atribuído com as seguintes permissões:
-- **Usuários (Users):** Permissão de **Leitura (Read / Pesquisa)** — Para pesquisar e achar os dados do solicitante a partir do telefone do WhatsApp.
-- **Chamados (Tickets):** Permissão de **Criação (Create)** e **Atualização (Update)** — Para abrir chamados e registrar as interações subsequentes.
-- **Documentos (Documents):** Permissão de **Criação (Create)** — Para subir prints, fotos e PDFs enviados pelo usuário e anexá-los ao ticket.
+3. **Perfil de Permissões (Perfil Recomendado):**
+   Garante que o usuário do bot tenha as seguintes permissões básicas ativas no GLPI:
+   - **Usuários:** Leitura (Read) para localizar o telefone do solicitante.
+   - **Chamados:** Criação e Atualização (Create/Update) para abrir e alimentar tickets.
+   - **Documentos:** Criação (Create) para vincular imagens e anexos à base de conhecimento do ticket.
 
 ---
 
-## 🚀 Passo a Passo de Instalação e Funcionamento
+## 🚀 Instalação e Execução via Docker Compose
 
-A aplicação roda inteiramente via **Docker**, sem necessidade de instalar Go ou qualquer outra dependência.
+O bot foi empacotado em uma imagem estável hospedada e pode ser executado facilmente através de containers.
 
-#### Passo 1: Instalar Docker e Docker Compose
-Certifique-se de ter o Docker instalado em sua máquina ou servidor Linux/Windows.
-
-#### Passo 2: Configurar o `docker-compose.yml`
-Crie uma pasta no servidor chamada `glpi-bot` e, dentro dela, crie um arquivo chamado `docker-compose.yml` com o seguinte conteúdo:
+### Arquivo `docker-compose.yml`
+Crie um diretório de trabalho no servidor e salve o arquivo com o seguinte conteúdo:
 
 ```yaml
+version: "3.8"
+
 services:
-  bot:
+  glpi-bot:
     image: ghcr.io/arthurjaexiste/glpi-bot:latest
     container_name: glpi-bot
     restart: unless-stopped
@@ -94,68 +115,46 @@ services:
       - ./config:/app/config
 ```
 
-#### Passo 3: Iniciar o Serviço
-Abra o terminal na pasta onde colocou o arquivo e execute:
+### Inicializando o Bot
+Execute no terminal da pasta do arquivo:
 ```bash
 docker compose up -d
 ```
-O container iniciará na porta `33090`. Para verificar se está rodando:
+Acompanhe os logs operacionais para verificar a correta inicialização dos servidores internos:
 ```bash
-docker compose ps
+docker compose logs -f glpi-bot
 ```
 
 ---
 
-## ⚙️ Configuração Inicial e Primeiro Acesso
+## ⚙️ Primeiro Acesso & Configurações Iniciais
 
-Uma vez que o bot esteja rodando, siga os passos abaixo para fazê-lo funcionar:
-
-### Passo 1: Entrar no Painel Web
-1. Abra o navegador e digite o endereço: `http://localhost:33090` (ou o IP do seu servidor).
-2. Insira as credenciais padrão de administração:
+1. **Acessar o Painel:**
+   Abra o navegador em `http://IP_DO_SERVIDOR:33090`. As credenciais padrão de primeiro acesso são:
    - **Usuário:** `admin`
    - **Senha:** `admin123`
-3. _Dica de Segurança:_ Após o primeiro login, acesse a aba **Configurações > Bloqueios & Senha** para mudar a senha de administrador.
+   
+   > [!IMPORTANT]
+   > Lembre-se de alterar a senha administrativa padrão na aba **Configurações > Bloqueios & Senha** logo após o primeiro acesso para garantir a segurança da aplicação.
 
-### Passo 2: Conectar o WhatsApp
-1. Na tela principal (**Status**), se for o primeiro acesso, o painel exibirá o botão **Conectar** e gerará um **QR Code**.
-2. Abra o WhatsApp no seu smartphone de atendimento, vá em **Aparelhos Conectados > Conectar um aparelho**.
-3. Aponte a câmera do celular para o QR Code gerado na tela do painel.
-4. Após o escaneamento bem-sucedido, a tela do painel mudará para o status verde de **Sessão Ativa / Conectado**.
+2. **Emparelhar WhatsApp:**
+   Na aba **Status**, clique em **Conectar** para gerar o QR Code. Abre o seu WhatsApp no smartphone de suporte, clique em **Aparelhos conectados > Conectar um aparelho** e realize o escaneamento na tela.
 
-### Passo 3: Configurar os Parâmetros da TI (Aba Configurações)
-1. **👥 Identidade & Suporte:** Defina o nome da sua empresa e insira o WhatsApp da TI (com DDI 55 + DDD + Número) para receber notificações. Defina os nomes dos técnicos da fila de transbordo.
-2. **🔌 Conexão GLPI API:** Insira o link absoluto do seu GLPI (ex: `https://meu-glpi/apirest.php`), o **App-Token** e o **User-Token** obtidos no GLPI.
-3. **📧 SMTP (Opcional):** Se desejar receber alertas por e-mail quando a sessão do WhatsApp desconectar, ative o SMTP e preencha as credenciais. Clique no botão de teste para garantir o funcionamento.
-4. **📅 Horário & Ausência:** Defina a faixa horária de suporte (ex: das `08:00` às `18:00`), marque os dias de atendimento e digite a mensagem de ausência automática.
-5. **Salvar:** Clique no botão verde superior **Salvar Configurações**.
-
-### Passo 4: Personalizar Mensagens do Bot (Aba Mensagens)
-- Acesse a aba **Mensagens** e personalize os textos que o bot enviará nas diferentes fases do atendimento.
-- Utilize as variáveis como `{saudacao}`, `{empresa}`, `{ticket_id}` e `{ticket_title}` para criar respostas personalizadas e dinâmicas.
-- Clique em **Salvar Mensagens** ao terminar.
-
-### Passo 5: Criar sua Árvore de Atendimento (Aba Fluxo do Bot)
-- Acesse a aba **Fluxo do Bot**.
-- O menu principal já vem criado. Você pode editar os títulos e escolher o tipo da ação de cada botão.
-- Use **Adicionar Opção** para criar novos nós.
-- Se for uma opção de tipo **Abrir Chamado GLPI**, lembre-se de configurar o **ID da Categoria** correspondente ao seu catálogo de serviços no GLPI, bem como as mídias requeridas.
-- Clique no botão **Salvar Árvore de Fluxo** para atualizar o robô imediatamente.
+3. **Cadastrar Credenciais do GLPI:**
+   Acesse a aba **Configurações**, preencha o link absoluto da API Rest (ex: `https://meu-glpi/apirest.php`), o **App-Token** e o **User-Token** nos campos correspondentes e clique em **Salvar Configurações**.
 
 ---
 
 ## 🛠️ Resolução de Problemas Comuns
 
-### 1. O QR Code não carrega ou mostra "Erro de Conexão com a API"
-- Verifique se a aplicação está rodando. Se rodando via Docker, olhe os logs do container (`docker logs glpi-bot`).
-- Caso necessário, acesse **Configurações > Manutenção do Sistema** e clique em **Reiniciar Bot** para recarregar a engine do WhatsApp.
+### 1. QR Code não carrega ou sessão desconecta frequentemente
+- Certifique-se de que o container possui conexão ativa com a internet.
+- Se o bot travar na tela de conexão, vá em **Configurações > Manutenção do Sistema** e utilize o botão **Reiniciar Bot** para limpar a engine local do whatsmeow e iniciar uma nova varredura de QR Code limpa.
 
-### 2. Os chamados não são criados no GLPI
-- Verifique se a URL da API está correta e termina em `/apirest.php`.
-- Teste se o servidor onde o bot está rodando consegue alcançar o servidor do GLPI (problemas de rede, regras de firewall ou SSL inválido podem bloquear a conexão).
-- Verifique se o App-Token e o User-Token inseridos na aba de configurações estão corretos.
-- Verifique se o número de WhatsApp do solicitante está cadastrado no campo "Telefone" do usuário no GLPI (ou se o perfil do usuário da API tem permissão para pesquisar usuários).
+### 2. Chamados criados como "Usuário Anônimo" ou GlpiUser não localizado
+- Certifique-se de que o número do WhatsApp do solicitante está cadastrado no campo **Telefone** do seu respectivo usuário no GLPI no formato internacional sem o símbolo `+` (ex: `5511999999999`).
+- O Perfil (Profile) da conta que gerou o `User-Token` deve ter permissão para ler a lista de usuários no GLPI para executar buscas completas.
 
-### 3. Os arquivos de anexo (Fotos ou Documentos) não são vinculados ao chamado
-- Certifique-se de que a opção de chamado no **Fluxo do Bot** está com as caixas "Solicitar Imagens" e/ou "Solicitar Documentos" devidamente marcadas.
-- Certifique-se de que o perfil (Profile) do usuário do bot no GLPI tem permissão de escrita/criação na aba **Documentos**.
+### 3. Falha de upload de arquivos anexados
+- O GLPI limita o tamanho padrão de uploads nas configurações de sistema php (`upload_max_filesize` e `post_max_size`). Certifique-se de que os limites do seu servidor GLPI toleram o envio de fotos ou documentos maiores.
+- Valide se o perfil do usuário do bot tem acesso para escrever na pasta física de armazenamento de documentos no servidor onde o GLPI está hospedado.
