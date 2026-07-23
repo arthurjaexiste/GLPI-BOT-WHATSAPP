@@ -22,20 +22,21 @@ type Doc struct {
 // UserState mantém o estado da conversa de cada usuário durante o atendimento.
 // Struct UserState define a estrutura de dados e mapeamento correspondente
 type UserState struct {
-	Step             int
-	Title            string
-	Description      string
-	InvalidAttempts  int
-	LastTicketTime   time.Time
-	LastGreetingTime time.Time
-	PollOptions      []string
-	PollIDs          []int
-	CategoryID       int
-	Images           [][]byte
-	Docs             []Doc
-	SubCategory      string
-	ActiveTicketID   int
-	CurrentNodeID    string
+	Step                int
+	Title               string
+	Description         string
+	InvalidAttempts     int
+	LastTicketTime      time.Time
+	LastGreetingTime    time.Time
+	LastInteractionTime time.Time
+	PollOptions         []string
+	PollIDs             []int
+	CategoryID          int
+	Images              [][]byte
+	Docs                []Doc
+	SubCategory         string
+	ActiveTicketID      int
+	CurrentNodeID       string
 }
 
 // ─── Estado global compartilhado ─────────────────────────────────────────────

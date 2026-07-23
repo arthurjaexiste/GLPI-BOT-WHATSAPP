@@ -49,6 +49,7 @@ func resetarEstadoUsuario(sender string, uState *state.UserState) {
 
 	uState.Step = -1
 	uState.LastGreetingTime = time.Now().Add(-1 * time.Minute)
+	uState.LastInteractionTime = time.Now()
 	uState.Images = nil
 	uState.Docs = nil
 	uState.SubCategory = ""
@@ -241,10 +242,52 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 	state.Mu.Lock()
 	uState, exists := state.Users[sender]
 	if !exists {
-		uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
+		uState = &state.UserState{
+			Step:                -1,
+			LastGreetingTime:    time.Now().Add(-15 * time.Minute),
+			LastInteractionTime: time.Now(),
+		}
 		state.Users[sender] = uState
 	}
 	currentStep := uState.Step
+
+	// ── Timeout de Inatividade (10 Minutos) ──────────────────────────────────
+	timedOut := !uState.LastInteractionTime.IsZero() &&
+		time.Since(uState.LastInteractionTime) >= 10*time.Minute &&
+		currentStep != 100 && currentStep != 99
+
+	if timedOut {
+		nomeCompleto, jaConhece := state.Names[sender]
+		uState.Title = ""
+		uState.Description = ""
+		uState.Images = nil
+		uState.Docs = nil
+		uState.SubCategory = ""
+		uState.ActiveTicketID = 0
+		uState.InvalidAttempts = 0
+		uState.LastInteractionTime = time.Now()
+
+		if jaConhece && nomeCompleto != "" {
+			primeiroNome := strings.Split(nomeCompleto, " ")[0]
+			uState.Step = 30
+			state.Mu.Unlock()
+
+			fmt.Printf("⏰ [TIMEOUT] Usuário %s (%s) inativo por 10+ minutos. Enviando enquete de confirmação de identidade.\n", nomeCompleto, sender)
+			pollMsg := client.BuildPollCreation(fmt.Sprintf("Ainda estou falando com *%s*?", primeiroNome), []string{"Sim", "Não"}, 1)
+			_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
+			return
+		} else {
+			uState.Step = -1
+			uState.LastGreetingTime = time.Now().Add(-15 * time.Minute)
+			state.Mu.Unlock()
+
+			fmt.Printf("⏰ [TIMEOUT] Usuário novo %s inativo por 10+ minutos. Reiniciando saudação.\n", sender)
+			processarSaudacaoInicial(ctx, client, v, uState, sender)
+			return
+		}
+	}
+
+	uState.LastInteractionTime = time.Now()
 	state.Mu.Unlock()
 
 	// ── Fluxo de chat ao vivo ativo (usuário) ─────────────────────────────
