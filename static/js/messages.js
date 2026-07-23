@@ -5,10 +5,8 @@
 
 let currentConfig = {};
 
-// Carrega as configurações atuais da API
-async 
 // Função fetchConfig manipula a rotina correspondente na interface do painel
-function fetchConfig() {
+async function fetchConfig() {
     try {
         const response = await fetch('/api/config');
         if (!response.ok) throw new Error('Falha ao obter configurações');
@@ -40,10 +38,8 @@ function fetchConfig() {
     }
 }
 
-// Salva as configurações via POST na API
-async 
 // Função saveMessages manipula a rotina correspondente na interface do painel
-function saveMessages() {
+async function saveMessages() {
     currentConfig.msg_novo_usuario = document.getElementById('msg_novo_usuario').value;
     currentConfig.msg_usuario_existente = document.getElementById('msg_usuario_existente').value;
     currentConfig.msg_menu_inicial = document.getElementById('msg_menu_inicial').value;

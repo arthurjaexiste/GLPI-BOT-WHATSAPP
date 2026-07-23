@@ -7,9 +7,8 @@ let statusInterval;
 let lastQR = "";
 let lastStatus = "";
 
-async 
 // Função checkStatus manipula a rotina correspondente na interface do painel
-function checkStatus() {
+async function checkStatus() {
     try {
         const response = await fetch('/api/status');
         const data = await response.json();
@@ -176,9 +175,8 @@ statusInterval = setInterval(checkStatus, 1000);
 checkStatus();
 
 // Histórico de chamados recentes
-async 
 // Função fetchRecentTickets manipula a rotina correspondente na interface do painel
-function fetchRecentTickets() {
+async function fetchRecentTickets() {
     try {
         const response = await fetch('/api/tickets/recent');
         if (!response.ok) throw new Error("Erro ao buscar chamados recentes");
@@ -218,9 +216,8 @@ fetchRecentTickets();
 setInterval(fetchRecentTickets, 10000);
 
 // Chamadas de controle de conexao do WhatsApp
-async 
 // Função whatsappConnect manipula a rotina correspondente na interface do painel
-function whatsappConnect() {
+async function whatsappConnect() {
     try {
         const res = await fetch('/api/whatsapp/connect', { method: 'POST' });
         const data = await res.json();
@@ -236,9 +233,8 @@ function whatsappConnect() {
     }
 }
 
-async 
 // Função whatsappLogout manipula a rotina correspondente na interface do painel
-function whatsappLogout() {
+async function whatsappLogout() {
     if (!confirm("Tem certeza que deseja desconectar o bot e limpar a sessão ativa? Isso irá gerar um novo QR Code.")) {
         return;
     }

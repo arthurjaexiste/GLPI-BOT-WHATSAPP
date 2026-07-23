@@ -8,9 +8,8 @@ let activeEditPath = []; // Caminho de índices para localizar o nó na árvore
 let activeEditMode = "edit"; // "edit" ou "add"
 
 // Carrega o fluxo de conversa via API
-async 
 // Função fetchFlow manipula a rotina correspondente na interface do painel
-function fetchFlow() {
+async function fetchFlow() {
     try {
         const response = await fetch('/api/flow');
         if (!response.ok) throw new Error('Erro ao obter fluxo');
@@ -49,7 +48,7 @@ function createNodeUI(node, path, isRoot = false) {
         case 'menu':
             
 // Constante backInfo trata a execução de callback ou fluxo assíncrono
-const backInfo =isRoot || node.show_back_button !== false) ? ' (+Botão Voltar)' : ' (Sem Voltar)';
+const backInfo = (isRoot || node.show_back_button !== false) ? ' (+Botão Voltar)' : ' (Sem Voltar)';
             badgeHTML = `<span class="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded">📁 Menu${backInfo}</span>`;
             break;
         case 'ticket':
@@ -326,9 +325,8 @@ function moveNode(parentPath, idx, direction) {
 }
 
 // Salva a árvore na API
-async 
 // Função saveFlow manipula a rotina correspondente na interface do painel
-function saveFlow() {
+async function saveFlow() {
     try {
         const response = await fetch('/api/flow', {
             method: 'POST',

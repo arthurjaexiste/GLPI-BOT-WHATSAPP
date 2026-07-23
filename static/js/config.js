@@ -1,7 +1,6 @@
 // Carrega as configurações atuais da API
-async 
 // Função fetchConfig manipula a rotina correspondente na interface do painel
-function fetchConfig() {
+async function fetchConfig() {
     try {
         const response = await fetch('/api/config');
         if (!response.ok) throw new Error('Falha ao obter configurações');
@@ -42,9 +41,8 @@ function fetchConfig() {
 }
 
 // Salva as configurações via POST na API
-async 
 // Função saveConfig manipula a rotina correspondente na interface do painel
-function saveConfig() {
+async function saveConfig() {
     const company_name = document.getElementById('company_name').value.trim();
     const telefone_notificacao = document.getElementById('telefone_notificacao').value.trim();
     const glpi_api_url = document.getElementById('glpi_api_url').value.trim();
@@ -138,9 +136,8 @@ function toggleVisibility(btn, id) {
 }
 
 // Copia o valor do token para a área de transferência
-async 
 // Função copyToClipboard manipula a rotina correspondente na interface do painel
-function copyToClipboard(id) {
+async function copyToClipboard(id) {
     const input = document.getElementById(id);
     const value = input.value;
     if (!value) {
@@ -186,9 +183,8 @@ function showToast(message, icon = '✅') {
 }
 
 // Altera a senha do administrador
-async 
 // Função changePassword manipula a rotina correspondente na interface do painel
-function changePassword(event) {
+async function changePassword(event) {
     event.preventDefault();
     const current_password = document.getElementById('current_password').value;
     const new_password = document.getElementById('new_password').value;
@@ -221,9 +217,8 @@ function changePassword(event) {
 }
 
 // Reinicia o bot
-async 
 // Função restartBot manipula a rotina correspondente na interface do painel
-function restartBot() {
+async function restartBot() {
     if (!confirm('Tem certeza de que deseja reiniciar o bot? O painel ficará temporariamente indisponível por alguns segundos.')) {
         return;
     }
@@ -256,9 +251,8 @@ function restartBot() {
 }
 
 // Tenta se reconectar ao bot em loop até o painel voltar, então redireciona para a home
-async 
 // Função autoReconnect manipula a rotina correspondente na interface do painel
-function autoReconnect() {
+async function autoReconnect() {
     const msgEl = document.getElementById('restart-msg');
     try {
         // Tenta buscar o status da API
@@ -283,9 +277,8 @@ function autoReconnect() {
 window.addEventListener('DOMContentLoaded', fetchConfig);
 
 // Testar conexão SMTP antes de salvar
-async 
 // Função testSMTP manipula a rotina correspondente na interface do painel
-function testSMTP() {
+async function testSMTP() {
     const company_name = document.getElementById('company_name').value.trim();
     const smtp_host = document.getElementById('smtp_host').value.trim();
     const smtp_port = parseInt(document.getElementById('smtp_port').value) || 587;

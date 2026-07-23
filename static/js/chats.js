@@ -48,9 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Busca a lista de chats e exibe na barra lateral
-async 
 // Função loadChatsList manipula a rotina correspondente na interface do painel
-function loadChatsList(silent = false) {
+async function loadChatsList(silent = false) {
     try {
         const response = await fetch("/api/chats");
         if (!response.ok) throw new Error("Erro ao buscar conversas");
@@ -152,9 +151,8 @@ function filterChats() {
 }
 
 // Seleciona um chat da lista
-async 
 // Função selectChat manipula a rotina correspondente na interface do painel
-function selectChat(jid, name, status) {
+async function selectChat(jid, name, status) {
     activeChatJID = jid;
     activeChatName = name || jid;
     activeChatStatus = status;
@@ -206,9 +204,8 @@ function selectChat(jid, name, status) {
 
 // Atualiza o histórico de mensagens
 let lastMessagesCount = 0;
-async 
 // Função refreshActiveMessages manipula a rotina correspondente na interface do painel
-function refreshActiveMessages(forceScroll = false) {
+async function refreshActiveMessages(forceScroll = false) {
     if (!activeChatJID) return;
     
     try {
@@ -263,9 +260,8 @@ function renderMessages(messages, forceScroll = false) {
 }
 
 // Envia mensagem via Painel Console
-async 
 // Função sendConsoleMessage manipula a rotina correspondente na interface do painel
-function sendConsoleMessage() {
+async function sendConsoleMessage() {
     if (activeChatStatus === "queue" || activeChatStatus === "bot") {
         showToast("Selecione um técnico e clique em 'Assumir' antes de enviar mensagens.", false);
         return;
@@ -341,9 +337,8 @@ function showToast(message, isSuccess = true) {
 }
 
 // Apaga uma conversa e limpa o histórico
-async 
 // Função deleteChat manipula a rotina correspondente na interface do painel
-function deleteChat(jid) {
+async function deleteChat(jid) {
     if (!confirm("Tem certeza que deseja apagar esta conversa e todo o seu histórico? Esta ação é irreversível e resetará o atendimento do bot para este contato.")) {
         return;
     }
@@ -373,25 +368,22 @@ function deleteChat(jid) {
 }
 
 // Apaga a conversa ativa atualmente
-async 
 // Função deleteActiveChat manipula a rotina correspondente na interface do painel
-function deleteActiveChat() {
+async function deleteActiveChat() {
     if (!activeChatJID) return;
     await deleteChat(activeChatJID);
 }
 
 // Finaliza o atendimento ativo atualmente
-async 
 // Função closeActiveChat manipula a rotina correspondente na interface do painel
-function closeActiveChat() {
+async function closeActiveChat() {
     if (!activeChatJID) return;
     await closeChat(activeChatJID);
 }
 
 // Finaliza o atendimento (devolve para o Bot)
-async 
 // Função closeChat manipula a rotina correspondente na interface do painel
-function closeChat(jid) {
+async function closeChat(jid) {
     if (!confirm("Deseja finalizar o atendimento humano e reativar o Bot para esta conversa?")) {
         return;
     }
@@ -424,9 +416,8 @@ function closeChat(jid) {
 }
 
 // Carrega a lista de atendentes/técnicos
-async 
 // Função loadAgentsList manipula a rotina correspondente na interface do painel
-function loadAgentsList() {
+async function loadAgentsList() {
     try {
         const response = await fetch("/api/agents");
         if (!response.ok) throw new Error("Erro ao buscar atendentes");
@@ -448,9 +439,8 @@ function loadAgentsList() {
 }
 
 // Assume o chat ativo para o técnico selecionado
-async 
 // Função assumeActiveChat manipula a rotina correspondente na interface do painel
-function assumeActiveChat() {
+async function assumeActiveChat() {
     if (!activeChatJID) return;
     
     const select = document.getElementById("agent-select");
