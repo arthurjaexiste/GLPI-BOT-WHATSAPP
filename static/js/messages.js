@@ -11,7 +11,7 @@ async function fetchConfig() {
         const response = await fetch('/api/config');
         if (!response.ok) throw new Error('Falha ao obter configurações');
         currentConfig = await response.json();
-        
+
         document.getElementById('msg_novo_usuario').value = currentConfig.msg_novo_usuario || '';
         document.getElementById('msg_usuario_existente').value = currentConfig.msg_usuario_existente || '';
         document.getElementById('msg_menu_inicial').value = currentConfig.msg_menu_inicial || '';
@@ -91,16 +91,16 @@ function showToast(message, icon = '✅') {
 
     if (icon === '✅') {
         toast.className = toast.className.replace('border-red-500/30', 'border-emerald-500/30')
-                                       .replace('bg-red-950/80', 'bg-emerald-950/80')
-                                       .replace('text-red-300', 'text-emerald-300') + ' border-emerald-500/30 bg-emerald-950/80 text-emerald-300';
+            .replace('bg-red-950/80', 'bg-emerald-950/80')
+            .replace('text-red-300', 'text-emerald-300') + ' border-emerald-500/30 bg-emerald-950/80 text-emerald-300';
     } else {
         toast.className = toast.className.replace('border-emerald-500/30', 'border-red-500/30')
-                                       .replace('bg-emerald-950/80', 'bg-red-950/80')
-                                       .replace('text-emerald-300', 'text-red-300') + ' border-red-500/30 bg-red-950/80 text-red-300';
+            .replace('bg-emerald-950/80', 'bg-red-950/80')
+            .replace('text-emerald-300', 'text-red-300') + ' border-red-500/30 bg-red-950/80 text-red-300';
     }
 
     toast.classList.remove('translate-y-24', 'opacity-0');
-    
+
     setTimeout(() => {
         toast.classList.add('translate-y-24', 'opacity-0');
     }, 3000);

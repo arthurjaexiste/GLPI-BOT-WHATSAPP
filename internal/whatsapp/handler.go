@@ -348,7 +348,6 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 // ─── Handlers auxiliares do fluxo principal ───────────────────────────────────
 
-
 // Função handleSupportCommand executa a regra de negócio/rotina correspondente
 func handleSupportCommand(ctx context.Context, client *whatsmeow.Client, v *events.Message, text, sender string, isSupport bool, activeUserFull string) {
 	if activeUserFull == "" {
@@ -375,7 +374,6 @@ func handleSupportCommand(ctx context.Context, client *whatsmeow.Client, v *even
 	processarMensagemDoSuporte(ctx, client, v, textoLimpo, false)
 }
 
-
 // Função handleUserInLiveChat executa a regra de negócio/rotina correspondente
 func handleUserInLiveChat(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, chatJID types.JID, text, textLower string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage) {
 	if textLower == "#encerrar" || textLower == "cancelar" || textLower == "sair" || text == "#" {
@@ -401,7 +399,6 @@ func handleUserInLiveChat(ctx context.Context, client *whatsmeow.Client, v *even
 		_, _ = sendMessage(ctx, client, supportJID, v.Message)
 	}
 }
-
 
 // Função handleUserInQueue executa a regra de negócio/rotina correspondente
 func handleUserInQueue(ctx context.Context, client *whatsmeow.Client, uState *state.UserState, sender string, chatJID types.JID, textLower, text string) {
@@ -533,7 +530,6 @@ func handleLogout(client *whatsmeow.Client) {
 }
 
 // ─── Helpers de log ───────────────────────────────────────────────────────────
-
 
 // Função logReceivedMessage executa a regra de negócio/rotina correspondente
 func logReceivedMessage(sender, userName string, userStep int, activeUserFull, text string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage, pollUpdate interface{}) {

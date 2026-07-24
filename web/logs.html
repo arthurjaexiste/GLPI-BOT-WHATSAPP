@@ -1,75 +1,98 @@
 <!-- VIEW HTML: logs.html - Página do Painel Administrativo do GLPI-BOT -->
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logs do Bot - GLPI-BOT</title>
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css?v=1.6">
     <style>
         .terminal-font {
             font-family: 'Fira Code', 'Courier New', Courier, monospace;
         }
+
         /* Custom scrollbar for terminal */
         .terminal-scroll::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
+
         .terminal-scroll::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.3);
         }
+
         .terminal-scroll::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 4px;
         }
+
         .terminal-scroll::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
+
 <body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
     <!-- Ambient light glow effects (Monochrome/Gray theme) -->
-    <div class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-zinc-500/[0.03] rounded-full blur-[150px] pointer-events-none"></div>
-    <div class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[130px] pointer-events-none"></div>
+    <div
+        class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-zinc-500/[0.03] rounded-full blur-[150px] pointer-events-none">
+    </div>
+    <div
+        class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[130px] pointer-events-none">
+    </div>
 
     <!-- Header/Navbar -->
-    <header class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+    <header
+        class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-            <img src="/static/img/logo.png" alt="Logo" class="w-10 h-10 rounded-xl object-contain shadow-lg border border-white/5">
+            <img src="/static/img/logo.png" alt="Logo"
+                class="w-10 h-10 rounded-xl object-contain shadow-lg border border-white/5">
             <div>
-                <h1 class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">GLPI-BOT</h1>
+                <h1
+                    class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
+                    GLPI-BOT</h1>
                 <p class="text-xs text-zinc-400">Painel de Controle Inteligente</p>
             </div>
         </div>
-        
+
         <!-- Navigation Links -->
         <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/5 rounded-xl">
-            <a href="/" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 📊 Status
             </a>
-            <a href="/flow" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/flow"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 💬 Fluxo do Bot
             </a>
-            <a href="/config" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/config"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 🔧 Configurações
             </a>
-            <a href="/messages" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/messages"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 ✉️ Mensagens
             </a>
-            <a href="/chats" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/chats"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 💬 Conversas
             </a>
-            <a href="/logs" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
+            <a href="/logs"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
                 📋 Logs
             </a>
         </nav>
 
         <!-- Action / Logout -->
         <div class="flex items-center gap-3">
-            <a href="/logout" class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
+            <a href="/logout"
+                class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
                 🚪 Sair
             </a>
         </div>
@@ -78,17 +101,19 @@
     <main class="flex-1 max-w-5xl w-full mx-auto p-6 flex flex-col gap-6 relative z-10">
         <!-- Dashboard Card -->
         <div class="glass-card rounded-2xl p-8 flex flex-col gap-6">
-            
+
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
                 <div>
                     <h2 class="text-md font-bold text-zinc-200 flex items-center gap-2 uppercase tracking-wider">
                         📋 Console de Logs em Tempo Real
                     </h2>
-                    <p class="text-xs text-zinc-400 mt-1">Monitore interações de conversas, chamados abertos no GLPI e processos internos.</p>
+                    <p class="text-xs text-zinc-400 mt-1">Monitore interações de conversas, chamados abertos no GLPI e
+                        processos internos.</p>
                 </div>
                 <div class="flex items-center gap-3 flex-wrap">
                     <!-- Limit Select -->
-                    <select id="limitSelect" onchange="fetchLogs()" class="bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-300 focus:outline-none focus:border-zinc-400">
+                    <select id="limitSelect" onchange="fetchLogs()"
+                        class="bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-300 focus:outline-none focus:border-zinc-400">
                         <option value="50">Últimas 50 linhas</option>
                         <option value="150" selected>Últimas 150 linhas</option>
                         <option value="300">Últimas 300 linhas</option>
@@ -96,7 +121,8 @@
                     </select>
 
                     <!-- Refresh Interval Select -->
-                    <select id="intervalSelect" onchange="setupAutoRefresh()" class="bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-300 focus:outline-none focus:border-zinc-400">
+                    <select id="intervalSelect" onchange="setupAutoRefresh()"
+                        class="bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-300 focus:outline-none focus:border-zinc-400">
                         <option value="0">Sem auto-atualização</option>
                         <option value="2000" selected>Atualizar a cada 2s</option>
                         <option value="5000">Atualizar a cada 5s</option>
@@ -108,20 +134,26 @@
             <!-- Toolbar Controls -->
             <div class="flex items-center justify-between flex-wrap gap-4 text-xs text-zinc-400">
                 <div class="flex items-center gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer select-none text-zinc-300 hover:text-white transition">
-                        <input type="checkbox" id="autoScrollCheck" checked class="rounded border-white/10 bg-zinc-800 text-zinc-300 focus:ring-0">
+                    <label
+                        class="flex items-center gap-2 cursor-pointer select-none text-zinc-300 hover:text-white transition">
+                        <input type="checkbox" id="autoScrollCheck" checked
+                            class="rounded border-white/10 bg-zinc-800 text-zinc-300 focus:ring-0">
                         <span>Rolar Automaticamente ao Fim</span>
                     </label>
                     <div class="flex items-center gap-2 bg-black/40 border border-white/5 px-3 py-1.5 rounded-lg">
-                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="status-pulse"></span>
-                        <span id="status-text" class="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Monitorando...</span>
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"
+                            id="status-pulse"></span>
+                        <span id="status-text"
+                            class="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Monitorando...</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="clearConsole()" class="px-4 py-2 bg-zinc-800/40 hover:bg-zinc-700/60 border border-white/5 rounded-xl transition text-zinc-300 hover:text-white font-semibold">
+                    <button onclick="clearConsole()"
+                        class="px-4 py-2 bg-zinc-800/40 hover:bg-zinc-700/60 border border-white/5 rounded-xl transition text-zinc-300 hover:text-white font-semibold">
                         🗑️ Limpar Tela
                     </button>
-                    <a href="/api/logs?download=true" target="_blank" class="px-4 py-2 bg-white hover:bg-zinc-200 text-black border border-white font-bold rounded-xl shadow-lg transition flex items-center gap-1.5">
+                    <a href="/api/logs?download=true" target="_blank"
+                        class="px-4 py-2 bg-white hover:bg-zinc-200 text-black border border-white font-bold rounded-xl shadow-lg transition flex items-center gap-1.5">
                         📥 Baixar Log Completo
                     </a>
                 </div>
@@ -129,9 +161,11 @@
 
             <!-- Terminal Area -->
             <div class="relative">
-                <div id="terminal" class="terminal-font terminal-scroll w-full h-[550px] bg-[#020204] border border-white/5 rounded-2xl p-6 overflow-y-auto text-xs leading-relaxed text-zinc-400 whitespace-pre-wrap select-text shadow-2xl">Carregando logs do sistema...</div>
+                <div id="terminal"
+                    class="terminal-font terminal-scroll w-full h-[550px] bg-[#020204] border border-white/5 rounded-2xl p-6 overflow-y-auto text-xs leading-relaxed text-zinc-400 whitespace-pre-wrap select-text shadow-2xl">
+                    Carregando logs do sistema...</div>
             </div>
-            
+
         </div>
     </main>
 
@@ -140,7 +174,7 @@
         let lastLogContent = "";
 
         function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
+            return str.replace(/[&<>'"]/g,
                 tag => ({
                     '&': '&amp;',
                     '<': '&lt;',
@@ -189,9 +223,9 @@
                 const response = await fetch(`/api/logs?limit=${limit}`);
                 if (!response.ok) throw new Error("Erro na rede");
                 const data = await response.json();
-                
+
                 const logsText = data.logs || "Nenhum log gravado até o momento.";
-                
+
                 // Evita redesenhar se o log for idêntico
                 if (logsText === lastLogContent) {
                     statusText.innerText = "Monitorando (sem novas linhas)";
@@ -251,4 +285,5 @@
         });
     </script>
 </body>
+
 </html>

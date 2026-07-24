@@ -22,7 +22,6 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-
 // ─── Comparação de hashes de enquete ─────────────────────────────────────────
 
 // matchOptionHash compara o hash recebido do WhatsApp com o texto de uma opção.
@@ -150,7 +149,6 @@ func tratarVotoAtribuicaoAgente(ctx context.Context, client *whatsmeow.Client, v
 	return false
 }
 
-
 // Função tratarVotoConfirmacaoIdentidade executa a regra de negócio/rotina correspondente
 func tratarVotoConfirmacaoIdentidade(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool) {
 	if isSim {
@@ -172,7 +170,6 @@ func tratarVotoConfirmacaoIdentidade(ctx context.Context, client *whatsmeow.Clie
 		sendTextMessage(ctx, client, v.Info.Chat, "Sem problemas! Para começarmos, como você se chama? (Pode digitar seu nome completo)")
 	}
 }
-
 
 // Função tratarVotoEnqueteDocumentos executa a regra de negócio/rotina correspondente
 func tratarVotoEnqueteDocumentos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
@@ -196,7 +193,6 @@ func tratarVotoEnqueteDocumentos(ctx context.Context, client *whatsmeow.Client, 
 	}
 }
 
-
 // Função tratarVotoConfirmacaoDocumentos executa a regra de negócio/rotina correspondente
 func tratarVotoConfirmacaoDocumentos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
@@ -219,7 +215,6 @@ func tratarVotoConfirmacaoDocumentos(ctx context.Context, client *whatsmeow.Clie
 	}
 }
 
-
 // Função tratarVotoEnqueteFotos executa a regra de negócio/rotina correspondente
 func tratarVotoEnqueteFotos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
@@ -232,7 +227,6 @@ func tratarVotoEnqueteFotos(ctx context.Context, client *whatsmeow.Client, v *ev
 	}
 }
 
-
 // Função tratarVotoConfirmacaoFotos executa a regra de negócio/rotina correspondente
 func tratarVotoConfirmacaoFotos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
@@ -244,7 +238,6 @@ func tratarVotoConfirmacaoFotos(ctx context.Context, client *whatsmeow.Client, v
 		sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgProximaFoto)
 	}
 }
-
 
 // Função tratarVotoNovaMensagemChamado executa a regra de negócio/rotina correspondente
 func tratarVotoNovaMensagemChamado(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, isSim, isNao bool) {

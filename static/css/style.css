@@ -7,7 +7,8 @@
     --accent-indigo: #ffffff;
     --accent-purple: #d4d4d8;
     --accent-pink: #a1a1aa;
-    --accent-emerald: #10b981; /* Keep connected green */
+    --accent-emerald: #10b981;
+    /* Keep connected green */
     --accent-teal: #71717a;
     --accent-cyan: #e4e4e7;
     --text-primary: #f4f4f5;
@@ -30,16 +31,17 @@ body {
     box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7) !important;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
 }
+
 .glass-card:hover {
     border-color: rgba(255, 255, 255, 0.15) !important;
     box-shadow: 0 16px 48px 0 rgba(255, 255, 255, 0.02) !important;
 }
 
 /* Form Controls */
-input[type="text"], 
-input[type="password"], 
-input[type="number"], 
-textarea, 
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea,
 select {
     background: rgba(9, 9, 11, 0.7) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -51,8 +53,8 @@ select {
     width: 100%;
 }
 
-input:focus, 
-textarea:focus, 
+input:focus,
+textarea:focus,
 select:focus {
     border-color: var(--accent-indigo) !important;
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
@@ -65,13 +67,16 @@ select:focus {
     width: 8px;
     height: 8px;
 }
+
 ::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.4);
 }
+
 ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
 }
@@ -82,10 +87,12 @@ select:focus {
     transition: all 0.2s ease;
     border: 1px solid transparent;
 }
+
 .nav-link:hover {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.05);
 }
+
 .nav-link.active {
     color: #ffffff !important;
     background: rgba(255, 255, 255, 0.08) !important;
@@ -106,6 +113,7 @@ select:focus {
     transition: all 0.2s ease;
     display: inline-block;
 }
+
 .badge:hover {
     background: rgba(255, 255, 255, 0.12) !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
@@ -130,11 +138,19 @@ select:focus {
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-main, .glass-card {
+main,
+.glass-card {
     animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -145,10 +161,12 @@ main, .glass-card {
         opacity: 0;
         filter: blur(8px);
     }
+
     70% {
         transform: scale(1.03) rotate(1deg);
         filter: blur(0px);
     }
+
     100% {
         transform: scale(1) rotate(0deg);
         opacity: 1;
@@ -156,8 +174,13 @@ main, .glass-card {
 }
 
 @keyframes shineEffect {
-    0% { left: -100%; }
-    100% { left: 200%; }
+    0% {
+        left: -100%;
+    }
+
+    100% {
+        left: 200%;
+    }
 }
 
 .qr-animate {
@@ -177,12 +200,10 @@ main, .glass-card {
     left: -100%;
     width: 30%;
     height: 200%;
-    background: linear-gradient(
-        to right,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.2) 50%,
-        rgba(255, 255, 255, 0) 100%
-    );
+    background: linear-gradient(to right,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.2) 50%,
+            rgba(255, 255, 255, 0) 100%);
     transform: rotate(25deg);
     animation: shineEffect 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
     pointer-events: none;

@@ -40,7 +40,6 @@ type recoveryHandler struct {
 	handler http.Handler
 }
 
-
 // Função ServeHTTP executa a regra de negócio/rotina correspondente
 func (h *recoveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
@@ -142,7 +141,6 @@ func isAuthenticated(r *http.Request) bool {
 	return true
 }
 
-
 // Função getWebDir executa a regra de negócio/rotina correspondente
 func getWebDir() string {
 	paths := []string{".", "..", "../..", "../../.."}
@@ -154,7 +152,6 @@ func getWebDir() string {
 	}
 	return "."
 }
-
 
 // Função StartWebServer executa a regra de negócio/rotina correspondente
 func StartWebServer() {
@@ -359,7 +356,7 @@ func StartWebServer() {
 		defer rows.Close()
 
 		// Struct RecentTicket define a estrutura de dados e mapeamento correspondente
-type RecentTicket struct {
+		type RecentTicket struct {
 			TicketID  string `json:"ticket_id"`
 			Title     string `json:"title"`
 			Requester string `json:"requester"`
@@ -505,7 +502,7 @@ type RecentTicket struct {
 		}
 
 		// Struct ChatInfo define a estrutura de dados e mapeamento correspondente
-type ChatInfo struct {
+		type ChatInfo struct {
 			JID        string `json:"jid"`
 			Name       string `json:"name"`
 			LastMsg    string `json:"last_message"`
@@ -635,7 +632,7 @@ type ChatInfo struct {
 		defer rows.Close()
 
 		// Struct MsgInfo define a estrutura de dados e mapeamento correspondente
-type MsgInfo struct {
+		type MsgInfo struct {
 			ID         int    `json:"id"`
 			SenderName string `json:"sender_name"`
 			SenderJID  string `json:"sender_jid"`
@@ -1360,12 +1357,11 @@ func getUptime() string {
 	return fmt.Sprintf("%ds", s)
 }
 
-
 // Função triggerManualQRFlow executa a regra de negócio/rotina correspondente
 func triggerManualQRFlow() {
 	IsConnected = false
 	CurrentQR = ""
-	
+
 	ClientMu.Lock()
 	client := GlobalClient
 	ClientMu.Unlock()

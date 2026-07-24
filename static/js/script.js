@@ -12,10 +12,10 @@ async function checkStatus() {
     try {
         const response = await fetch('/api/status');
         const data = await response.json();
-        
+
         const qrStatusText = document.getElementById('qr-status');
         const qrCodeDiv = document.getElementById('qrcode');
-        
+
         // Elementos de Diagnóstico
         const statusText = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
@@ -35,11 +35,11 @@ async function checkStatus() {
         // Só atualiza os elementos principais se o status geral mudou
         if (data.status !== lastStatus) {
             lastStatus = data.status;
-            
+
             if (data.status === 'qr' && data.qr) {
                 // Status: Aguardando leitura do QR Code
                 qrStatusText.style.display = 'none';
-                
+
                 if (statusText) {
                     statusText.innerText = "Aguardando QR Code";
                     statusText.className = "text-xs font-semibold text-yellow-400 font-bold";
@@ -62,7 +62,7 @@ async function checkStatus() {
                         </div>
                     </div>
                 `;
-            } 
+            }
             else if (data.status === 'connected') {
                 // Status: Conectado com sucesso
                 qrCodeDiv.innerHTML = `
@@ -84,7 +84,7 @@ async function checkStatus() {
                 `;
                 qrStatusText.style.display = 'block';
                 qrStatusText.innerHTML = `<span class="text-emerald-500 font-semibold text-xs">Bot operacional na rede</span>`;
-                
+
                 if (statusText) {
                     statusText.innerText = "Conectado";
                     statusText.className = "text-xs font-semibold text-emerald-400 font-bold";
@@ -140,7 +140,7 @@ async function checkStatus() {
     } catch (error) {
         lastStatus = "error";
         console.error("Erro ao buscar status:", error);
-        
+
         const qrStatusText = document.getElementById('qr-status');
         const statusText = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
@@ -181,7 +181,7 @@ async function fetchRecentTickets() {
         const response = await fetch('/api/tickets/recent');
         if (!response.ok) throw new Error("Erro ao buscar chamados recentes");
         const tickets = await response.json();
-        
+
         const body = document.getElementById('recent-tickets-body');
         if (!body) return;
 

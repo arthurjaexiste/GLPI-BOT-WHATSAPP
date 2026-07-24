@@ -362,7 +362,6 @@ func processarMidiasEAnexos(ctx context.Context, client *whatsmeow.Client, v *ev
 	}
 }
 
-
 // Função processarDocumento executa a regra de negócio/rotina correspondente
 func processarDocumento(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, docMsg *waE2E.DocumentMessage, cfg config.Config) {
 	docBytes, err := client.Download(ctx, docMsg)
@@ -389,7 +388,6 @@ func processarDocumento(ctx context.Context, client *whatsmeow.Client, v *events
 	}
 }
 
-
 // Função processarImagem executa a regra de negócio/rotina correspondente
 func processarImagem(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, imgMsg *waE2E.ImageMessage, cfg config.Config) {
 	imageBytes, err := client.Download(ctx, imgMsg)
@@ -410,7 +408,6 @@ func processarImagem(ctx context.Context, client *whatsmeow.Client, v *events.Me
 		sendTextMessage(ctx, client, v.Info.Chat, cfg.MsgFotoAdicionada)
 	}
 }
-
 
 // Função processarConfirmacaoMidia executa a regra de negócio/rotina correspondente
 func processarConfirmacaoMidia(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, cfg config.Config) {

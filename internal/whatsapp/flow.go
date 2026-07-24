@@ -145,7 +145,6 @@ func FindParentNodeByID(childID string) (FlowNode, bool) {
 
 // ─── Helpers privados ─────────────────────────────────────────────────────────
 
-
 // Função loadFlow executa a regra de negócio/rotina correspondente
 func loadFlow() error {
 	flowMutex.Lock()
@@ -167,7 +166,6 @@ func loadFlow() error {
 	return nil
 }
 
-
 // Função findNodeRecursive executa a regra de negócio/rotina correspondente
 func findNodeRecursive(node FlowNode, id string) (FlowNode, bool) {
 	if node.ID == id {
@@ -180,7 +178,6 @@ func findNodeRecursive(node FlowNode, id string) (FlowNode, bool) {
 	}
 	return FlowNode{}, false
 }
-
 
 // Função findParentRecursive executa a regra de negócio/rotina correspondente
 func findParentRecursive(current FlowNode, childID string) (FlowNode, bool) {

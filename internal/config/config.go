@@ -44,25 +44,25 @@ type Config struct {
 	MsgAusencia         string `json:"msg_ausencia"`
 
 	// Mensagens configuráveis
-	MsgNovoUsuario               string `json:"msg_novo_usuario"`
-	MsgUsuarioExistente          string `json:"msg_usuario_existente"`
-	MsgMenuInicial               string `json:"msg_menu_inicial"`
-	MsgTicketCriado              string `json:"msg_ticket_criado"`
-	MsgFilaSuporte               string `json:"msg_fila_suporte"`
-	MsgFilaEspera                string `json:"msg_fila_espera"`
-	MsgSuporteAssumido           string `json:"msg_suporte_assumido"`
-	MsgFimAtendimento            string `json:"msg_fim_atendimento"`
-	MsgEnqueteDocumentos         string `json:"msg_enquete_documentos"`
-	MsgEnviarDocumentos          string `json:"msg_enviar_documentos"`
+	MsgNovoUsuario                string `json:"msg_novo_usuario"`
+	MsgUsuarioExistente           string `json:"msg_usuario_existente"`
+	MsgMenuInicial                string `json:"msg_menu_inicial"`
+	MsgTicketCriado               string `json:"msg_ticket_criado"`
+	MsgFilaSuporte                string `json:"msg_fila_suporte"`
+	MsgFilaEspera                 string `json:"msg_fila_espera"`
+	MsgSuporteAssumido            string `json:"msg_suporte_assumido"`
+	MsgFimAtendimento             string `json:"msg_fim_atendimento"`
+	MsgEnqueteDocumentos          string `json:"msg_enquete_documentos"`
+	MsgEnviarDocumentos           string `json:"msg_enviar_documentos"`
 	MsgEnqueteConfirmarDocumentos string `json:"msg_enquete_confirmar_documentos"`
-	MsgDocumentoAdicionado       string `json:"msg_documento_adicionado"`
-	MsgProximoDocumento          string `json:"msg_proximo_documento"`
-	MsgEnqueteFotos              string `json:"msg_enquete_fotos"`
-	MsgEnqueteFotosPosDocs       string `json:"msg_enquete_fotos_pos_docs"`
-	MsgEnviarFotos               string `json:"msg_enviar_fotos"`
-	MsgEnqueteConfirmarFotos     string `json:"msg_enquete_confirmar_fotos"`
-	MsgFotoAdicionada            string `json:"msg_foto_adicionada"`
-	MsgProximaFoto               string `json:"msg_proxima_foto"`
+	MsgDocumentoAdicionado        string `json:"msg_documento_adicionado"`
+	MsgProximoDocumento           string `json:"msg_proximo_documento"`
+	MsgEnqueteFotos               string `json:"msg_enquete_fotos"`
+	MsgEnqueteFotosPosDocs        string `json:"msg_enquete_fotos_pos_docs"`
+	MsgEnviarFotos                string `json:"msg_enviar_fotos"`
+	MsgEnqueteConfirmarFotos      string `json:"msg_enquete_confirmar_fotos"`
+	MsgFotoAdicionada             string `json:"msg_foto_adicionada"`
+	MsgProximaFoto                string `json:"msg_proxima_foto"`
 }
 
 var (
@@ -160,7 +160,7 @@ func carregarConfigDoAmbiente() Config {
 	}
 
 	smtpEnabled := get("SMTP_ENABLED", "false")
-	whEnabled   := get("WORKING_HOURS_ENABLED", "false")
+	whEnabled := get("WORKING_HOURS_ENABLED", "false")
 
 	return Config{
 		GLPIApiURL:    get("GLPI_API_URL", ""),
@@ -261,16 +261,16 @@ func preencherDefaultsMensagens(cfg *Config) {
 			"Agradecemos o contato! Quando precisar de algo, é só mandar uma nova mensagem. 🚀",
 
 		&cfg.MsgEnqueteDocumentos:          "Você possui arquivos ou documentos (PDF, Word, Excel, etc) para enviar?",
-		&cfg.MsgEnviarDocumentos:            "Pode enviar seus arquivos ou documentos! 📄",
-		&cfg.MsgEnqueteConfirmarDocumentos:  "📄 Arquivo recebido! Já terminou de enviar seus documentos?",
-		&cfg.MsgDocumentoAdicionado:         "✅ Mais um documento adicionado à lista!",
-		&cfg.MsgProximoDocumento:            "📄 Beleza, pode enviar o próximo arquivo!",
+		&cfg.MsgEnviarDocumentos:           "Pode enviar seus arquivos ou documentos! 📄",
+		&cfg.MsgEnqueteConfirmarDocumentos: "📄 Arquivo recebido! Já terminou de enviar seus documentos?",
+		&cfg.MsgDocumentoAdicionado:        "✅ Mais um documento adicionado à lista!",
+		&cfg.MsgProximoDocumento:           "📄 Beleza, pode enviar o próximo arquivo!",
 		&cfg.MsgEnqueteFotos:               "Você tem alguma FOTO ou PRINT do problema para enviar?",
 		&cfg.MsgEnqueteFotosPosDocs:        "Arquivos salvos! Você tem alguma FOTO ou PRINT do problema para enviar?",
-		&cfg.MsgEnviarFotos:               "Pode enviar suas fotos! 📸",
-		&cfg.MsgEnqueteConfirmarFotos:     "📸 Foto recebida! Já terminou de enviar suas fotos?",
-		&cfg.MsgFotoAdicionada:            "✅ Mais uma foto adicionada à lista!",
-		&cfg.MsgProximaFoto:              "📸 Beleza, pode enviar a próxima foto!",
+		&cfg.MsgEnviarFotos:                "Pode enviar suas fotos! 📸",
+		&cfg.MsgEnqueteConfirmarFotos:      "📸 Foto recebida! Já terminou de enviar suas fotos?",
+		&cfg.MsgFotoAdicionada:             "✅ Mais uma foto adicionada à lista!",
+		&cfg.MsgProximaFoto:                "📸 Beleza, pode enviar a próxima foto!",
 
 		&cfg.MsgAusencia: "Anotamos seu problema! 📝 No momento estamos fora do horário de expediente. " +
 			"Nosso atendimento retorna no próximo dia útil às {inicio}h.",

@@ -46,9 +46,9 @@ function createNodeUI(node, path, isRoot = false) {
     let badgeHTML = '';
     switch (node.type) {
         case 'menu':
-            
-// Constante backInfo trata a execução de callback ou fluxo assíncrono
-const backInfo = (isRoot || node.show_back_button !== false) ? ' (+Botão Voltar)' : ' (Sem Voltar)';
+
+            // Constante backInfo trata a execução de callback ou fluxo assíncrono
+            const backInfo = (isRoot || node.show_back_button !== false) ? ' (+Botão Voltar)' : ' (Sem Voltar)';
             badgeHTML = `<span class="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded">📁 Menu${backInfo}</span>`;
             break;
         case 'ticket':
@@ -110,12 +110,12 @@ const backInfo = (isRoot || node.show_back_button !== false) ? ' (+Botão Voltar
     if (node.type === 'menu' && node.children && node.children.length > 0) {
         const childrenDiv = document.createElement('div');
         childrenDiv.className = 'flex flex-col gap-2 border-l border-gray-800 ml-2 mt-1';
-        
+
         node.children.forEach((child, idx) => {
             const childEl = createNodeUI(child, [...path, idx]);
             childrenDiv.appendChild(childEl);
         });
-        
+
         div.appendChild(childrenDiv);
     } else if (node.type === 'menu') {
         const emptyDiv = document.createElement('div');
@@ -151,7 +151,7 @@ function openEditModal(path) {
     document.getElementById('node-type').value = node.type || 'menu';
     document.getElementById('node-glpi').value = node.glpi_id || 0;
     document.getElementById('node-content').value = node.content || '';
-    
+
     // Configura os checkboxes (padrão é true para nós existentes)
     document.getElementById('node-ask-images').checked = node.ask_images !== false;
     document.getElementById('node-ask-docs').checked = node.ask_docs !== false;
@@ -176,7 +176,7 @@ function openAddModal(path) {
     document.getElementById('node-type').value = 'ticket';
     document.getElementById('node-glpi').value = 0;
     document.getElementById('node-content').value = '';
-    
+
     // Checkboxes marcados por padrão ao adicionar novo nó
     document.getElementById('node-ask-images').checked = true;
     document.getElementById('node-ask-docs').checked = true;
@@ -248,7 +248,7 @@ function confirmModal() {
         node.type = type;
         node.glpi_id = glpi_id;
         node.content = content;
-        
+
         if (type === 'ticket') {
             node.ask_images = document.getElementById('node-ask-images').checked;
             node.ask_docs = document.getElementById('node-ask-docs').checked;
@@ -269,10 +269,10 @@ function confirmModal() {
     } else if (activeEditMode === "add") {
         const parent = funcNodeByPath(activeEditPath);
         if (!parent.children) parent.children = [];
-        
+
         // Gerar um ID único simples
         const newID = "node_" + Math.random().toString(36).substr(2, 9);
-        
+
         const newNode = {
             id: newID,
             title,
@@ -280,17 +280,17 @@ function confirmModal() {
             glpi_id,
             content
         };
-        
+
         if (type === 'ticket') {
             newNode.ask_images = document.getElementById('node-ask-images').checked;
             newNode.ask_docs = document.getElementById('node-ask-docs').checked;
         }
-        
+
         if (type === 'menu') {
             newNode.show_back_button = document.getElementById('node-show-back').checked;
             newNode.children = [];
         }
-        
+
         parent.children.push(newNode);
     }
 
@@ -357,16 +357,16 @@ function showToast(message, icon = '✅') {
 
     if (icon === '✅') {
         toast.className = toast.className.replace('border-red-500/30', 'border-emerald-500/30')
-                                       .replace('bg-red-950/80', 'bg-emerald-950/80')
-                                       .replace('text-red-300', 'text-emerald-300') + ' border-emerald-500/30 bg-emerald-950/80 text-emerald-300';
+            .replace('bg-red-950/80', 'bg-emerald-950/80')
+            .replace('text-red-300', 'text-emerald-300') + ' border-emerald-500/30 bg-emerald-950/80 text-emerald-300';
     } else {
         toast.className = toast.className.replace('border-emerald-500/30', 'border-red-500/30')
-                                       .replace('bg-emerald-950/80', 'bg-red-950/80')
-                                       .replace('text-emerald-300', 'text-red-300') + ' border-red-500/30 bg-red-950/80 text-red-300';
+            .replace('bg-emerald-950/80', 'bg-red-950/80')
+            .replace('text-emerald-300', 'text-red-300') + ' border-red-500/30 bg-red-950/80 text-red-300';
     }
 
     toast.classList.remove('translate-y-24', 'opacity-0');
-    
+
     setTimeout(() => {
         toast.classList.add('translate-y-24', 'opacity-0');
     }, 3000);

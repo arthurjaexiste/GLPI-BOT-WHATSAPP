@@ -1,6 +1,7 @@
 <!-- VIEW HTML: flow.html - Página do Painel Administrativo do GLPI-BOT -->
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,49 +12,66 @@
     <link rel="stylesheet" href="/static/css/style.css?v=1.6">
     <link rel="stylesheet" href="/static/css/flow.css?v=1.6">
 </head>
+
 <body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
     <!-- Ambient light glow effects (Monochrome/Gray theme) -->
-    <div class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-zinc-500/[0.03] rounded-full blur-[150px] pointer-events-none"></div>
-    <div class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[130px] pointer-events-none"></div>
+    <div
+        class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-zinc-500/[0.03] rounded-full blur-[150px] pointer-events-none">
+    </div>
+    <div
+        class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[130px] pointer-events-none">
+    </div>
 
     <!-- Header/Navbar -->
-    <header class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+    <header
+        class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-            <img src="/static/img/logo.png" alt="Logo" class="w-10 h-10 rounded-xl object-contain shadow-lg border border-white/5">
+            <img src="/static/img/logo.png" alt="Logo"
+                class="w-10 h-10 rounded-xl object-contain shadow-lg border border-white/5">
             <div>
-                <h1 class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">GLPI-BOT</h1>
+                <h1
+                    class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
+                    GLPI-BOT</h1>
                 <p class="text-xs text-zinc-400">Painel de Controle Inteligente</p>
             </div>
         </div>
-        
+
         <!-- Navigation Links -->
         <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/5 rounded-xl">
-            <a href="/" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 📊 Status
             </a>
-            <a href="/flow" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
+            <a href="/flow"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
                 💬 Fluxo do Bot
             </a>
-            <a href="/config" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/config"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 🔧 Configurações
             </a>
-            <a href="/messages" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/messages"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 ✉️ Mensagens
             </a>
-            <a href="/chats" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/chats"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 💬 Conversas
             </a>
-            <a href="/logs" class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
+            <a href="/logs"
+                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
                 📋 Logs
             </a>
         </nav>
 
         <!-- Action / Save and Logout -->
         <div class="flex items-center gap-3">
-            <button onclick="saveFlow()" class="px-4 py-2.5 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-1.5 border border-white">
+            <button onclick="saveFlow()"
+                class="px-4 py-2.5 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-1.5 border border-white">
                 💾 Salvar Árvore de Fluxo
             </button>
-            <a href="/logout" class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
+            <a href="/logout"
+                class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
                 🚪 Sair
             </a>
         </div>
@@ -61,16 +79,20 @@
 
     <main class="flex-1 max-w-5xl w-full mx-auto p-6 flex flex-col gap-6 overflow-hidden relative z-10">
         <!-- Quick Info Panel -->
-        <div class="bg-zinc-900/20 border border-white/5 p-6 rounded-2xl flex items-center justify-between gap-6 border-l-4 border-zinc-400 shadow-xl">
+        <div
+            class="bg-zinc-900/20 border border-white/5 p-6 rounded-2xl flex items-center justify-between gap-6 border-l-4 border-zinc-400 shadow-xl">
             <div>
                 <h2 class="text-sm font-bold mb-1 text-zinc-200">Como funciona o Fluxo do Bot?</h2>
                 <p class="text-xs text-zinc-400 leading-relaxed font-normal">
-                    Você pode modelar os botões e enquetes dinamicamente. Defina a ação de cada resposta: 
-                    <span class="text-zinc-200 font-semibold">Submenu</span> aninha novas enquetes; 
-                    <span class="text-zinc-200 font-semibold">Abrir Chamado GLPI</span> coleta a descrição do usuário no WhatsApp e abre o ticket; 
-                    <span class="text-zinc-250 font-semibold">FAQ / Texto</span> envia uma mensagem final com a resposta; 
-                    <span class="text-zinc-300 font-semibold">Status Chamado</span> busca os tickets abertos do usuário; 
-                    <span class="text-zinc-350 font-semibold">Falar com Suporte</span> envia para a fila de técnicos administradores.
+                    Você pode modelar os botões e enquetes dinamicamente. Defina a ação de cada resposta:
+                    <span class="text-zinc-200 font-semibold">Submenu</span> aninha novas enquetes;
+                    <span class="text-zinc-200 font-semibold">Abrir Chamado GLPI</span> coleta a descrição do usuário no
+                    WhatsApp e abre o ticket;
+                    <span class="text-zinc-250 font-semibold">FAQ / Texto</span> envia uma mensagem final com a
+                    resposta;
+                    <span class="text-zinc-300 font-semibold">Status Chamado</span> busca os tickets abertos do usuário;
+                    <span class="text-zinc-350 font-semibold">Falar com Suporte</span> envia para a fila de técnicos
+                    administradores.
                 </p>
             </div>
         </div>
@@ -84,25 +106,31 @@
     </main>
 
     <!-- Node Editor Modal -->
-    <div id="edit-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center hidden">
-        <div class="bg-zinc-950 border border-white/10 w-full max-w-lg rounded-3xl p-8 shadow-2xl flex flex-col gap-6 relative overflow-hidden">
+    <div id="edit-modal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        <div
+            class="bg-zinc-950 border border-white/10 w-full max-w-lg rounded-3xl p-8 shadow-2xl flex flex-col gap-6 relative overflow-hidden">
             <!-- Modal ambient background light -->
-            <div class="absolute -top-12 -right-12 w-32 h-32 bg-white/[0.01] rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-white/[0.01] rounded-full blur-2xl pointer-events-none">
+            </div>
 
             <div class="flex justify-between items-center border-b border-white/5 pb-4 relative z-10">
                 <h3 id="modal-title" class="text-md font-bold text-zinc-200 uppercase tracking-wider">Editar Opção</h3>
                 <button onclick="closeModal()" class="text-zinc-400 hover:text-white transition text-lg">✕</button>
             </div>
-            
+
             <div class="flex flex-col gap-5 relative z-10">
                 <div class="flex flex-col gap-2">
-                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Título da Opção (WhatsApp)</label>
-                    <input type="text" id="node-title" maxlength="32" placeholder="Ex: Internet lenta" class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Título da Opção
+                        (WhatsApp)</label>
+                    <input type="text" id="node-title" maxlength="32" placeholder="Ex: Internet lenta"
+                        class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
                 </div>
 
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Tipo da Ação</label>
-                    <select id="node-type" onchange="toggleModalFields()" class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                    <select id="node-type" onchange="toggleModalFields()"
+                        class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
                         <option value="menu">📁 Submenu (Abre novas opções)</option>
                         <option value="ticket">🎫 Abrir Chamado GLPI (Coleta descrição e anexa mídias)</option>
                         <option value="text">💬 FAQ / Resposta de Texto (Envia mensagem e finaliza)</option>
@@ -113,20 +141,26 @@
 
                 <!-- GLPI Category ID Field -->
                 <div id="field-glpi" class="flex flex-col gap-2 hidden">
-                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">ID da Categoria no GLPI</label>
-                    <input type="number" id="node-glpi" placeholder="Digite o ID da categoria" class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">ID da Categoria no
+                        GLPI</label>
+                    <input type="number" id="node-glpi" placeholder="Digite o ID da categoria"
+                        class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
                 </div>
 
                 <!-- Attachment Options (Only for GLPI Ticket) -->
                 <div id="field-attachments" class="flex flex-col gap-2.5 hidden">
-                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Solicitar Anexos (WhatsApp)</label>
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-black/30 border border-white/5 p-4 rounded-xl">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Solicitar Anexos
+                        (WhatsApp)</label>
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-black/30 border border-white/5 p-4 rounded-xl">
                         <label class="flex items-center gap-2.5 text-xs text-zinc-300 cursor-pointer select-none">
-                            <input type="checkbox" id="node-ask-images" class="w-4 h-4 rounded border-white/10 bg-zinc-800 text-zinc-350 focus:ring-0">
+                            <input type="checkbox" id="node-ask-images"
+                                class="w-4 h-4 rounded border-white/10 bg-zinc-800 text-zinc-350 focus:ring-0">
                             <span>Solicitar Imagens / Fotos</span>
                         </label>
                         <label class="flex items-center gap-2.5 text-xs text-zinc-300 cursor-pointer select-none">
-                            <input type="checkbox" id="node-ask-docs" class="w-4 h-4 rounded border-white/10 bg-zinc-800 text-zinc-350 focus:ring-0">
+                            <input type="checkbox" id="node-ask-docs"
+                                class="w-4 h-4 rounded border-white/10 bg-zinc-800 text-zinc-350 focus:ring-0">
                             <span>Solicitar Documentos (PDF, etc)</span>
                         </label>
                     </div>
@@ -134,10 +168,12 @@
 
                 <!-- Submenu Options (Only for Menu/Submenu) -->
                 <div id="field-menu-options" class="flex flex-col gap-2.5 hidden">
-                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Configuração do Menu (WhatsApp)</label>
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Configuração do Menu
+                        (WhatsApp)</label>
                     <div class="flex items-center gap-2.5 bg-black/30 border border-white/5 p-4 rounded-xl">
                         <label class="flex items-center gap-2.5 text-xs text-zinc-300 cursor-pointer select-none">
-                            <input type="checkbox" id="node-show-back" class="w-4 h-4 rounded border-white/10 bg-zinc-800 text-zinc-350 focus:ring-0">
+                            <input type="checkbox" id="node-show-back"
+                                class="w-4 h-4 rounded border-white/10 bg-zinc-800 text-zinc-350 focus:ring-0">
                             <span>Adicionar botão "Voltar"</span>
                         </label>
                     </div>
@@ -145,16 +181,21 @@
 
                 <!-- Content/Prompt Field -->
                 <div id="field-content" class="flex flex-col gap-2 hidden">
-                    <label id="label-content" class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Mensagem de Resposta</label>
-                    <textarea id="node-content" rows="4" placeholder="Digite o conteúdo aqui..." class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 resize-none"></textarea>
+                    <label id="label-content"
+                        class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Mensagem de
+                        Resposta</label>
+                    <textarea id="node-content" rows="4" placeholder="Digite o conteúdo aqui..."
+                        class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 resize-none"></textarea>
                 </div>
             </div>
 
             <div class="flex justify-end gap-3 border-t border-white/5 pt-4 relative z-10">
-                <button onclick="closeModal()" class="px-4 py-2 text-xs font-semibold text-zinc-350 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition duration-200">
+                <button onclick="closeModal()"
+                    class="px-4 py-2 text-xs font-semibold text-zinc-350 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition duration-200">
                     Cancelar
                 </button>
-                <button onclick="confirmModal()" class="px-5 py-2 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg border border-white transition duration-200">
+                <button onclick="confirmModal()"
+                    class="px-5 py-2 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg border border-white transition duration-200">
                     Confirmar
                 </button>
             </div>
@@ -162,11 +203,13 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 backdrop-blur-md transform translate-y-24 opacity-0 transition duration-300 flex items-center gap-3 z-50">
+    <div id="toast"
+        class="fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 backdrop-blur-md transform translate-y-24 opacity-0 transition duration-300 flex items-center gap-3 z-50">
         <span id="toast-icon">✅</span>
         <span id="toast-message">Fluxo salvo com sucesso!</span>
     </div>
 
     <script src="/static/js/flow.js?v=1.6"></script>
 </body>
+
 </html>

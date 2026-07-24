@@ -16,7 +16,7 @@ function formatJIDToPhone(jid) {
     if (!jid) return "";
     // Remove sufixos como @s.whatsapp.net ou grupos, e também session id :1, :2
     const num = jid.split('@')[0].split(':')[0];
-    
+
     // Formatação de número brasileiro (+55 DD 9XXXX-XXXX ou +55 DD XXXX-XXXX)
     if (num.startsWith('55') && num.length >= 10) {
         const ddd = num.substring(2, 4);
@@ -34,7 +34,7 @@ function formatJIDToPhone(jid) {
 document.addEventListener("DOMContentLoaded", () => {
     loadChatsList();
     loadAgentsList();
-    
+
     // Inicia polling periódico (atualiza mensagens a cada 3s e lista de chats a cada 6s)
     setInterval(() => {
         if (activeChatJID) {
@@ -53,7 +53,7 @@ async function loadChatsList(silent = false) {
     try {
         const response = await fetch("/api/chats");
         if (!response.ok) throw new Error("Erro ao buscar conversas");
-        
+
         chatsData = await response.json();
         renderChatsList();
     } catch (error) {
@@ -91,8 +91,8 @@ function renderChatsList(filteredData = null) {
         }
 
         const isSelected = activeChatJID === chat.jid;
-        const cardClass = isSelected 
-            ? "bg-white/10 border-white/10" 
+        const cardClass = isSelected
+            ? "bg-white/10 border-white/10"
             : "bg-zinc-900/40 hover:bg-white/5 border-white/5";
 
         const card = document.createElement("div");
@@ -143,9 +143,9 @@ function filterChats() {
         return;
     }
     const filtered = chatsData.filter(chat => {
-        return (chat.name && chat.name.toLowerCase().includes(term)) || 
-               chat.jid.toLowerCase().includes(term) ||
-               (chat.last_message && chat.last_message.toLowerCase().includes(term));
+        return (chat.name && chat.name.toLowerCase().includes(term)) ||
+            chat.jid.toLowerCase().includes(term) ||
+            (chat.last_message && chat.last_message.toLowerCase().includes(term));
     });
     renderChatsList(filtered);
 }
@@ -156,17 +156,17 @@ async function selectChat(jid, name, status) {
     activeChatJID = jid;
     activeChatName = name || jid;
     activeChatStatus = status;
-    
+
     // Esconde o placeholder
     document.getElementById("chat-placeholder").style.display = "none";
-    
+
     // Configura o cabeçalho do chat ativo
     const phoneFormatted = formatJIDToPhone(jid);
     const displayName = name ? name : phoneFormatted;
 
     document.getElementById("active-chat-name").textContent = displayName;
     document.getElementById("active-chat-jid").textContent = phoneFormatted;
-    
+
     // Configura o avatar no cabeçalho
     const avatarContainer = document.getElementById("active-chat-avatar");
     avatarContainer.innerHTML = `<img src="/api/chats/avatar?jid=${encodeURIComponent(jid)}&name=${encodeURIComponent(displayName)}" class="w-full h-full rounded-xl object-cover" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&color=fff';" />`;
@@ -194,9 +194,9 @@ async function selectChat(jid, name, status) {
         node.classList.remove("bg-white/10", "border-white/10");
         node.classList.add("bg-zinc-900/40", "border-white/5");
     });
-    
+
     // Atualiza a lista lateral para destacar a selecionada
-    loadChatsList(true); 
+    loadChatsList(true);
 
     // Carrega histórico de mensagens
     await refreshActiveMessages(true);
@@ -207,11 +207,11 @@ let lastMessagesCount = 0;
 // Função refreshActiveMessages manipula a rotina correspondente na interface do painel
 async function refreshActiveMessages(forceScroll = false) {
     if (!activeChatJID) return;
-    
+
     try {
         const response = await fetch(`/api/chats/messages?jid=${encodeURIComponent(activeChatJID)}`);
         if (!response.ok) throw new Error("Erro ao buscar histórico");
-        
+
         const messages = await response.json();
         renderMessages(messages, forceScroll);
     } catch (error) {
@@ -224,12 +224,12 @@ async function refreshActiveMessages(forceScroll = false) {
 // Função renderMessages manipula a rotina correspondente na interface do painel
 function renderMessages(messages, forceScroll = false) {
     const container = document.getElementById("chat-messages-container");
-    
+
     // Se não há novas mensagens, evita re-renderizar para manter o scroll amigável do admin
     if (messages.length === lastMessagesCount && !forceScroll) {
         return;
     }
-    
+
     container.innerHTML = "";
     lastMessagesCount = messages.length;
 
@@ -244,9 +244,9 @@ function renderMessages(messages, forceScroll = false) {
 
         const bubble = document.createElement("div");
         bubble.className = `message-bubble ${msg.is_from_me ? 'message-outgoing' : 'message-incoming'}`;
-        
+
         const formattedText = msg.text.replace(/\n/g, "<br>");
-        
+
         bubble.innerHTML = `
             <div class="font-medium">${formattedText}</div>
             <div class="text-[9px] mt-1 text-right ${msg.is_from_me ? 'text-zinc-600' : 'text-zinc-400'}">${msg.timestamp}</div>
@@ -269,9 +269,9 @@ async function sendConsoleMessage() {
 
     const input = document.getElementById("chat-message-input");
     const text = input.value.trim();
-    
+
     if (!text || !activeChatJID) return;
-    
+
     const sendBtn = document.getElementById("btn-send-msg");
     sendBtn.disabled = true;
     sendBtn.textContent = "Enviando...";
@@ -289,7 +289,7 @@ async function sendConsoleMessage() {
         });
 
         if (!response.ok) throw new Error("Falha ao enviar");
-        
+
         input.value = "";
         showToast("Mensagem enviada com sucesso!");
         await refreshActiveMessages(true);
@@ -322,15 +322,14 @@ function showToast(message, isSuccess = true) {
 
     icon.textContent = isSuccess ? "✅" : "🚨";
     msg.textContent = message;
-    
-    toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl backdrop-blur-md transform transition duration-300 flex items-center gap-3 z-50 ${
-        isSuccess 
-        ? 'bg-emerald-950/80 border border-emerald-500/30 text-emerald-300' 
-        : 'bg-rose-950/80 border border-rose-500/30 text-rose-300'
-    }`;
+
+    toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl backdrop-blur-md transform transition duration-300 flex items-center gap-3 z-50 ${isSuccess
+            ? 'bg-emerald-950/80 border border-emerald-500/30 text-emerald-300'
+            : 'bg-rose-950/80 border border-rose-500/30 text-rose-300'
+        }`;
 
     toast.classList.remove("translate-y-24", "opacity-0");
-    
+
     setTimeout(() => {
         toast.classList.add("translate-y-24", "opacity-0");
     }, 3000);
@@ -401,7 +400,7 @@ async function closeChat(jid) {
 
         // Recarrega a lista de chats para atualizar o status visual
         loadChatsList();
-        
+
         // Atualiza cabeçalho do chat ativo para mostrar "Interação Bot"
         const statusDot = document.getElementById("active-chat-status-dot");
         const statusText = document.getElementById("active-chat-status-text");
@@ -422,7 +421,7 @@ async function loadAgentsList() {
         const response = await fetch("/api/agents");
         if (!response.ok) throw new Error("Erro ao buscar atendentes");
         agentsList = await response.json();
-        
+
         const select = document.getElementById("agent-select");
         if (select) {
             select.innerHTML = '<option value="">Selecione o Técnico...</option>';
@@ -442,15 +441,15 @@ async function loadAgentsList() {
 // Função assumeActiveChat manipula a rotina correspondente na interface do painel
 async function assumeActiveChat() {
     if (!activeChatJID) return;
-    
+
     const select = document.getElementById("agent-select");
     const selectedAgent = select.value;
-    
+
     if (!selectedAgent) {
         showToast("Selecione um técnico primeiro.", false);
         return;
     }
-    
+
     try {
         const response = await fetch("/api/chats/assume", {
             method: "POST",
@@ -462,12 +461,12 @@ async function assumeActiveChat() {
                 agent: selectedAgent
             })
         });
-        
+
         if (!response.ok) throw new Error("Erro ao assumir atendimento");
-        
+
         showToast(`Atendimento assumido por ${selectedAgent}!`);
         document.getElementById("assume-chat-banner").style.display = "none";
-        
+
         // Atualiza o status localmente para live_chat
         activeChatStatus = "live_chat";
         const statusDot = document.getElementById("active-chat-status-dot");
@@ -476,7 +475,7 @@ async function assumeActiveChat() {
             statusDot.className = "w-1.5 h-1.5 rounded-full status-live_chat";
             statusText.textContent = "Live Chat / Suporte";
         }
-        
+
         // Recarrega a lista de chats e as mensagens
         loadChatsList(true);
         refreshActiveMessages(true);

@@ -53,7 +53,6 @@ func setupLogRedirection() {
 	}()
 }
 
-
 // Função main executa a regra de negócio/rotina correspondente
 func main() {
 	setupLogRedirection()

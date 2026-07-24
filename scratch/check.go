@@ -7,10 +7,9 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 	"go.mau.fi/whatsmeow/types"
+	"reflect"
 )
-
 
 // Função main executa a regra de negócio/rotina correspondente
 func main() {

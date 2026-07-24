@@ -5,7 +5,7 @@ async function fetchConfig() {
         const response = await fetch('/api/config');
         if (!response.ok) throw new Error('Falha ao obter configurações');
         const cfg = await response.json();
-        
+
         document.getElementById('company_name').value = cfg.company_name || '';
         document.getElementById('telefone_notificacao').value = cfg.telefone_notificacao || '';
         document.getElementById('glpi_api_url').value = cfg.glpi_api_url || '';
@@ -30,7 +30,7 @@ async function fetchConfig() {
         document.getElementById('msg_ausencia').value = cfg.msg_ausencia || '';
 
         // Marca os checkboxes dos dias de trabalho
-        const workingDays = cfg.working_days ? cfg.working_days.split(',') : ['1','2','3','4','5'];
+        const workingDays = cfg.working_days ? cfg.working_days.split(',') : ['1', '2', '3', '4', '5'];
         const checkboxes = document.getElementsByName('working_days_checkbox');
         checkboxes.forEach(cb => {
             cb.checked = workingDays.includes(cb.value);
@@ -165,7 +165,7 @@ function showToast(message, icon = '✅') {
 
     // Reset layout classes to avoid duplicate accumulation
     const baseClasses = "fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl backdrop-blur-md transform transition duration-300 flex items-center gap-3 z-50";
-    
+
     if (icon === '✅') {
         toast.className = baseClasses + " bg-emerald-950/80 border border-emerald-500/30 text-emerald-300";
     } else {
@@ -176,7 +176,7 @@ function showToast(message, icon = '✅') {
     setTimeout(() => {
         toast.classList.remove('translate-y-24', 'opacity-0');
     }, 10);
-    
+
     setTimeout(() => {
         toast.classList.add('translate-y-24', 'opacity-0');
     }, 3000);
@@ -231,7 +231,7 @@ async function restartBot() {
         if (!response.ok) throw new Error('Falha ao enviar sinal de reinício');
 
         showToast('Sinal de reinício enviado! Aguardando o bot voltar...', '✅');
-        
+
         // Bloqueia a tela informando que está reiniciando
         setTimeout(() => {
             document.body.innerHTML = `
@@ -241,7 +241,7 @@ async function restartBot() {
                     <p class="text-xs text-gray-400" id="restart-msg">Aguardando o bot subir novamente...</p>
                 </div>
             `;
-            
+
             // Inicia tentativa de reconexão automática após 4 segundos
             setTimeout(autoReconnect, 4000);
         }, 1000);
@@ -268,7 +268,7 @@ async function autoReconnect() {
         // Ignora erros de rede enquanto o servidor estiver fora do ar
         console.log("Servidor ainda offline, tentando novamente...");
     }
-    
+
     // Tenta novamente após 1.5 segundos
     setTimeout(autoReconnect, 1500);
 }
@@ -294,7 +294,7 @@ async function testSMTP() {
 
     const btn = document.getElementById('btn-test-smtp');
     if (!btn) return;
-    
+
     const originalText = btn.innerText;
     btn.disabled = true;
     btn.innerText = "⏳ Testando...";
@@ -324,7 +324,7 @@ async function testSMTP() {
         } catch (e) {
             data = { status: 'error', message: 'Servidor retornou resposta inválida' };
         }
-        
+
         btn.disabled = false;
         btn.innerText = originalText;
 
