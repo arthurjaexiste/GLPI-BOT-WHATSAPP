@@ -12,30 +12,7 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css?v=1.6">
-    <style>
-        .terminal-font {
-            font-family: 'Fira Code', 'Courier New', Courier, monospace;
-        }
-
-        /* Custom scrollbar for terminal */
-        .terminal-scroll::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        .terminal-scroll::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .terminal-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-
-        .terminal-scroll::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/logs.css?v=1.6">
 </head>
 
 <body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
@@ -169,121 +146,7 @@
         </div>
     </main>
 
-    <script>
-        let refreshInterval = null;
-        let lastLogContent = "";
-
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g,
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag] || tag)
-            );
-        }
-
-        // Analisa e colore as linhas de logs para simular um terminal com sintaxe destacada
-        function formatLogLine(line) {
-            const trimmed = line.trim();
-            if (!trimmed) return "";
-
-            let colorClass = "text-zinc-400";
-            let escaped = escapeHTML(line);
-
-            // Verifica palavras-chave e define estilos de cor
-            if (escaped.includes("🚨") || escaped.toLowerCase().includes("erro") || escaped.toLowerCase().includes("error") || escaped.toLowerCase().includes("failed") || escaped.toLowerCase().includes("panic") || escaped.toLowerCase().includes("fatal")) {
-                colorClass = "text-rose-400 font-semibold";
-            } else if (escaped.includes("✅") || escaped.toLowerCase().includes("sucesso") || escaped.toLowerCase().includes("success") || escaped.toLowerCase().includes("conectado") || escaped.toLowerCase().includes("connected")) {
-                colorClass = "text-emerald-400 font-semibold";
-            } else if (escaped.includes("⚠️") || escaped.toLowerCase().includes("warning") || escaped.toLowerCase().includes("warn") || escaped.toLowerCase().includes("offline") || escaped.toLowerCase().includes("desconectado")) {
-                colorClass = "text-amber-400 font-semibold";
-            } else if (escaped.includes("[POLL]") || escaped.includes("[VOTO]")) {
-                colorClass = "text-zinc-300";
-            } else if (escaped.includes("[WEBHOOK]") || escaped.includes("[API]")) {
-                colorClass = "text-zinc-200";
-            } else if (escaped.includes("[TICKET]") || escaped.includes("[GLPI]")) {
-                colorClass = "text-white font-medium";
-            } else if (escaped.includes("🔄") || escaped.includes("iniciado") || escaped.includes("reiniciado") || escaped.includes("START")) {
-                colorClass = "text-zinc-100 font-semibold";
-            }
-
-            return `<div class="${colorClass} py-0.5">${escaped}</div>`;
-        }
-
-        async function fetchLogs() {
-            const limit = document.getElementById('limitSelect').value;
-            const terminal = document.getElementById('terminal');
-            const statusText = document.getElementById('status-text');
-            const statusPulse = document.getElementById('status-pulse');
-
-            try {
-                const response = await fetch(`/api/logs?limit=${limit}`);
-                if (!response.ok) throw new Error("Erro na rede");
-                const data = await response.json();
-
-                const logsText = data.logs || "Nenhum log gravado até o momento.";
-
-                // Evita redesenhar se o log for idêntico
-                if (logsText === lastLogContent) {
-                    statusText.innerText = "Monitorando (sem novas linhas)";
-                    return;
-                }
-                lastLogContent = logsText;
-
-                const lines = logsText.split("\n");
-                let formattedHTML = "";
-                for (let line of lines) {
-                    formattedHTML += formatLogLine(line);
-                }
-
-                terminal.innerHTML = formattedHTML || "Nenhum log gravado até o momento.";
-
-                statusText.innerText = "Monitorando - Atualizado: " + new Date().toLocaleTimeString();
-                statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-
-                // Rolar para o fim se selecionado
-                if (document.getElementById('autoScrollCheck').checked) {
-                    terminal.scrollTop = terminal.scrollHeight;
-                }
-            } catch (err) {
-                statusText.innerText = "Erro ao buscar logs do bot";
-                statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping";
-            }
-        }
-
-        function clearConsole() {
-            document.getElementById('terminal').innerHTML = '<div class="text-zinc-650 italic font-mono">// Tela limpa localmente. Aguardando novas linhas...</div>';
-            lastLogContent = "";
-        }
-
-        function setupAutoRefresh() {
-            const interval = parseInt(document.getElementById('intervalSelect').value);
-            const statusPulse = document.getElementById('status-pulse');
-            const statusText = document.getElementById('status-text');
-
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-                refreshInterval = null;
-            }
-
-            if (interval > 0) {
-                refreshInterval = setInterval(fetchLogs, interval);
-                statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-                statusText.innerText = "Monitorando...";
-            } else {
-                statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-zinc-600";
-                statusText.innerText = "Atualização automática desativada";
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            fetchLogs();
-            setupAutoRefresh();
-        });
-    </script>
+    <script src="/static/js/logs.js?v=1.6"></script>
 </body>
 
 </html>

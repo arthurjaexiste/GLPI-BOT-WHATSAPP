@@ -340,3 +340,29 @@ async function testSMTP() {
         showToast('Erro de conexão ao testar o SMTP.', '❌');
     }
 }
+
+// Alterna a exibição das abas do painel de configurações
+function showTab(tabName) {
+    // Esconde todos os painéis
+    const panels = document.querySelectorAll('.settings-panel');
+    panels.forEach(p => p.classList.add('hidden'));
+
+    // Exibe o painel selecionado
+    const activePanel = document.getElementById('panel-' + tabName);
+    if (activePanel) {
+        activePanel.classList.remove('hidden');
+    }
+
+    // Reseta o estilo de todas as abas
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(t => {
+        t.className = "tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent";
+    });
+
+    // Aplica estilo ativo na aba selecionada
+    const activeTab = document.getElementById('tab-' + tabName);
+    if (activeTab) {
+        activeTab.className = "tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-white bg-zinc-800/40 border border-zinc-700/50 shadow-md active";
+    }
+}
+
