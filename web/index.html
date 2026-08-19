@@ -65,6 +65,10 @@
 
         <!-- Action / Logout -->
         <div class="flex items-center gap-3">
+            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-900/80 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-medium">
+                <span id="user-badge-role" class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300">...</span>
+                <span id="user-badge-name" class="text-zinc-200 font-bold">...</span>
+            </div>
             <a href="/logout"
                 class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
                 🚪 Sair
@@ -188,7 +192,8 @@
         </div>
     </main>
 
-    <!-- Importando o Script -->
+    <!-- Importando os Scripts -->
+    <script src="/static/js/auth-check.js?v=1.6"></script>
     <script src="/static/js/script.js?v=1.6"></script>
 </body>
 

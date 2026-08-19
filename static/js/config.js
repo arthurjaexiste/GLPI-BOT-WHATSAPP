@@ -1,3 +1,14 @@
+// Função auxiliar de sanitização HTML
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // Carrega as configurações atuais da API
 // Função fetchConfig manipula a rotina correspondente na interface do painel
 async function fetchConfig() {
@@ -364,5 +375,396 @@ function showTab(tabName) {
     if (activeTab) {
         activeTab.className = "tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-white bg-zinc-800/40 border border-zinc-700/50 shadow-md active";
     }
+
+    if (tabName === 'usuarios') {
+        fetchSystemUsers();
+    }
 }
+
+// ─── GESTÃO DE USUÁRIOS DO SISTEMA & MODAL DE IMPORTAÇÃO GLPI ───────────────────────────
+
+let systemUsersList = [];
+let allGLPIUsers = [];
+
+// Carrega usuários cadastrados no sistema (Tabela Principal)
+async function fetchSystemUsers() {
+    const tbody = document.getElementById('users-table-body');
+    if (!tbody) return;
+
+    try {
+        const response = await fetch('/api/users');
+        if (!response.ok) {
+            const errorMsg = await response.text();
+            tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-400 font-medium italic">⚠️ ${escapeHTML(errorMsg || "Erro ao carregar usuários do sistema.")}</td></tr>`;
+            return;
+        }
+        systemUsersList = await response.json();
+        renderSystemUsersTable(systemUsersList);
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-400 font-medium italic">⚠️ Erro de comunicação: ${escapeHTML(err.message)}</td></tr>`;
+    }
+}
+
+function filterSystemUsers() {
+    const searchInput = document.getElementById('system-user-search');
+    if (!searchInput) return;
+    const query = searchInput.value.toLowerCase().trim();
+    if (!query) {
+        renderSystemUsersTable(systemUsersList);
+        return;
+    }
+    const filtered = systemUsersList.filter(u => 
+        (u.name && u.name.toLowerCase().includes(query)) || 
+        (u.username && u.username.toLowerCase().includes(query))
+    );
+    renderSystemUsersTable(filtered);
+}
+
+function renderSystemUsersTable(users) {
+    const tbody = document.getElementById('users-table-body');
+    if (!tbody) return;
+
+    if (!users || users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-zinc-500 italic">Nenhum usuário cadastrado no sistema ainda. Clique em "📥 Importar Usuário do GLPI" acima.</td></tr>`;
+        return;
+    }
+
+    let html = '';
+    users.forEach((u, index) => {
+        const isChecked = u.enabled ? 'checked' : '';
+        const statusBadge = u.enabled 
+            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">🟢 Acesso Liberado</span>`
+            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">🔴 Acesso Bloqueado</span>`;
+
+        const roleSelect = `
+            <select id="user-role-select-${index}" onchange="updateSystemUserPermissions(${index})" class="bg-black/60 border border-white/10 text-xs p-1.5 rounded-xl text-zinc-200 focus:outline-none">
+                <option value="operator" ${u.role === 'operator' ? 'selected' : ''}>👤 Operador</option>
+                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>⭐ Administrador</option>
+            </select>
+        `;
+
+        html += `
+            <tr class="hover:bg-white/[0.02] transition">
+                <td class="py-3 font-semibold text-zinc-200">${escapeHTML(u.name || u.username)}</td>
+                <td class="py-3 font-mono text-zinc-400">@${escapeHTML(u.username)}</td>
+                <td class="py-3">
+                    <div class="flex items-center gap-3">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="user-toggle-${index}" ${isChecked} onchange="updateSystemUserPermissions(${index})" class="sr-only peer">
+                            <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-white"></div>
+                        </label>
+                        ${statusBadge}
+                    </div>
+                </td>
+                <td class="py-3">${roleSelect}</td>
+                <td class="py-3 text-right flex items-center justify-end gap-2">
+                    <button onclick="saveSystemUserDirect(${index})" class="px-3 py-1.5 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-lg shadow-sm transition cursor-pointer">💾 Salvar</button>
+                    <button onclick="openSetPasswordModal('${escapeHTML(u.username)}', ${u.id}, '${escapeHTML(u.name || u.username)}')" class="px-2.5 py-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg transition cursor-pointer" title="Definir Senha de Acesso Local">🔑 Senha</button>
+                    <button onclick="deleteSystemUser('${escapeHTML(u.username)}')" class="px-2.5 py-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition cursor-pointer" title="Remover do sistema">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+function openSetPasswordModal(username, userId, name) {
+    const modal = document.getElementById('modal-set-password');
+    const idInput = document.getElementById('modal-password-user-id');
+    const userInput = document.getElementById('modal-password-username');
+    const subtitle = document.getElementById('modal-password-subtitle');
+    const passInput = document.getElementById('modal-new-password');
+
+    if (idInput) idInput.value = userId || '';
+    if (userInput) userInput.value = username || '';
+    if (subtitle) subtitle.innerText = `Definindo senha para @${username} (${name || username})`;
+    if (passInput) passInput.value = '';
+
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeSetPasswordModal() {
+    const modal = document.getElementById('modal-set-password');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function saveUserPasswordFromModal(event) {
+    event.preventDefault();
+    const userId = parseInt(document.getElementById('modal-password-user-id').value) || 0;
+    const username = document.getElementById('modal-password-username').value;
+    const password = document.getElementById('modal-new-password').value;
+
+    if (!password) {
+        showToast('A senha não pode ser vazia.', '⚠️');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/users', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: userId,
+                username: username,
+                name: username,
+                password: password,
+                role: 'operator'
+            })
+        });
+
+        if (!response.ok) {
+            const errMsg = await response.text();
+            throw new Error(errMsg || 'Erro ao definir senha');
+        }
+
+        showToast(`Senha para @${username} definida com sucesso!`, '✅');
+        closeSetPasswordModal();
+    } catch (err) {
+        showToast(err.message || 'Erro ao salvar senha.', '❌');
+    }
+}
+
+async function updateSystemUserPermissions(index) {
+    const user = systemUsersList[index];
+    if (!user) return;
+
+    const toggle = document.getElementById(`user-toggle-${index}`);
+    const roleSelect = document.getElementById(`user-role-select-${index}`);
+
+    if (toggle) user.enabled = toggle.checked;
+    if (roleSelect) user.role = roleSelect.value;
+
+    renderSystemUsersTable(systemUsersList);
+    await saveSystemUserDirect(index, true);
+}
+
+async function saveSystemUserDirect(index, silent = false) {
+    const user = systemUsersList[index];
+    if (!user) return;
+
+    const payload = {
+        glpi_id: user.glpi_id || 0,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        enabled: user.enabled
+    };
+
+    try {
+        const response = await fetch('/api/users/toggle-access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errMsg = await response.text();
+            throw new Error(errMsg || 'Erro ao salvar permissão');
+        }
+
+        if (!silent) {
+            showToast(`Permissão para @${user.username} salva com sucesso!`, '✅');
+        }
+    } catch (err) {
+        showToast(err.message || 'Erro ao atualizar permissão do usuário.', '❌');
+    }
+}
+
+async function deleteSystemUser(username) {
+    if (!confirm(`Tem certeza que deseja remover o usuário @${username} do sistema?`)) return;
+
+    try {
+        const response = await fetch('/api/users/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+
+        if (!response.ok) {
+            const errMsg = await response.text();
+            throw new Error(errMsg || 'Erro ao remover usuário');
+        }
+
+        showToast(`Usuário @${username} removido com sucesso.`, '✅');
+        fetchSystemUsers();
+    } catch (err) {
+        showToast(err.message || 'Erro ao remover usuário.', '❌');
+    }
+}
+
+// ─── MODAL DE IMPORTAÇÃO DE USUÁRIOS DO GLPI ───────────────────────────
+
+function openImportGLPIModal() {
+    const modal = document.getElementById('modal-import-glpi');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+    syncModalGLPIUsers();
+}
+
+function closeImportGLPIModal() {
+    const modal = document.getElementById('modal-import-glpi');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+async function syncModalGLPIUsers() {
+    const listContainer = document.getElementById('modal-glpi-user-list');
+    const btnSync = document.getElementById('btn-modal-sync-glpi');
+    if (!listContainer) return;
+
+    if (btnSync) {
+        btnSync.disabled = true;
+        btnSync.innerText = '⏳ Conectando...';
+    }
+
+    listContainer.innerHTML = `
+        <div class="py-12 text-center text-zinc-400 text-xs italic flex flex-col items-center gap-2">
+            <span class="text-2xl animate-spin">🔄</span>
+            Conectando ao GLPI e carregando lista de usuários...
+        </div>
+    `;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    try {
+        const response = await fetch('/api/glpi/users', { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            const errorMsg = await response.text();
+            listContainer.innerHTML = `<div class="py-8 text-center text-rose-400 text-xs font-medium italic">⚠️ ${escapeHTML(errorMsg || "Erro ao conectar com a API do GLPI.")}</div>`;
+            return;
+        }
+
+        allGLPIUsers = await response.json();
+        filterModalGLPIUsers();
+    } catch (err) {
+        clearTimeout(timeoutId);
+        let msg = err.name === 'AbortError' 
+            ? 'A conexão com o GLPI demorou mais de 6 segundos.' 
+            : (err.message || 'Falha de comunicação');
+        listContainer.innerHTML = `<div class="py-8 text-center text-rose-400 text-xs font-medium italic">⚠️ ${escapeHTML(msg)}</div>`;
+    } finally {
+        if (btnSync) {
+            btnSync.disabled = false;
+            btnSync.innerText = '🔄 Sincronizar GLPI';
+        }
+    }
+}
+
+function filterModalGLPIUsers() {
+    const searchInput = document.getElementById('modal-glpi-search');
+    const counterEl = document.getElementById('modal-glpi-counter');
+    if (!searchInput) return;
+
+    const query = searchInput.value.toLowerCase().trim();
+    let filtered = allGLPIUsers;
+    if (query) {
+        filtered = allGLPIUsers.filter(u => 
+            (u.name && u.name.toLowerCase().includes(query)) || 
+            (u.username && u.username.toLowerCase().includes(query))
+        );
+    }
+
+    if (counterEl) {
+        counterEl.innerText = `${filtered.length} usuários encontrados no GLPI`;
+    }
+
+    renderModalGLPIUsers(filtered);
+}
+
+let currentFilteredGLPIUsers = [];
+
+function renderModalGLPIUsers(users) {
+    const listContainer = document.getElementById('modal-glpi-user-list');
+    if (!listContainer) return;
+
+    currentFilteredGLPIUsers = users || [];
+
+    if (!currentFilteredGLPIUsers || currentFilteredGLPIUsers.length === 0) {
+        listContainer.innerHTML = `<div class="py-8 text-center text-zinc-500 text-xs italic">Nenhum usuário do GLPI encontrado com essa pesquisa.</div>`;
+        return;
+    }
+
+    const localUsernames = new Set(systemUsersList.map(u => (u.username || '').toLowerCase()));
+
+    let html = '';
+    currentFilteredGLPIUsers.forEach((u, index) => {
+        const isAlreadyInSystem = localUsernames.has((u.username || '').toLowerCase());
+
+        html += `
+            <div class="flex items-center justify-between p-3 bg-black/40 border border-white/5 rounded-2xl hover:border-white/10 transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-300 font-bold text-xs uppercase">
+                        ${escapeHTML((u.username || 'U').substring(0, 2))}
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-zinc-200">${escapeHTML(u.name || u.username)}</div>
+                        <div class="text-[11px] font-mono text-zinc-400">@${escapeHTML(u.username)}</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <select id="modal-role-${index}" class="bg-black/60 border border-white/10 text-xs p-1.5 rounded-xl text-zinc-200 focus:outline-none">
+                        <option value="operator">👤 Operador</option>
+                        <option value="admin">⭐ Administrador</option>
+                    </select>
+
+                    ${isAlreadyInSystem ? `
+                        <span class="px-3 py-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                            ✅ Importado
+                        </span>
+                    ` : `
+                        <button onclick="importUserFromModal(${index})" class="px-3.5 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 rounded-xl shadow-sm transition cursor-pointer">
+                            ➕ Importar
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+    });
+
+    listContainer.innerHTML = html;
+}
+
+async function importUserFromModal(index) {
+    const user = currentFilteredGLPIUsers[index];
+    if (!user) return;
+
+    const roleSelect = document.getElementById(`modal-role-${index}`);
+    const selectedRole = roleSelect ? roleSelect.value : 'operator';
+
+    const payload = {
+        glpi_id: user.glpi_id || user.id || 0,
+        username: user.username,
+        name: user.name || user.username,
+        role: selectedRole,
+        enabled: true
+    };
+
+    try {
+        const response = await fetch('/api/users/toggle-access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errMsg = await response.text();
+            throw new Error(errMsg || 'Erro ao importar usuário');
+        }
+
+        showToast(`Usuário @${user.username} importado com sucesso!`, '✅');
+        
+        await fetchSystemUsers();
+        filterModalGLPIUsers();
+    } catch (err) {
+        showToast(err.message || 'Erro ao importar usuário.', '❌');
+    }
+}
+
 

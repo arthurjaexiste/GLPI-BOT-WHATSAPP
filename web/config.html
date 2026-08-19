@@ -65,6 +65,10 @@
 
         <!-- Action / Save and Logout -->
         <div class="flex items-center gap-3">
+            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-900/80 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-medium">
+                <span id="user-badge-role" class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300">...</span>
+                <span id="user-badge-name" class="text-zinc-200 font-bold">...</span>
+            </div>
             <button onclick="saveConfig()"
                 class="px-4 py-2.5 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-1.5 border border-white">
                 💾 Salvar Configurações
@@ -99,6 +103,10 @@
             <button type="button" onclick="showTab('seguranca')" id="tab-seguranca"
                 class="tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent">
                 🚫 Bloqueios & Senha
+            </button>
+            <button type="button" onclick="showTab('usuarios')" id="tab-usuarios"
+                class="tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent">
+                🔑 Gestão de Usuários
             </button>
             <button type="button" onclick="showTab('sistema')" id="tab-sistema"
                 class="tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent">
@@ -462,8 +470,173 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Panel 7: Usuarios -->
+            <div id="panel-usuarios" class="settings-panel hidden flex flex-col gap-6">
+                <div class="border-b border-white/5 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-md font-bold text-zinc-100 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                            🔑 Gestão de Usuários do Sistema
+                        </h2>
+                        <p class="text-xs text-zinc-400">Usuários cadastrados no sistema com permissão de uso do bot e acesso ao painel.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="openImportGLPIModal()"
+                            class="px-4 py-2.5 text-xs font-bold text-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 rounded-xl shadow-lg shadow-amber-500/10 transition-all duration-200 flex items-center gap-2 border border-amber-300 whitespace-nowrap cursor-pointer">
+                            📥 Importar Usuário do GLPI
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Barra de Busca de Usuários do Sistema -->
+                <div class="flex items-center gap-3">
+                    <input type="text" id="system-user-search" oninput="filterSystemUsers()" placeholder="Buscar usuário cadastrado no sistema por nome ou login..."
+                        class="w-full text-xs p-3 bg-black/40 border border-white/5 rounded-xl">
+                </div>
+
+                <!-- Tabela de Usuários do Sistema -->
+                <div class="overflow-x-auto w-full z-10">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-white/10 text-zinc-400 font-semibold uppercase tracking-wider">
+                                <th class="pb-3 text-left">Nome no Sistema</th>
+                                <th class="pb-3 text-left">Login GLPI</th>
+                                <th class="pb-3 text-left">Acesso ao Bot</th>
+                                <th class="pb-3 text-left">Classe (Role)</th>
+                                <th class="pb-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-white/5 text-zinc-300">
+                            <tr>
+                                <td colspan="5" class="py-6 text-center text-zinc-500 italic">Carregando usuários do sistema...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
+
+    <!-- Modal Popup: Importar Usuário do GLPI -->
+    <div id="modal-import-glpi" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-[#0f1422] border border-white/10 w-full max-w-2xl rounded-3xl p-6 shadow-2xl flex flex-col gap-5 relative overflow-hidden">
+            <!-- Header do Modal -->
+            <div class="flex justify-between items-center border-b border-white/5 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-base">📥</div>
+                    <div>
+                        <h3 class="text-sm font-bold text-zinc-100 uppercase tracking-wider">Importar Usuário do GLPI</h3>
+                        <p class="text-xs text-zinc-400">Pesquise o usuário do GLPI e selecione o perfil de acesso.</p>
+                    </div>
+                </div>
+                <button onclick="closeImportGLPIModal()" class="text-zinc-400 hover:text-white transition text-lg w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">✕</button>
+            </div>
+
+            <!-- Campo de Pesquisa com Lupa 🔍 -->
+            <div class="flex items-center gap-3">
+                <div class="relative w-full">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-sm">🔍</span>
+                    <input type="text" id="modal-glpi-search" oninput="filterModalGLPIUsers()" placeholder="Pesquise por nome ou login do usuário no GLPI..."
+                        class="w-full text-xs p-3 pl-10 bg-black/60 border border-white/10 rounded-xl text-zinc-200 focus:border-amber-500 focus:outline-none transition">
+                </div>
+                <button type="button" onclick="syncModalGLPIUsers()" id="btn-modal-sync-glpi"
+                    class="px-3.5 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-white/10 flex items-center gap-1.5 whitespace-nowrap transition cursor-pointer">
+                    🔄 Sincronizar GLPI
+                </button>
+            </div>
+
+            <!-- Container de Resultados de Usuários do GLPI -->
+            <div class="overflow-y-auto max-h-[350px] pr-1 flex flex-col gap-2" id="modal-glpi-user-list">
+                <div class="py-12 text-center text-zinc-500 text-xs italic">
+                    Digite no campo acima para pesquisar usuários do GLPI...
+                </div>
+            </div>
+
+            <!-- Footer do Modal -->
+            <div class="flex justify-between items-center border-t border-white/5 pt-3">
+                <span class="text-[11px] text-zinc-500" id="modal-glpi-counter">0 usuários encontrados no GLPI</span>
+                <button onclick="closeImportGLPIModal()" class="px-4 py-2 text-xs font-bold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cadastro / Edição de Usuário -->
+    <div id="user-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        <div class="bg-zinc-950 border border-white/10 w-full max-w-md rounded-3xl p-6 shadow-2xl flex flex-col gap-5 relative overflow-hidden">
+            <div class="flex justify-between items-center border-b border-white/5 pb-3">
+                <h3 id="user-modal-title" class="text-sm font-bold text-zinc-200 uppercase tracking-wider">Cadastrar Usuário</h3>
+                <button onclick="closeUserModal()" class="text-zinc-400 hover:text-white transition text-lg">✕</button>
+            </div>
+
+            <form id="user-form" onsubmit="saveUser(event)" class="flex flex-col gap-4">
+                <input type="hidden" id="user-id" value="">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nome Completo</label>
+                    <input type="text" id="user-name" required placeholder="Ex: João da Silva" class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nome de Usuário (Login)</label>
+                    <input type="text" id="user-username" required placeholder="Ex: joaosilva" class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Perfil / Nível de Acesso</label>
+                    <select id="user-role" class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                        <option value="operator">👤 Operador (Atendimento & Status)</option>
+                        <option value="admin">⭐ Administrador (Acesso Total & Configurações)</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label id="label-user-password" class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Senha</label>
+                    <input type="password" id="user-password" placeholder="Senha do usuário" class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                    <span id="help-user-password" class="text-[10px] text-zinc-500 hidden">Deixe em branco para manter a senha atual.</span>
+                </div>
+                <div class="flex justify-end gap-3 border-t border-white/5 pt-4 mt-2">
+                    <button type="button" onclick="closeUserModal()" class="px-4 py-2 text-xs font-semibold text-zinc-350 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-xl transition duration-200">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg border border-white transition duration-200">
+                        Salvar Usuário
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Popup: Definir Senha de Usuário -->
+    <div id="modal-set-password" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-[#0f1422] border border-white/10 w-full max-w-md rounded-3xl p-6 shadow-2xl flex flex-col gap-5 relative overflow-hidden">
+            <div class="flex justify-between items-center border-b border-white/5 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-base">🔑</div>
+                    <div>
+                        <h3 class="text-sm font-bold text-zinc-100 uppercase tracking-wider">Definir Senha do Usuário</h3>
+                        <p class="text-xs text-zinc-400" id="modal-password-subtitle">Defina uma senha de acesso ao painel.</p>
+                    </div>
+                </div>
+                <button onclick="closeSetPasswordModal()" class="text-zinc-400 hover:text-white transition text-lg w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">✕</button>
+            </div>
+
+            <form onsubmit="saveUserPasswordFromModal(event)" class="flex flex-col gap-4">
+                <input type="hidden" id="modal-password-user-id" value="">
+                <input type="hidden" id="modal-password-username" value="">
+                
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nova Senha</label>
+                    <input type="password" id="modal-new-password" required placeholder="Digite a nova senha de acesso..."
+                        class="w-full text-xs p-3 bg-black/60 border border-white/10 rounded-xl text-zinc-200 focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2 border-t border-white/5">
+                    <button type="button" onclick="closeSetPasswordModal()" class="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-white transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2.5 text-xs font-bold text-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 rounded-xl shadow-md transition cursor-pointer">
+                        💾 Salvar Senha
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Toast Notification -->
     <div id="toast"
@@ -472,7 +645,8 @@
         <span id="toast-message">Configurações salvas com sucesso!</span>
     </div>
 
-    <script src="/static/js/config.js?v=1.6"></script>
+    <script src="/static/js/auth-check.js?v=3.1"></script>
+    <script src="/static/js/config.js?v=3.1"></script>
 </body>
 
 </html>

@@ -1,5 +1,5 @@
-# Usa uma imagem oficial do Go para compilar
-FROM golang:1.26-alpine AS builder
+# Usa a imagem oficial do Go (Alpine) para compilar
+FROM golang:alpine AS builder
 
 # Instala dependências de compilação
 RUN apk add --no-cache git build-base
@@ -14,11 +14,11 @@ RUN go mod download
 # Copia todo o código fonte
 COPY . .
 
-# Compila o executável apontando para a nova pasta cmd/bot/
+# Compila o executável apontando para o pacote cmd/bot/
 RUN CGO_ENABLED=0 GOOS=linux go build -o bot-chamados ./cmd/bot/
 
 # ==========================================
-# IMAGEM FINAL (PRODUÇÃO)
+# IMAGEM FINAL (PRODUÇÃO / EXECUÇÃO)
 # ==========================================
 FROM alpine:latest
 
@@ -32,13 +32,13 @@ RUN apk add --no-cache ca-certificates tzdata && \
 
 WORKDIR /app/
 
-# Expõe a porta do painel web para a rede do Docker
+# Expõe a porta do painel web
 EXPOSE 33090
 
-# Copia o binário e os arquivos de interface
+# Copia o binário e os diretórios estáticos/web
 COPY --from=builder /app/bot-chamados .
 COPY --from=builder /app/web ./web
 COPY --from=builder /app/static ./static
 
-# Comando para rodar o bot
+# Comando para rodar a aplicação
 CMD ["./bot-chamados"]

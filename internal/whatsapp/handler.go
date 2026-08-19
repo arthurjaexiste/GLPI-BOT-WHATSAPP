@@ -23,6 +23,15 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+// Struct UserSession guarda as informações do usuário autenticado no painel
+type UserSession struct {
+	UserID   int       `json:"user_id"`
+	Username string    `json:"username"`
+	Name     string    `json:"name"`
+	Role     string    `json:"role"`
+	Expiry   time.Time `json:"expiry"`
+}
+
 // ─── Estado global compartilhado ─────────────────────────────────────────────
 
 var (
@@ -34,7 +43,7 @@ var (
 
 	// Banco de dados e sessões do painel web
 	webDB      *sql.DB
-	sessions   = make(map[string]time.Time)
+	sessions   = make(map[string]UserSession)
 	sessionsMu sync.Mutex
 )
 
