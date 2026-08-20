@@ -9,6 +9,63 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+let initialConfigState = null;
+
+function getFormState() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    const state = {};
+    inputs.forEach(el => {
+        if (!el.id || el.id === 'system-user-search' || el.id === 'modal-glpi-search' || el.id === 'modal-new-password') return;
+        if (el.type === 'checkbox') {
+            state[el.id] = el.checked;
+        } else {
+            state[el.id] = el.value.trim();
+        }
+    });
+
+    if (typeof systemUsersList !== 'undefined' && systemUsersList) {
+        state['__users__'] = systemUsersList.map(u => `${u.id}:${u.enabled}:${u.role}`).join('|');
+    }
+    return JSON.stringify(state);
+}
+
+function checkConfigDirtyState() {
+    if (!initialConfigState) return;
+    const currentState = getFormState();
+    if (currentState === initialConfigState) {
+        markConfigClean();
+    } else {
+        markConfigDirty();
+    }
+}
+
+function markConfigDirty() {
+    const btn = document.getElementById('btn-header-save');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.className = "px-4 py-2.5 text-xs font-bold text-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-amber-400 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.35)] transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border border-amber-300/40 animate-pulse";
+    btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg><span>Salvar Configurações</span>`;
+}
+
+function markConfigClean() {
+    const btn = document.getElementById('btn-header-save');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.className = "px-4 py-2.5 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 border opacity-40 pointer-events-none bg-zinc-800 text-zinc-400 border-zinc-700/50 shadow-none";
+    btn.innerHTML = `<svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Salvo</span>`;
+}
+
+// Event Delegation Global para captura de qualquer alteração nos formulários
+document.addEventListener('input', (e) => {
+    if (!e.target || e.target.id === 'system-user-search' || e.target.id === 'modal-glpi-search' || e.target.id === 'modal-new-password') return;
+    checkConfigDirtyState();
+});
+
+document.addEventListener('change', (e) => {
+    if (!e.target || e.target.id === 'system-user-search' || e.target.id === 'modal-glpi-search' || e.target.id === 'modal-new-password') return;
+    checkConfigDirtyState();
+});
+
 // Carrega as configurações atuais da API
 // Função fetchConfig manipula a rotina correspondente na interface do painel
 async function fetchConfig() {
@@ -46,9 +103,76 @@ async function fetchConfig() {
         checkboxes.forEach(cb => {
             cb.checked = workingDays.includes(cb.value);
         });
+
+        // Atualiza estado ativado/desativado dos campos de SMTP e Expediente
+        toggleSMTPFields();
+        toggleExpedienteFields();
+
+        const smtpToggle = document.getElementById('smtp_enabled');
+        if (smtpToggle) smtpToggle.onchange = toggleSMTPFields;
+
+        const expToggle = document.getElementById('working_hours_enabled');
+        if (expToggle) expToggle.onchange = toggleExpedienteFields;
+
+        initialConfigState = getFormState();
+        markConfigClean();
     } catch (err) {
         showToast('Erro ao obter as configurações.', '❌');
     }
+}
+
+function toggleSMTPFields() {
+    const toggle = document.getElementById('smtp_enabled');
+    if (!toggle) return;
+    const isChecked = toggle.checked;
+    const smtpInputs = ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_sender', 'smtp_receiver'];
+    const badge = document.getElementById('smtp-status-badge');
+
+    if (badge) {
+        badge.innerHTML = isChecked 
+            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Alertas Ativos</span>`
+            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-800/80 text-zinc-500 border border-zinc-700/50">Desativado</span>`;
+    }
+
+    smtpInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.disabled = !isChecked;
+        if (!isChecked) {
+            el.classList.add('opacity-40', 'cursor-not-allowed', 'bg-zinc-950/80');
+            el.classList.remove('bg-zinc-900');
+        } else {
+            el.classList.remove('opacity-40', 'cursor-not-allowed', 'bg-zinc-950/80');
+            el.classList.add('bg-zinc-900');
+        }
+    });
+}
+
+function toggleExpedienteFields() {
+    const toggle = document.getElementById('working_hours_enabled');
+    if (!toggle) return;
+    const isChecked = toggle.checked;
+    const expInputs = ['working_hours_start', 'working_hours_end', 'msg_ausencia'];
+    const badge = document.getElementById('expediente-status-badge');
+
+    if (badge) {
+        badge.innerHTML = isChecked 
+            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Controle Ativo</span>`
+            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-800/80 text-zinc-500 border border-zinc-700/50">Desativado</span>`;
+    }
+
+    expInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.disabled = !isChecked;
+        if (!isChecked) {
+            el.classList.add('opacity-40', 'cursor-not-allowed', 'bg-zinc-950/80');
+            el.classList.remove('bg-zinc-900');
+        } else {
+            el.classList.remove('opacity-40', 'cursor-not-allowed', 'bg-zinc-950/80');
+            el.classList.add('bg-zinc-900');
+        }
+    });
 }
 
 // Salva as configurações via POST na API
@@ -124,7 +248,16 @@ async function saveConfig() {
         });
 
         if (!response.ok) throw new Error('Erro ao salvar as configurações');
+
+        if (typeof systemUsersList !== 'undefined' && systemUsersList && systemUsersList.length > 0) {
+            for (let i = 0; i < systemUsersList.length; i++) {
+                await saveSystemUserDirect(i, true);
+            }
+        }
+
         showToast('Configurações salvas e aplicadas com sucesso!', '✅');
+        initialConfigState = getFormState();
+        markConfigClean();
     } catch (err) {
         showToast('Erro ao salvar configurações.', '❌');
     }
@@ -135,15 +268,12 @@ async function saveConfig() {
 // Função toggleVisibility manipula a rotina correspondente na interface do painel
 function toggleVisibility(btn, id) {
     const input = document.getElementById(id);
-    if (input.type === "password") {
-        input.type = "text";
-        btn.innerText = "🔒";
-        btn.title = "Esconder Token";
-    } else {
-        input.type = "password";
-        btn.innerText = "👁️";
-        btn.title = "Visualizar Token";
-    }
+    if (!input) return;
+    const isPassword = input.type === "password";
+    input.type = isPassword ? "text" : "password";
+    btn.innerHTML = isPassword 
+        ? `<svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.047 10.047 0 013.682-.763c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m-4.276-4.276a3 3 0 10-4.243-4.243M3 3l18 18"/></svg>`
+        : `<svg class="w-4 h-4 text-zinc-400 hover:text-zinc-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
 }
 
 // Copia o valor do token para a área de transferência
@@ -400,6 +530,8 @@ async function fetchSystemUsers() {
         }
         systemUsersList = await response.json();
         renderSystemUsersTable(systemUsersList);
+        initialConfigState = getFormState();
+        checkConfigDirtyState();
     } catch (err) {
         tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-400 font-medium italic">⚠️ Erro de comunicação: ${escapeHTML(err.message)}</td></tr>`;
     }
@@ -425,7 +557,7 @@ function renderSystemUsersTable(users) {
     if (!tbody) return;
 
     if (!users || users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-zinc-500 italic">Nenhum usuário cadastrado no sistema ainda. Clique em "📥 Importar Usuário do GLPI" acima.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-zinc-500 italic">Nenhum usuário cadastrado no sistema ainda. Clique em "Importar Usuário do GLPI" acima.</td></tr>`;
         return;
     }
 
@@ -433,39 +565,37 @@ function renderSystemUsersTable(users) {
     users.forEach((u, index) => {
         const isChecked = u.enabled ? 'checked' : '';
         const statusBadge = u.enabled 
-            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">🟢 Acesso Liberado</span>`
-            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">🔴 Acesso Bloqueado</span>`;
+            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Ativo</span>`
+            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700/50"><span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Inativo</span>`;
 
         const roleSelect = `
-            <select id="user-role-select-${index}" onchange="updateSystemUserPermissions(${index})" class="bg-black/60 border border-white/10 text-xs p-1.5 rounded-xl text-zinc-200 focus:outline-none">
-                <option value="operator" ${u.role === 'operator' ? 'selected' : ''}>👤 Operador</option>
-                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>⭐ Administrador</option>
+            <select id="user-role-select-${index}" onchange="updateSystemUserPermissions(${index})" class="w-36 bg-zinc-900 border border-white/10 text-xs px-2.5 py-1.5 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none cursor-pointer">
+                <option value="operator" ${u.role === 'operator' ? 'selected' : ''}>Operador</option>
+                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrador</option>
             </select>
         `;
 
         html += `
-            <tr class="hover:bg-white/[0.02] transition">
-                <td class="py-3 font-semibold text-zinc-200">${escapeHTML(u.name || u.username)}</td>
-                <td class="py-3 font-mono text-zinc-400">@${escapeHTML(u.username)}</td>
-                <td class="py-3">
+            <tr class="border-b border-white/5 hover:bg-white/[0.02] transition">
+                <td class="py-3.5 px-3 align-middle font-medium text-zinc-200">${escapeHTML(u.name || u.username)}</td>
+                <td class="py-3.5 px-3 align-middle font-mono text-zinc-400">@${escapeHTML(u.username)}</td>
+                <td class="py-3.5 px-3 align-middle">
                     <div class="flex items-center gap-3">
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="user-toggle-${index}" ${isChecked} onchange="updateSystemUserPermissions(${index})" class="sr-only peer">
-                            <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-white"></div>
+                            <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-400"></div>
                         </label>
                         ${statusBadge}
                     </div>
                 </td>
-                <td class="py-3">${roleSelect}</td>
-                <td class="py-3 text-right flex items-center justify-end gap-2">
-                    <button onclick="saveSystemUserDirect(${index})" class="px-3 py-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl shadow-sm transition-all duration-200 flex items-center gap-1.5 cursor-pointer" title="Salvar Alterações do Usuário">
-                        <span>💾</span> <span>Salvar</span>
+                <td class="py-3.5 px-3 align-middle">${roleSelect}</td>
+                <td class="py-3.5 px-3 align-middle text-right flex items-center justify-end gap-2">
+                    <button onclick="openSetPasswordModal('${escapeHTML(u.username)}', ${u.id}, '${escapeHTML(u.name || u.username)}')" class="px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-amber-300 bg-zinc-800/60 hover:bg-amber-500/10 border border-white/10 hover:border-amber-500/30 rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer" title="Definir Senha">
+                        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                        <span>Senha</span>
                     </button>
-                    <button onclick="openSetPasswordModal('${escapeHTML(u.username)}', ${u.id}, '${escapeHTML(u.name || u.username)}')" class="px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl shadow-sm transition-all duration-200 flex items-center gap-1.5 cursor-pointer" title="Definir Senha de Acesso">
-                        <span>🔑</span> <span>Senha</span>
-                    </button>
-                    <button onclick="deleteSystemUser('${escapeHTML(u.username)}')" class="px-2.5 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all duration-200 flex items-center gap-1 cursor-pointer" title="Remover do Sistema">
-                        <span>🗑️</span>
+                    <button onclick="deleteSystemUser('${escapeHTML(u.username)}')" class="p-1.5 text-zinc-400 hover:text-rose-400 bg-zinc-800/60 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 rounded-xl transition-all duration-200 flex items-center justify-center cursor-pointer" title="Remover Usuário">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                 </td>
             </tr>
@@ -531,7 +661,7 @@ async function saveUserPasswordFromModal(event) {
     }
 }
 
-async function updateSystemUserPermissions(index) {
+function updateSystemUserPermissions(index) {
     const user = systemUsersList[index];
     if (!user) return;
 
@@ -542,7 +672,7 @@ async function updateSystemUserPermissions(index) {
     if (roleSelect) user.role = roleSelect.value;
 
     renderSystemUsersTable(systemUsersList);
-    await saveSystemUserDirect(index, true);
+    markConfigDirty();
 }
 
 async function saveSystemUserDirect(index, silent = false) {
@@ -703,33 +833,32 @@ function renderModalGLPIUsers(users) {
         const isAlreadyInSystem = localUsernames.has((u.username || '').toLowerCase());
 
         html += `
-            <div class="flex items-center justify-between p-3 bg-black/40 border border-white/5 rounded-2xl hover:border-white/10 transition">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-300 font-bold text-xs uppercase">
+            <div class="flex items-center justify-between gap-4 p-3.5 bg-zinc-900/60 border border-white/5 rounded-2xl hover:border-white/10 transition">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-300 font-bold text-xs uppercase shrink-0">
                         ${escapeHTML((u.username || 'U').substring(0, 2))}
                     </div>
-                    <div>
-                        <div class="text-xs font-bold text-zinc-200">${escapeHTML(u.name || u.username)}</div>
-                        <div class="text-[11px] font-mono text-zinc-400">@${escapeHTML(u.username)}</div>
+                    <div class="truncate">
+                        <div class="text-xs font-semibold text-zinc-100 truncate">${escapeHTML(u.name || u.username)}</div>
+                        <div class="text-[11px] font-mono text-zinc-400 truncate">@${escapeHTML(u.username)}</div>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    ${!isAlreadyInSystem ? `
-                        <input type="password" id="modal-pass-${index}" placeholder="Senha (opcional)" class="bg-black/60 border border-white/10 text-xs p-1.5 rounded-xl text-zinc-200 focus:outline-none w-28">
-                    ` : ''}
-                    <select id="modal-role-${index}" class="bg-black/60 border border-white/10 text-xs p-1.5 rounded-xl text-zinc-200 focus:outline-none">
-                        <option value="operator">👤 Operador</option>
-                        <option value="admin">⭐ Administrador</option>
+                <div class="flex items-center gap-3 shrink-0">
+                    <select id="modal-role-${index}" class="h-9 w-36 bg-zinc-900 border border-white/10 text-xs px-3 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none cursor-pointer">
+                        <option value="operator" ${u.role === 'operator' ? 'selected' : ''}>Operador</option>
+                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrador</option>
                     </select>
 
                     ${isAlreadyInSystem ? `
-                        <span class="px-3 py-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                            ✅ Importado
+                        <span class="h-9 px-4 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Importado</span>
                         </span>
                     ` : `
-                        <button onclick="importUserFromModal(${index})" class="px-3.5 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 rounded-xl shadow-sm transition cursor-pointer">
-                            ➕ Importar
+                        <button onclick="importUserFromModal(${index})" class="h-9 px-4 inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-black bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-amber-400 rounded-xl shadow-md hover:shadow-amber-500/20 transition-all duration-200 cursor-pointer border border-amber-300/30">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            <span>Importar</span>
                         </button>
                     `}
                 </div>
@@ -746,14 +875,11 @@ async function importUserFromModal(index) {
 
     const roleSelect = document.getElementById(`modal-role-${index}`);
     const selectedRole = roleSelect ? roleSelect.value : 'operator';
-    const passInput = document.getElementById(`modal-pass-${index}`);
-    const password = passInput ? passInput.value.trim() : '';
 
     const payload = {
         glpi_id: user.glpi_id || user.id || 0,
         username: user.username,
         name: user.name || user.username,
-        password: password,
         role: selectedRole,
         enabled: true
     };

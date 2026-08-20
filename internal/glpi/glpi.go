@@ -529,8 +529,8 @@ func BuscarUsuariosGLPI(sessionToken string) ([]GLPIUserDTO, error) {
 	cfg := config.GetConfig()
 	apiURL := getBaseURL()
 
-	// 1. Tenta GET /User?range=0-500
-	urlStr := fmt.Sprintf("%s/User?range=0-500", apiURL)
+	// 1. Tenta GET /User?range=0-200
+	urlStr := fmt.Sprintf("%s/User?range=0-200", apiURL)
 	fmt.Printf("🔍 [GLPI API] Buscando usuários em: %s ...\n", urlStr)
 
 	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
@@ -593,7 +593,7 @@ func BuscarUsuariosGLPI(sessionToken string) ([]GLPIUserDTO, error) {
 	}
 
 	// 2. Fallback para GET /search/User
-	searchURL := fmt.Sprintf("%s/search/User?forcedisplay[0]=1&forcedisplay[1]=2&forcedisplay[2]=9&forcedisplay[3]=34&range=0-500", apiURL)
+	searchURL := fmt.Sprintf("%s/search/User?forcedisplay[0]=1&forcedisplay[1]=2&forcedisplay[2]=9&forcedisplay[3]=34&range=0-200", apiURL)
 	fmt.Printf("🔍 [GLPI API] Tentando fallback via Search API em: %s ...\n", searchURL)
 	reqSearch, errS := http.NewRequest(http.MethodGet, searchURL, nil)
 	if errS != nil {
@@ -603,7 +603,7 @@ func BuscarUsuariosGLPI(sessionToken string) ([]GLPIUserDTO, error) {
 
 	respSearch, errDS := httpClient.Do(reqSearch)
 	if errDS != nil {
-		return nil, fmt.Errorf("erro de conexão no fallback /search/User: %v", errDS)
+		return nil, fmt.Errorf("erro de conexão no servidor GLPI: %v", errDS)
 	}
 	defer respSearch.Body.Close()
 
@@ -611,7 +611,10 @@ func BuscarUsuariosGLPI(sessionToken string) ([]GLPIUserDTO, error) {
 	fmt.Printf("📊 [GLPI API /search/User] Status HTTP %d (Tamanho: %d bytes)\n", respSearch.StatusCode, len(bodyBytes))
 
 	if respSearch.StatusCode != http.StatusOK && respSearch.StatusCode != 206 {
-		return nil, fmt.Errorf("GLPI recusou busca /search/User (HTTP %d): %s", respSearch.StatusCode, string(bodyBytes))
+		if strings.Contains(string(bodyBytes), "502 Bad Gateway") || strings.Contains(string(bodyBytes), "openresty") || respSearch.StatusCode == 502 {
+			return nil, fmt.Errorf("o servidor do seu GLPI retornou HTTP 502 Bad Gateway (servidor instável)")
+		}
+		return nil, fmt.Errorf("GLPI recusou busca de usuários (HTTP %d)", respSearch.StatusCode)
 	}
 
 	rows, errExt := extrairLinhasUsuario(bodyBytes)
