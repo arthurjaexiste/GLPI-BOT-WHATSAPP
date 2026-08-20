@@ -458,9 +458,15 @@ function renderSystemUsersTable(users) {
                 </td>
                 <td class="py-3">${roleSelect}</td>
                 <td class="py-3 text-right flex items-center justify-end gap-2">
-                    <button onclick="saveSystemUserDirect(${index})" class="px-3 py-1.5 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-lg shadow-sm transition cursor-pointer">💾 Salvar</button>
-                    <button onclick="openSetPasswordModal('${escapeHTML(u.username)}', ${u.id}, '${escapeHTML(u.name || u.username)}')" class="px-2.5 py-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg transition cursor-pointer" title="Definir Senha de Acesso Local">🔑 Senha</button>
-                    <button onclick="deleteSystemUser('${escapeHTML(u.username)}')" class="px-2.5 py-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition cursor-pointer" title="Remover do sistema">🗑️</button>
+                    <button onclick="saveSystemUserDirect(${index})" class="px-3 py-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl shadow-sm transition-all duration-200 flex items-center gap-1.5 cursor-pointer" title="Salvar Alterações do Usuário">
+                        <span>💾</span> <span>Salvar</span>
+                    </button>
+                    <button onclick="openSetPasswordModal('${escapeHTML(u.username)}', ${u.id}, '${escapeHTML(u.name || u.username)}')" class="px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl shadow-sm transition-all duration-200 flex items-center gap-1.5 cursor-pointer" title="Definir Senha de Acesso">
+                        <span>🔑</span> <span>Senha</span>
+                    </button>
+                    <button onclick="deleteSystemUser('${escapeHTML(u.username)}')" class="px-2.5 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all duration-200 flex items-center gap-1 cursor-pointer" title="Remover do Sistema">
+                        <span>🗑️</span>
+                    </button>
                 </td>
             </tr>
         `;
