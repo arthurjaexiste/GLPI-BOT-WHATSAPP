@@ -240,6 +240,7 @@ func StartWebServer() {
 			err := webDB.QueryRow("SELECT id, COALESCE(glpi_id, 0), COALESCE(password, ''), COALESCE(name, 'Usuário'), COALESCE(role, 'operator'), COALESCE(enabled, 1) FROM users WHERE LOWER(username) = LOWER(?)", username).Scan(&id, &glpiID, &dbPass, &name, &role, &enabled)
 
 			valid := false
+			loginErrorMsg := "Usuário ou senha inválidos."
 
 			// 1. Tratamento Especial para o usuário mestre 'admin'
 			if strings.EqualFold(username, "admin") {
@@ -290,7 +291,7 @@ func StartWebServer() {
 
 				// Se a senha local não bateu, tenta autenticação na API do GLPI
 				if !valid && password != "" {
-					okGLPI, _ := glpi.AutenticarUsuarioGLPI(username, password)
+					okGLPI, errGLPI := glpi.AutenticarUsuarioGLPI(username, password)
 					if okGLPI {
 						if err == nil {
 							valid = true
@@ -306,6 +307,8 @@ func StartWebServer() {
 								valid = true
 							}
 						}
+					} else if errGLPI != nil && strings.Contains(errGLPI.Error(), "ERROR_LOGIN_WITH_CREDENTIALS_DISABLED") {
+						loginErrorMsg = "O servidor do seu GLPI desabilitou o login com credenciais na API (ERROR_LOGIN_WITH_CREDENTIALS_DISABLED). Defina uma senha no botão '🔑 Senha' em Gestão de Usuários ou ative 'Habilitar login com credenciais' no GLPI."
 					}
 				}
 			}
@@ -339,7 +342,7 @@ func StartWebServer() {
 				http.Error(w, fmt.Sprintf("Erro ao carregar login: %v", err), http.StatusInternalServerError)
 				return
 			}
-			tmpl.Execute(w, map[string]string{"Error": "Usuário ou senha inválidos."})
+			tmpl.Execute(w, map[string]string{"Error": loginErrorMsg})
 		}
 	})
 
@@ -772,6 +775,7 @@ func StartWebServer() {
 			GLPIID   int    `json:"glpi_id"`
 			Username string `json:"username"`
 			Name     string `json:"name"`
+			Password string `json:"password"`
 			Role     string `json:"role"`
 			Enabled  bool   `json:"enabled"`
 		}
@@ -783,6 +787,7 @@ func StartWebServer() {
 
 		req.Username = strings.TrimSpace(req.Username)
 		req.Name = strings.TrimSpace(req.Name)
+		req.Password = strings.TrimSpace(req.Password)
 		if req.Role != "admin" && req.Role != "operator" {
 			req.Role = "operator"
 		}
@@ -803,13 +808,24 @@ func StartWebServer() {
 			return
 		}
 
+		passToSave := "glpi_user"
+		if req.Password != "" {
+			if hash, errH := hashPassword(req.Password); errH == nil {
+				passToSave = hash
+			}
+		}
+
 		// Upsert no banco SQLite
 		var existingID int
 		err := webDB.QueryRow("SELECT id FROM users WHERE LOWER(username) = LOWER(?)", req.Username).Scan(&existingID)
 		if err == nil {
-			_, err = webDB.Exec("UPDATE users SET glpi_id = ?, name = ?, role = ?, enabled = ? WHERE id = ?", req.GLPIID, req.Name, req.Role, enabledInt, existingID)
+			if req.Password != "" {
+				_, err = webDB.Exec("UPDATE users SET glpi_id = ?, name = ?, role = ?, enabled = ?, password = ? WHERE id = ?", req.GLPIID, req.Name, req.Role, enabledInt, passToSave, existingID)
+			} else {
+				_, err = webDB.Exec("UPDATE users SET glpi_id = ?, name = ?, role = ?, enabled = ? WHERE id = ?", req.GLPIID, req.Name, req.Role, enabledInt, existingID)
+			}
 		} else {
-			_, err = webDB.Exec("INSERT INTO users (glpi_id, username, password, name, role, enabled) VALUES (?, ?, 'glpi_user', ?, ?, ?)", req.GLPIID, req.Username, req.Name, req.Role, enabledInt)
+			_, err = webDB.Exec("INSERT INTO users (glpi_id, username, password, name, role, enabled) VALUES (?, ?, ?, ?, ?, ?)", req.GLPIID, req.Username, passToSave, req.Name, req.Role, enabledInt)
 		}
 
 		if err != nil {

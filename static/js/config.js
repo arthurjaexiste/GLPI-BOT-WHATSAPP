@@ -708,7 +708,10 @@ function renderModalGLPIUsers(users) {
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
+                    ${!isAlreadyInSystem ? `
+                        <input type="password" id="modal-pass-${index}" placeholder="Senha (opcional)" class="bg-black/60 border border-white/10 text-xs p-1.5 rounded-xl text-zinc-200 focus:outline-none w-28">
+                    ` : ''}
                     <select id="modal-role-${index}" class="bg-black/60 border border-white/10 text-xs p-1.5 rounded-xl text-zinc-200 focus:outline-none">
                         <option value="operator">👤 Operador</option>
                         <option value="admin">⭐ Administrador</option>
@@ -737,11 +740,14 @@ async function importUserFromModal(index) {
 
     const roleSelect = document.getElementById(`modal-role-${index}`);
     const selectedRole = roleSelect ? roleSelect.value : 'operator';
+    const passInput = document.getElementById(`modal-pass-${index}`);
+    const password = passInput ? passInput.value.trim() : '';
 
     const payload = {
         glpi_id: user.glpi_id || user.id || 0,
         username: user.username,
         name: user.name || user.username,
+        password: password,
         role: selectedRole,
         enabled: true
     };
