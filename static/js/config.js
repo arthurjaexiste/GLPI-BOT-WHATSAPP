@@ -497,13 +497,17 @@ function showTab(tabName) {
     // Reseta o estilo de todas as abas
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(t => {
-        t.className = "tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent";
+        t.className = "tab-btn group px-4 py-3 text-left text-xs font-semibold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] border border-transparent cursor-pointer";
+        const svg = t.querySelector('svg');
+        if (svg) svg.className = "w-4 h-4 text-zinc-400 group-hover:text-zinc-200 shrink-0 transition-colors";
     });
 
     // Aplica estilo ativo na aba selecionada
     const activeTab = document.getElementById('tab-' + tabName);
     if (activeTab) {
-        activeTab.className = "tab-btn px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-white bg-zinc-800/40 border border-zinc-700/50 shadow-md active";
+        activeTab.className = "tab-btn group px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-amber-400 bg-amber-400/[0.08] border border-amber-400/20 shadow-[0_0_15px_rgba(245,158,11,0.08)] active cursor-pointer";
+        const svg = activeTab.querySelector('svg');
+        if (svg) svg.className = "w-4 h-4 text-amber-400 shrink-0 transition-colors";
     }
 
     if (tabName === 'usuarios') {

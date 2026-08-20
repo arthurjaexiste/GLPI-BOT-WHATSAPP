@@ -98,13 +98,16 @@
         <div class="flex-1 glass-card rounded-2xl p-8 flex flex-col gap-8 relative overflow-hidden min-w-0">
             <!-- Panel 1: Identidade -->
             <div id="panel-identidade" class="settings-panel flex flex-col gap-6">
-                <div class="border-b border-white/5 pb-4">
-                    <h2 class="text-md font-bold text-zinc-100 mb-1 flex items-center gap-2 uppercase tracking-wider">
-                        👥 Identidade & Suporte
-                    </h2>
-                    <p class="text-xs text-zinc-400">Defina a identidade de atendimento e os técnicos administradores no WhatsApp.</p>
+                <div class="border-b border-white/5 pb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-md font-bold text-zinc-100 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5 5 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            <span>Identidade & Suporte</span>
+                        </h2>
+                        <p class="text-xs text-zinc-400">Defina a identidade de atendimento e os técnicos administradores no WhatsApp.</p>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-zinc-900/40 p-6 border border-white/5 rounded-2xl">
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nome da Empresa</label>
                         <input type="text" id="company_name" placeholder="Insira o nome da empresa" class="w-full text-xs p-3 bg-zinc-900 border border-white/10 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none transition">
@@ -125,7 +128,7 @@
                             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             <span>Conexão GLPI API</span>
                         </h2>
-                        <p class="text-xs text-zinc-400">Insira os dados da API do seu GLPI para sincronizar chamados e usuários.</p>
+                        <p class="text-xs text-zinc-400">Insira os dados da API do seu GLPI para synchronizar chamados e usuários.</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-zinc-900/40 p-6 border border-white/5 rounded-2xl">
@@ -175,7 +178,7 @@
                     </label>
                     <span class="text-xs font-semibold text-zinc-200">Ativar Notificações por E-mail</span>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-zinc-900/40 p-6 border border-white/5 rounded-2xl">
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Servidor SMTP Host</label>
                         <input type="text" id="smtp_host" placeholder="smtp.gmail.com" class="w-full text-xs p-3 bg-zinc-900 border border-white/10 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none transition">
@@ -229,7 +232,7 @@
                     </label>
                     <span class="text-xs font-semibold text-zinc-200">Ativar Controle de Horário de Atendimento</span>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-zinc-900/40 p-6 border border-white/5 rounded-2xl">
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Horário de Início</label>
                         <input type="time" id="working_hours_start" value="08:00" class="w-full text-xs p-3 bg-zinc-900 border border-white/10 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none transition [color-scheme:dark]">
@@ -238,22 +241,25 @@
                         <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Horário de Término</label>
                         <input type="time" id="working_hours_end" value="18:00" class="w-full text-xs p-3 bg-zinc-900 border border-white/10 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none transition [color-scheme:dark]">
                     </div>
-                </div>
-                <div class="flex flex-col gap-2">
-                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Mensagem de Ausência (Fora do Expediente)</label>
-                    <textarea id="msg_ausencia" rows="3" placeholder="Nosso atendimento funciona de Segunda a Sexta..." class="w-full text-xs p-3 bg-zinc-900 border border-white/10 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none transition resize-none"></textarea>
+                    <div class="flex flex-col gap-2 md:col-span-2">
+                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Mensagem de Ausência (Fora do Expediente)</label>
+                        <textarea id="msg_ausencia" rows="3" placeholder="Nosso atendimento funciona de Segunda a Sexta..." class="w-full text-xs p-3 bg-zinc-900 border border-white/10 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none transition resize-none"></textarea>
+                    </div>
                 </div>
             </div>
 
             <!-- Panel 5: Seguranca -->
             <div id="panel-seguranca" class="settings-panel hidden flex flex-col gap-6">
-                <div class="border-b border-white/5 pb-4">
-                    <h2 class="text-md font-bold text-zinc-100 mb-1 flex items-center gap-2 uppercase tracking-wider">
-                        🚫 Bloqueios & Suporte
-                    </h2>
-                    <p class="text-xs text-zinc-400">Números bloqueados de interagir com o bot e números dos agentes de suporte.</p>
+                <div class="border-b border-white/5 pb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-md font-bold text-zinc-100 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            <span>Bloqueios & Suporte</span>
+                        </h2>
+                        <p class="text-xs text-zinc-400">Números bloqueados de interagir com o bot e números dos agentes de suporte.</p>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-zinc-900/40 p-6 border border-white/5 rounded-2xl">
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Lista Negra de Telefones (Dark List)</label>
                         <textarea id="dark_list" rows="4" placeholder="5511999999999&#10;5511888888888" class="w-full text-xs p-3 bg-zinc-900 border border-white/10 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none transition font-mono resize-none"></textarea>
@@ -269,15 +275,19 @@
 
             <!-- Panel 6: Sistema -->
             <div id="panel-sistema" class="settings-panel hidden flex flex-col gap-6">
-                <div class="border-b border-white/5 pb-4">
-                    <h2 class="text-md font-bold text-zinc-100 mb-1 flex items-center gap-2 uppercase tracking-wider">
-                        ⚙️ Manutenção do Bot
-                    </h2>
-                    <p class="text-xs text-zinc-400">Ações de manutenção e reinicialização dos serviços.</p>
+                <div class="border-b border-white/5 pb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-md font-bold text-zinc-100 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <span>Manutenção do Bot</span>
+                        </h2>
+                        <p class="text-xs text-zinc-400">Ações de manutenção e reinicialização dos serviços.</p>
+                    </div>
                 </div>
-                <div class="flex flex-wrap gap-4">
-                    <button type="button" onclick="restartBot()" class="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-white/10 flex items-center gap-2 transition cursor-pointer">
-                        🔄 Reiniciar Serviços do Bot
+                <div class="flex flex-wrap gap-4 bg-zinc-900/40 p-6 border border-white/5 rounded-2xl">
+                    <button type="button" onclick="restartBot()" class="px-4 py-3 bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-200 text-xs font-bold rounded-xl border border-white/10 flex items-center gap-2 transition cursor-pointer">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span>Reiniciar Serviços do Bot</span>
                     </button>
                 </div>
             </div>
@@ -434,8 +444,8 @@
         <span id="toast-message">Configurações salvas com sucesso!</span>
     </div>
 
-    <script src="/static/js/auth-check.js?v=16.0"></script>
-    <script src="/static/js/config.js?v=16.0"></script>
+    <script src="/static/js/auth-check.js?v=17.0"></script>
+    <script src="/static/js/config.js?v=17.0"></script>
 </body>
 
 </html>
