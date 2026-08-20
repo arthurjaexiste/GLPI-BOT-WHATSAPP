@@ -43,16 +43,16 @@ function markConfigDirty() {
     const btn = document.getElementById('btn-header-save');
     if (!btn) return;
     btn.disabled = false;
-    btn.className = "px-4 py-2.5 text-xs font-bold text-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-amber-400 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.35)] transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border border-amber-300/40 animate-pulse";
-    btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg><span>Salvar Configurações</span>`;
+    btn.className = "px-4 py-2 text-xs font-medium text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg ring-1 ring-amber-500/20 transition-all flex items-center gap-2 cursor-pointer";
+    btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg><span>Salvar Configurações</span>`;
 }
 
 function markConfigClean() {
     const btn = document.getElementById('btn-header-save');
     if (!btn) return;
     btn.disabled = true;
-    btn.className = "px-4 py-2.5 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 border opacity-40 pointer-events-none bg-zinc-800 text-zinc-400 border-zinc-700/50 shadow-none";
-    btn.innerHTML = `<svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Salvo</span>`;
+    btn.className = "px-4 py-2 text-xs font-medium rounded-lg transition-all flex items-center gap-2 opacity-40 pointer-events-none bg-white/[0.03] text-neutral-500 ring-1 ring-white/[0.05]";
+    btn.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Salvo</span>`;
 }
 
 // Event Delegation Global para captura de qualquer alteração nos formulários
@@ -116,6 +116,7 @@ async function fetchConfig() {
 
         initialConfigState = getFormState();
         markConfigClean();
+        updateLivePreview();
     } catch (err) {
         showToast('Erro ao obter as configurações.', '❌');
     }
@@ -482,6 +483,19 @@ async function testSMTP() {
     }
 }
 
+function updateLivePreview() {
+    const compName = document.getElementById('company_name')?.value.trim() || 'Sua Empresa';
+    const adminPhone = document.getElementById('telefone_notificacao')?.value.trim() || 'Não configurado';
+
+    const pCompName = document.getElementById('preview-company-name');
+    const pCompBold = document.getElementById('preview-company-bold');
+    const pAdminPhone = document.getElementById('preview-admin-phone');
+
+    if (pCompName) pCompName.innerText = compName + ' Bot';
+    if (pCompBold) pCompBold.innerText = compName;
+    if (pAdminPhone) pAdminPhone.innerText = adminPhone;
+}
+
 // Alterna a exibição das abas do painel de configurações
 function showTab(tabName) {
     // Esconde todos os painéis
@@ -497,17 +511,17 @@ function showTab(tabName) {
     // Reseta o estilo de todas as abas
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(t => {
-        t.className = "tab-btn group px-4 py-3 text-left text-xs font-semibold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] border border-transparent cursor-pointer";
+        t.className = "tab-btn px-3.5 py-2.5 text-left text-xs font-normal rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-neutral-400 hover:text-white hover:bg-white/5 cursor-pointer";
         const svg = t.querySelector('svg');
-        if (svg) svg.className = "w-4 h-4 text-zinc-400 group-hover:text-zinc-200 shrink-0 transition-colors";
+        if (svg) svg.className = "w-4 h-4 text-neutral-400 shrink-0";
     });
 
     // Aplica estilo ativo na aba selecionada
     const activeTab = document.getElementById('tab-' + tabName);
     if (activeTab) {
-        activeTab.className = "tab-btn group px-4 py-3 text-left text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-3 whitespace-nowrap text-amber-400 bg-amber-400/[0.08] border border-amber-400/20 shadow-[0_0_15px_rgba(245,158,11,0.08)] active cursor-pointer";
+        activeTab.className = "tab-btn px-3.5 py-2.5 text-left text-xs font-medium rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-white bg-white/10 ring-1 ring-white/[0.08] active cursor-pointer";
         const svg = activeTab.querySelector('svg');
-        if (svg) svg.className = "w-4 h-4 text-amber-400 shrink-0 transition-colors";
+        if (svg) svg.className = "w-4 h-4 text-amber-400 shrink-0";
     }
 
     if (tabName === 'usuarios') {
@@ -561,7 +575,7 @@ function renderSystemUsersTable(users) {
     if (!tbody) return;
 
     if (!users || users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-zinc-500 italic">Nenhum usuário cadastrado no sistema ainda. Clique em "Importar Usuário do GLPI" acima.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-neutral-500 italic font-normal">Nenhum usuário cadastrado no sistema ainda. Clique em "Importar Usuário do GLPI" acima.</td></tr>`;
         return;
     }
 
@@ -569,36 +583,36 @@ function renderSystemUsersTable(users) {
     users.forEach((u, index) => {
         const isChecked = u.enabled ? 'checked' : '';
         const statusBadge = u.enabled 
-            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Ativo</span>`
-            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700/50"><span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Inativo</span>`;
+            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Ativo</span>`
+            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/5 text-neutral-400 ring-1 ring-white/10"><span class="w-1.5 h-1.5 rounded-full bg-neutral-500"></span> Inativo</span>`;
 
         const roleSelect = `
-            <select id="user-role-select-${index}" onchange="updateSystemUserPermissions(${index})" class="w-36 bg-zinc-900 border border-white/10 text-xs px-2.5 py-1.5 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none cursor-pointer">
+            <select id="user-role-select-${index}" onchange="updateSystemUserPermissions(${index})" class="w-32 bg-white/5 text-xs text-white/90 px-2.5 py-1 rounded-lg ring-1 ring-white/10 focus:ring-white/20 focus:outline-none cursor-pointer">
                 <option value="operator" ${u.role === 'operator' ? 'selected' : ''}>Operador</option>
                 <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrador</option>
             </select>
         `;
 
         html += `
-            <tr class="border-b border-white/5 hover:bg-white/[0.02] transition">
-                <td class="py-3.5 px-3 align-middle font-medium text-zinc-200">${escapeHTML(u.name || u.username)}</td>
-                <td class="py-3.5 px-3 align-middle font-mono text-zinc-400">@${escapeHTML(u.username)}</td>
-                <td class="py-3.5 px-3 align-middle">
+            <tr class="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                <td class="py-3 px-3 align-middle font-medium text-neutral-200">${escapeHTML(u.name || u.username)}</td>
+                <td class="py-3 px-3 align-middle font-mono text-xs text-neutral-400">@${escapeHTML(u.username)}</td>
+                <td class="py-3 px-3 align-middle">
                     <div class="flex items-center gap-3">
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="user-toggle-${index}" ${isChecked} onchange="updateSystemUserPermissions(${index})" class="sr-only peer">
-                            <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-400"></div>
+                            <div class="w-8 h-4.5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-neutral-400 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500"></div>
                         </label>
                         ${statusBadge}
                     </div>
                 </td>
-                <td class="py-3.5 px-3 align-middle">${roleSelect}</td>
-                <td class="py-3.5 px-3 align-middle text-right flex items-center justify-end gap-2">
-                    <button onclick="openSetPasswordModal('${escapeHTML(u.username)}', ${u.id}, '${escapeHTML(u.name || u.username)}')" class="px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-amber-300 bg-zinc-800/60 hover:bg-amber-500/10 border border-white/10 hover:border-amber-500/30 rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer" title="Definir Senha">
-                        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                <td class="py-3 px-3 align-middle">${roleSelect}</td>
+                <td class="py-3 px-3 align-middle text-right flex items-center justify-end gap-1.5">
+                    <button onclick="openSetPasswordModal('${escapeHTML(u.username)}', ${u.id}, '${escapeHTML(u.name || u.username)}')" class="px-2.5 py-1 text-xs font-medium text-neutral-400 hover:text-white bg-transparent hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer" title="Definir Senha">
+                        <svg class="w-3.5 h-3.5 text-neutral-400 hover:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
                         <span>Senha</span>
                     </button>
-                    <button onclick="deleteSystemUser('${escapeHTML(u.username)}')" class="p-1.5 text-zinc-400 hover:text-rose-400 bg-zinc-800/60 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 rounded-xl transition-all duration-200 flex items-center justify-center cursor-pointer" title="Remover Usuário">
+                    <button onclick="deleteSystemUser('${escapeHTML(u.username)}')" class="p-1.5 text-neutral-500 hover:text-red-400 bg-transparent hover:bg-red-400/10 rounded-lg transition-colors flex items-center justify-center cursor-pointer" title="Remover Usuário">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                 </td>
