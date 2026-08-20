@@ -211,7 +211,7 @@ async function saveConfig() {
         }
     });
     const working_days = selectedDays.join(',');
-
+    
     if (!glpi_api_url) {
         showToast('O Link da API do GLPI é obrigatório.', '⚠️');
         return;
@@ -764,8 +764,12 @@ function closeImportGLPIModal() {
     }
 }
 
+function getModalGLPIListContainer() {
+    return document.getElementById('modal-glpi-user-list') || document.getElementById('modal-glpi-users-list');
+}
+
 async function syncModalGLPIUsers() {
-    const listContainer = document.getElementById('modal-glpi-user-list');
+    const listContainer = getModalGLPIListContainer();
     const btnSync = document.getElementById('btn-modal-sync-glpi');
     if (!listContainer) return;
 
@@ -834,7 +838,7 @@ function filterModalGLPIUsers() {
 let currentFilteredGLPIUsers = [];
 
 function renderModalGLPIUsers(users) {
-    const listContainer = document.getElementById('modal-glpi-user-list');
+    const listContainer = getModalGLPIListContainer();
     if (!listContainer) return;
 
     currentFilteredGLPIUsers = users || [];
@@ -922,5 +926,7 @@ async function importUserFromModal(index) {
         showToast(err.message || 'Erro ao importar usuário.', '❌');
     }
 }
+
+
 
 

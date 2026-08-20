@@ -327,6 +327,32 @@ func SendRootFlowPoll(ctx context.Context, client *whatsmeow.Client, jid types.J
 	_, _ = sendMessage(ctx, client, jid, pollMsg)
 }
 
+// ReexibirMenuAtual re-envia a enquete do nó/menu em que o usuário se encontra no momento.
+func ReexibirMenuAtual(ctx context.Context, client *whatsmeow.Client, jid types.JID, uState *state.UserState) {
+	state.Mu.Lock()
+	nodeID := uState.CurrentNodeID
+	state.Mu.Unlock()
+
+	if nodeID == "" || nodeID == "root" {
+		SendRootFlowPoll(ctx, client, jid, uState)
+		return
+	}
+
+	node, found := FindNodeByID(nodeID)
+	if !found || node.ID == "" {
+		SendRootFlowPoll(ctx, client, jid, uState)
+		return
+	}
+
+	options := buildChildOptions(node)
+	if node.GetShowBackButton() {
+		options = append(options, "⬅️ Voltar")
+	}
+
+	pollMsg := client.BuildPollCreation(fmt.Sprintf("Qual o problema com %s?", node.Title), options, 1)
+	_, _ = sendMessage(ctx, client, jid, pollMsg)
+}
+
 // tratarVotoFluxoDinamico processa o voto no menu de navegação do fluxo configurável.
 
 // Função tratarVotoFluxoDinamico executa a regra de negócio/rotina correspondente
