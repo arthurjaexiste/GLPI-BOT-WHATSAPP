@@ -128,11 +128,14 @@ func initWebDB() {
 		message_text TEXT, 
 		message_type TEXT, 
 		is_from_me INTEGER, 
+		media_url TEXT,
 		timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`)
 	if err != nil {
 		fmt.Println("🚨 Erro ao criar tabela chat_messages:", err)
 	}
+
+	_, _ = webDB.Exec(`ALTER TABLE chat_messages ADD COLUMN media_url TEXT`)
 
 	var adminID int
 	var adminPass, adminRole string
@@ -1212,7 +1215,7 @@ func StartWebServer() {
 		}
 
 		rows, err := webDB.Query(`
-			SELECT id, sender_name, sender_jid, message_text, message_type, is_from_me, timestamp 
+			SELECT id, sender_name, sender_jid, message_text, message_type, is_from_me, timestamp, COALESCE(media_url, '') 
 			FROM chat_messages 
 			WHERE chat_jid = ? 
 			ORDER BY id ASC
@@ -1232,6 +1235,7 @@ func StartWebServer() {
 			Type       string `json:"type"`
 			IsFromMe   bool   `json:"is_from_me"`
 			Timestamp  string `json:"timestamp"`
+			MediaURL   string `json:"media_url,omitempty"`
 		}
 
 		messages := []MsgInfo{}
@@ -1239,7 +1243,7 @@ func StartWebServer() {
 			var m MsgInfo
 			var rawTime string
 			var isFromMeInt int
-			if err := rows.Scan(&m.ID, &m.SenderName, &m.SenderJID, &m.Text, &m.Type, &isFromMeInt, &rawTime); err == nil {
+			if err := rows.Scan(&m.ID, &m.SenderName, &m.SenderJID, &m.Text, &m.Type, &isFromMeInt, &rawTime, &m.MediaURL); err == nil {
 				m.IsFromMe = isFromMeInt == 1
 				if parsed, errTime := time.Parse("2006-01-02 15:04:05", rawTime); errTime == nil {
 					loc, _ := time.LoadLocation("America/Sao_Paulo")

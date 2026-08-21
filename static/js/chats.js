@@ -219,6 +219,18 @@ async function refreshActiveMessages(forceScroll = false) {
     }
 }
 
+function replyToMessage(originalText) {
+    const input = document.getElementById("chat-message-input");
+    if (!input) return;
+    input.focus();
+    if (originalText && originalText !== "[Imagem]") {
+        const cleanSnippet = originalText.length > 30 ? originalText.substring(0, 30) + '...' : originalText;
+        input.placeholder = `Respondendo a: "${cleanSnippet}"...`;
+    } else {
+        input.placeholder = "Digite uma resposta...";
+    }
+}
+
 // Renderiza o histórico de mensagens
 
 // Função renderMessages manipula a rotina correspondente na interface do painel
@@ -240,18 +252,71 @@ function renderMessages(messages, forceScroll = false) {
 
     messages.forEach(msg => {
         const row = document.createElement("div");
-        row.className = `w-full flex ${msg.is_from_me ? 'justify-end' : 'justify-start'}`;
+        row.className = `w-full flex ${msg.is_from_me ? 'justify-end' : 'justify-start'} group`;
 
         const bubble = document.createElement("div");
-        bubble.className = `message-bubble ${msg.is_from_me ? 'message-outgoing' : 'message-incoming'}`;
+        bubble.className = `message-bubble ${msg.is_from_me ? 'message-outgoing' : 'message-incoming'} relative`;
 
-        const formattedText = msg.text.replace(/\n/g, "<br>");
+        let mediaHTML = "";
+        let textContent = msg.text || '';
 
-        bubble.innerHTML = `
-            <div class="font-medium">${formattedText}</div>
+        if (msg.media_url) {
+            const lowerUrl = msg.media_url.toLowerCase();
+            if (msg.type === "image" || lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp") || lowerUrl.endsWith(".gif")) {
+                mediaHTML = `<div class="mb-2">
+                    <img src="${msg.media_url}" alt="Imagem do WhatsApp" class="max-w-[280px] max-h-72 rounded-xl object-contain border border-white/10 shadow-lg cursor-pointer hover:opacity-90 transition" onclick="window.open('${msg.media_url}', '_blank')" title="Clique para expandir em nova aba" />
+                </div>`;
+            } else if (msg.type === "document" || lowerUrl.endsWith(".pdf") || lowerUrl.endsWith(".doc") || lowerUrl.endsWith(".docx") || lowerUrl.endsWith(".txt") || lowerUrl.endsWith(".zip")) {
+                mediaHTML = `<div class="mb-2">
+                    <a href="${msg.media_url}" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-amber-400 font-mono text-xs transition">
+                        📄 Abrir Documento Anexo
+                    </a>
+                </div>`;
+            }
+            if (textContent.startsWith("[Imagem]")) {
+                textContent = textContent.replace("[Imagem]", "").trim();
+            }
+        } else if (msg.type === "image" || textContent.includes("[Imagem]")) {
+            mediaHTML = `<div class="mb-1 flex items-center gap-2 text-xs font-semibold text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">
+                <span class="text-sm">📷</span>
+                <span>Imagem enviada no WhatsApp</span>
+            </div>`;
+            if (textContent === "[Imagem]") {
+                textContent = "";
+            } else {
+                textContent = textContent.replace(/\[Imagem\]/g, "").trim();
+            }
+        }
+
+        const formattedText = textContent ? textContent.replace(/\n/g, "<br>") : "";
+
+        // Botão "Responder" rápido para mensagens recebidas
+        const replyBtn = !msg.is_from_me ? `
+            <button onclick="replyToMessage('${escapeQuotes(msg.text)}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded-md self-center ml-2 shrink-0 border border-white/5 cursor-pointer" title="Responder esta mensagem">
+                ↩️ Responder
+            </button>
+        ` : '';
+
+        const bubbleHTML = `
+            ${mediaHTML}
+            ${formattedText ? `<div class="font-medium">${formattedText}</div>` : ''}
             <div class="text-[9px] mt-1 text-right ${msg.is_from_me ? 'text-zinc-600' : 'text-zinc-400'}">${msg.timestamp}</div>
         `;
-        row.appendChild(bubble);
+
+        bubble.innerHTML = bubbleHTML;
+
+        if (!msg.is_from_me) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "flex items-center gap-1 max-w-[85%]";
+            wrapper.appendChild(bubble);
+            const btnSpan = document.createElement("span");
+            btnSpan.innerHTML = replyBtn;
+            wrapper.appendChild(btnSpan);
+            row.appendChild(wrapper);
+        } else {
+            row.appendChild(bubble);
+        }
+
         container.appendChild(row);
     });
 
@@ -259,14 +324,14 @@ function renderMessages(messages, forceScroll = false) {
     container.scrollTop = container.scrollHeight;
 }
 
+function escapeQuotes(str) {
+    if (!str) return "";
+    return str.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+}
+
 // Envia mensagem via Painel Console
 // Função sendConsoleMessage manipula a rotina correspondente na interface do painel
 async function sendConsoleMessage() {
-    if (activeChatStatus === "queue" || activeChatStatus === "bot") {
-        showToast("Selecione um técnico e clique em 'Assumir' antes de enviar mensagens.", false);
-        return;
-    }
-
     const input = document.getElementById("chat-message-input");
     const text = input.value.trim();
 
@@ -288,15 +353,30 @@ async function sendConsoleMessage() {
             })
         });
 
-        if (!response.ok) throw new Error("Falha ao enviar");
+        if (!response.ok) throw new Error("Falha ao enviar mensagem");
 
         input.value = "";
-        showToast("Mensagem enviada com sucesso!");
+        input.placeholder = "Digite uma resposta...";
+        
+        // Atualiza o estado da UI para Live Chat se estiver em bot ou fila
+        if (activeChatStatus !== "live_chat") {
+            activeChatStatus = "live_chat";
+            const statusDot = document.getElementById("active-chat-status-dot");
+            const statusText = document.getElementById("active-chat-status-text");
+            if (statusDot && statusText) {
+                statusDot.className = "w-1.5 h-1.5 rounded-full status-live_chat";
+                statusText.textContent = "Live Chat / Suporte";
+            }
+            const banner = document.getElementById("assume-chat-banner");
+            if (banner) banner.style.display = "none";
+        }
+
+        showToast("Mensagem enviada para o WhatsApp com sucesso!", true);
         await refreshActiveMessages(true);
         loadChatsList(true); // Atualiza snippet lateral
     } catch (error) {
         console.error(error);
-        showToast("Falha ao enviar mensagem.", false);
+        showToast("Falha ao enviar mensagem para o WhatsApp.", false);
     } finally {
         sendBtn.disabled = false;
         sendBtn.textContent = "Enviar";

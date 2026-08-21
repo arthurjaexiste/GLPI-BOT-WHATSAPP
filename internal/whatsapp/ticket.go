@@ -59,11 +59,74 @@ func processarSaudacaoInicial(ctx context.Context, client *whatsmeow.Client, v *
 	}
 }
 
+// nomeValido verifica se o texto digitado é aceitável como Nome/Sobrenome
+// e bloqueia spams, links, frases longas ou mensagens sem sentido.
+func nomeValido(text string) bool {
+	trimmed := strings.TrimSpace(text)
+	runes := []rune(trimmed)
+
+	// 1. Tamanho aceitável para um nome/sobrenome (mínimo 2, máximo 50 caracteres)
+	if len(runes) < 2 || len(runes) > 50 {
+		return false
+	}
+
+	// 2. Não pode conter quebra de linha ou pontuação de frase (?, !, ;)
+	if strings.ContainsAny(trimmed, "\n\r?!;") {
+		return false
+	}
+
+	textLower := strings.ToLower(trimmed)
+
+	// 3. Bloqueia links e URLs
+	if strings.Contains(textLower, "http://") || strings.Contains(textLower, "https://") ||
+		strings.Contains(textLower, "www.") || strings.Contains(textLower, ".com") ||
+		strings.Contains(textLower, ".me") || strings.Contains(textLower, ".br") {
+		return false
+	}
+
+	// 4. Bloqueia palavras-chave típicas de propaganda/spam ou comandos aleatórios
+	spamKeywords := []string{
+		"oferta", "desconto", "clique", "garanta", "vitalício", "promoção",
+		"r$", "pix", "link", "compre", "cupom", "grátis", "assine",
+	}
+	for _, kw := range spamKeywords {
+		if strings.Contains(textLower, kw) {
+			return false
+		}
+	}
+
+	// 5. Deve conter pelo menos uma letra e não ter excesso de dígitos (números)
+	digitCount := 0
+	letterCount := 0
+	for _, r := range runes {
+		if unicode.IsDigit(r) {
+			digitCount++
+		} else if unicode.IsLetter(r) {
+			letterCount++
+		}
+	}
+
+	if letterCount == 0 {
+		return false
+	}
+	// Se tiver mais números do que letras, não é um nome
+	if digitCount > letterCount {
+		return false
+	}
+
+	return true
+}
+
 // processarBuscaNomeGLPI busca o usuário no GLPI pelo nome digitado e apresenta
 // as opções encontradas em uma enquete.
 
 // Função processarBuscaNomeGLPI executa a regra de negócio/rotina correspondente
 func processarBuscaNomeGLPI(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, text string) {
+	if !nomeValido(text) {
+		sendTextMessage(ctx, client, v.Info.Chat, "❌ *Nome não reconhecido:* Por favor, digite apenas o seu *Nome e Sobrenome* (exemplo: João Silva) para iniciarmos o atendimento.")
+		return
+	}
+
 	sendTextMessage(ctx, client, v.Info.Chat, "🔍 Aguarde, estou buscando o seu cadastro...")
 
 	token, err := glpi.GetGLPISession()
@@ -78,7 +141,9 @@ func processarBuscaNomeGLPI(ctx context.Context, client *whatsmeow.Client, v *ev
 	// Segunda tentativa usando apenas o primeiro nome, se a busca completa falhar
 	if (errBusca != nil || len(nomes) == 0) && strings.Contains(text, " ") {
 		primeiraPalavra := strings.Split(text, " ")[0]
-		nomes, ids, errBusca = glpi.BuscarUsuariosPorNome(token, primeiraPalavra)
+		if nomeValido(primeiraPalavra) {
+			nomes, ids, errBusca = glpi.BuscarUsuariosPorNome(token, primeiraPalavra)
+		}
 	}
 
 	if errBusca != nil || len(nomes) == 0 {
@@ -105,6 +170,11 @@ func processarBuscaNomeGLPI(ctx context.Context, client *whatsmeow.Client, v *ev
 
 // Função processarNomeManual executa a regra de negócio/rotina correspondente
 func processarNomeManual(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, text string) {
+	if !nomeValido(text) {
+		sendTextMessage(ctx, client, v.Info.Chat, "❌ *Nome inválido:* Por favor, digite o seu *Nome e Sobrenome* corretos (exemplo: Maria Souza) para podermos registrar o chamado.")
+		return
+	}
+
 	primeiroNome := strings.Split(text, " ")[0]
 
 	state.Mu.Lock()
