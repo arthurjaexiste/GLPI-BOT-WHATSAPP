@@ -1,7 +1,8 @@
 services:
   bot:
-    image: ghcr.io/arthurjaexiste/glpi-bot:latest
-    pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: glpi-bot
     restart: unless-stopped
     environment:
@@ -10,3 +11,5 @@ services:
       - "33090:33090"
     volumes:
       - ./db:/app/db
+      - ./web:/app/web
+      - ./static:/app/static

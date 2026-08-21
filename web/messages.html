@@ -66,8 +66,12 @@
 
         <!-- Action / Save and Logout -->
         <div class="flex items-center gap-3">
+            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-900/80 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-medium">
+                <span id="user-badge-role" class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300">...</span>
+                <span id="user-badge-name" class="text-zinc-200 font-bold">...</span>
+            </div>
             <button onclick="saveMessages()"
-                class="px-4 py-2.5 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-1.5 border border-white">
+                class="px-4 py-2.5 text-xs font-bold text-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-amber-400 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.25)] hover:shadow-[0_0_25px_rgba(245,158,11,0.4)] transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border border-amber-300/30">
                 💾 Salvar Mensagens
             </button>
             <a href="/logout"
@@ -336,6 +340,7 @@
         <span id="toast-message">Mensagens salvas com sucesso!</span>
     </div>
 
+    <script src="/static/js/auth-check.js?v=1.6"></script>
     <script src="/static/js/messages.js?v=1.6"></script>
 </body>
 

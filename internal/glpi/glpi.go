@@ -7,6 +7,8 @@ package glpi
 
 import (
 	"bytes"
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,48 +22,84 @@ import (
 	"bot-glpi/internal/config"
 )
 
-// httpClient é o cliente HTTP compartilhado (sem tempo limite configurado aqui,
-// mas reutilizado para melhor desempenho de conexões keep-alive).
-var httpClient = &http.Client{}
+// httpClient é o cliente HTTP compartilhado com suporte a TLS/HTTPS interno e timeout curto (3s)
+var httpClient = &http.Client{
+	Timeout: 3 * time.Second,
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	},
+}
 
-// getBaseURL retorna a URL base da API do GLPI sem barra final.
-
-// Função getBaseURL executa a regra de negócio/rotina correspondente
+// getBaseURL retorna a URL base da API do GLPI formatada e sem barra final
 func getBaseURL() string {
-	return strings.TrimSuffix(config.GetConfig().GLPIApiURL, "/")
+	rawURL := strings.TrimSpace(config.GetConfig().GLPIApiURL)
+	rawURL = strings.TrimSuffix(rawURL, "/")
+	if rawURL == "" {
+		return ""
+	}
+	if strings.Contains(rawURL, ".php") || strings.Contains(rawURL, "apirest") || strings.HasSuffix(rawURL, "/v1") {
+		return rawURL
+	}
+	return rawURL + "/apirest.php"
 }
 
 // setCommonHeaders adiciona os cabeçalhos obrigatórios para todas as requisições GLPI.
-
-// Função setCommonHeaders executa a regra de negócio/rotina correspondente
 func setCommonHeaders(req *http.Request, appToken, sessionToken string) {
-	req.Header.Set("App-Token", appToken)
+	req.Header.Set("App-Token", strings.TrimSpace(appToken))
 	req.Header.Set("Content-Type", "application/json")
 	if sessionToken != "" {
-		req.Header.Set("Session-Token", sessionToken)
+		req.Header.Set("Session-Token", strings.TrimSpace(sessionToken))
 	}
 }
 
 // ─── Sessão ───────────────────────────────────────────────────────────────────
 
-// GetGLPISession inicia uma sessão na API do GLPI e retorna o session_token.
-
-// Função GetGLPISession executa a regra de negócio/rotina correspondente
+// GetGLPISession inicia uma sessão na API do GLPI testando a URL com suporte a fallback rápido
 func GetGLPISession() (string, error) {
 	cfg := config.GetConfig()
-	urlStr := fmt.Sprintf("%s/initSession", getBaseURL())
+	rawURL := strings.TrimSpace(cfg.GLPIApiURL)
+	appToken := strings.TrimSpace(cfg.GLPIAppToken)
+	userTokenRaw := strings.TrimSpace(cfg.GLPIUserToken)
 
+	if rawURL == "" || appToken == "" || userTokenRaw == "" {
+		return "", fmt.Errorf("Configuração incompleta: URL, App-Token e User-Token da API do GLPI devem estar preenchidos em 'Conexão GLPI API'")
+	}
+
+	userToken := userTokenRaw
+	if !strings.HasPrefix(strings.ToLower(userToken), "user_token ") {
+		userToken = "user_token " + userToken
+	}
+
+	cand := strings.TrimSuffix(rawURL, "/")
+	fmt.Printf("🌐 [GLPI API] Conectando em: %s/initSession ...\n", cand)
+	token, err := tryGLPIInitSession(cand, appToken, userToken)
+	if err == nil && token != "" {
+		fmt.Println("✅ [GLPI API] Sessão iniciada com sucesso!")
+		return token, nil
+	}
+
+	fmt.Printf("⚠️ [GLPI API] Tentativa em %s falhou (%v). Testando fallback /apirest.php...\n", cand, err)
+	if !strings.Contains(cand, "apirest.php") {
+		candFallback := cand + "/apirest.php"
+		tokenFB, errFB := tryGLPIInitSession(candFallback, appToken, userToken)
+		if errFB == nil && tokenFB != "" {
+			fmt.Println("✅ [GLPI API] Sessão iniciada via fallback apirest.php!")
+			return tokenFB, nil
+		}
+		return "", fmt.Errorf("Falha de conexão no GLPI (%s: %v)", cand, err)
+	}
+
+	return "", fmt.Errorf("Falha de conexão no GLPI (%s: %v)", cand, err)
+}
+
+func tryGLPIInitSession(apiURL, appToken, userToken string) (string, error) {
+	urlStr := fmt.Sprintf("%s/initSession", strings.TrimSuffix(apiURL, "/"))
 	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
 	if err != nil {
 		return "", err
 	}
 
-	userToken := cfg.GLPIUserToken
-	if !strings.HasPrefix(strings.ToLower(userToken), "user_token ") {
-		userToken = "user_token " + userToken
-	}
-
-	req.Header.Set("App-Token", cfg.GLPIAppToken)
+	req.Header.Set("App-Token", appToken)
 	req.Header.Set("Authorization", userToken)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -73,7 +111,7 @@ func GetGLPISession() (string, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("falha na autenticação (HTTP %d): %s", resp.StatusCode, body)
+		return "", fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
 	}
 
 	var result map[string]interface{}
@@ -83,7 +121,7 @@ func GetGLPISession() (string, error) {
 
 	token, ok := result["session_token"].(string)
 	if !ok {
-		return "", fmt.Errorf("token de sessão não encontrado na resposta")
+		return "", fmt.Errorf("session_token ausente na resposta")
 	}
 
 	return token, nil
@@ -474,3 +512,246 @@ func CriarUsuarioVisitante(sessionToken, nomeCompleto string) (int, error) {
 
 	return 0, fmt.Errorf("id do usuário não retornado")
 }
+
+// ─── Integração e Autenticação de Usuários GLPI ───────────────────────────────
+
+// Struct GLPIUserDTO representa os dados básicos de um usuário cadastrado no GLPI
+type GLPIUserDTO struct {
+	ID        int    `json:"id"`
+	Username  string `json:"username"`
+	Name      string `json:"name"`
+	RealName  string `json:"realname"`
+	FirstName string `json:"firstname"`
+}
+
+// BuscarUsuariosGLPI consulta a API REST do GLPI e retorna a lista de usuários cadastrados
+func BuscarUsuariosGLPI(sessionToken string) ([]GLPIUserDTO, error) {
+	cfg := config.GetConfig()
+	apiURL := getBaseURL()
+
+	// 1. Tenta GET /User?range=0-200
+	urlStr := fmt.Sprintf("%s/User?range=0-200", apiURL)
+	fmt.Printf("🔍 [GLPI API] Buscando usuários em: %s ...\n", urlStr)
+
+	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
+	if err == nil {
+		setCommonHeaders(req, cfg.GLPIAppToken, sessionToken)
+		resp, errDo := httpClient.Do(req)
+		if errDo == nil {
+			defer resp.Body.Close()
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			fmt.Printf("📊 [GLPI API /User] Status HTTP %d (Tamanho: %d bytes)\n", resp.StatusCode, len(bodyBytes))
+
+			if resp.StatusCode == http.StatusOK || resp.StatusCode == 206 {
+				rows, errExt := extrairLinhasUsuario(bodyBytes)
+				if errExt == nil && len(rows) > 0 {
+					var result []GLPIUserDTO
+					for _, item := range rows {
+						var u GLPIUserDTO
+						if idVal, ok := item["id"].(float64); ok {
+							u.ID = int(idVal)
+						} else if idStr := fmt.Sprintf("%v", item["2"]); idStr != "" && idStr != "<nil>" {
+							u.ID, _ = strconv.Atoi(idStr)
+						} else if idStr := fmt.Sprintf("%v", item["id"]); idStr != "" && idStr != "<nil>" {
+							u.ID, _ = strconv.Atoi(idStr)
+						}
+
+						if nameVal, ok := item["name"].(string); ok {
+							u.Username = nameVal
+						} else if userVal, ok := item["1"].(string); ok {
+							u.Username = userVal
+						}
+
+						if realVal, ok := item["realname"].(string); ok {
+							u.RealName = realVal
+						} else if realVal, ok := item["34"].(string); ok {
+							u.RealName = realVal
+						}
+
+						if firstVal, ok := item["firstname"].(string); ok {
+							u.FirstName = firstVal
+						} else if firstVal, ok := item["9"].(string); ok {
+							u.FirstName = firstVal
+						}
+
+						u.Name = montarNome(u.FirstName, u.RealName, u.Username)
+						if u.Username != "" && u.ID > 0 && !strings.HasPrefix(u.Username, "visitante_") {
+							result = append(result, u)
+						}
+					}
+					if len(result) > 0 {
+						fmt.Printf("✅ [GLPI API] %d usuários carregados via /User!\n", len(result))
+						return result, nil
+					}
+				}
+			} else {
+				fmt.Printf("⚠️ [GLPI API /User] Rejeitado pelo GLPI: %s\n", string(bodyBytes))
+			}
+		} else {
+			fmt.Printf("⚠️ [GLPI API /User] Erro de rede: %v\n", errDo)
+		}
+	}
+
+	// 2. Fallback para GET /search/User
+	searchURL := fmt.Sprintf("%s/search/User?forcedisplay[0]=1&forcedisplay[1]=2&forcedisplay[2]=9&forcedisplay[3]=34&range=0-200", apiURL)
+	fmt.Printf("🔍 [GLPI API] Tentando fallback via Search API em: %s ...\n", searchURL)
+	reqSearch, errS := http.NewRequest(http.MethodGet, searchURL, nil)
+	if errS != nil {
+		return nil, errS
+	}
+	setCommonHeaders(reqSearch, cfg.GLPIAppToken, sessionToken)
+
+	respSearch, errDS := httpClient.Do(reqSearch)
+	if errDS != nil {
+		return nil, fmt.Errorf("erro de conexão no servidor GLPI: %v", errDS)
+	}
+	defer respSearch.Body.Close()
+
+	bodyBytes, _ := io.ReadAll(respSearch.Body)
+	fmt.Printf("📊 [GLPI API /search/User] Status HTTP %d (Tamanho: %d bytes)\n", respSearch.StatusCode, len(bodyBytes))
+
+	if respSearch.StatusCode != http.StatusOK && respSearch.StatusCode != 206 {
+		if strings.Contains(string(bodyBytes), "502 Bad Gateway") || strings.Contains(string(bodyBytes), "openresty") || respSearch.StatusCode == 502 {
+			return nil, fmt.Errorf("o servidor do seu GLPI retornou HTTP 502 Bad Gateway (servidor instável)")
+		}
+		return nil, fmt.Errorf("GLPI recusou busca de usuários (HTTP %d)", respSearch.StatusCode)
+	}
+
+	rows, errExt := extrairLinhasUsuario(bodyBytes)
+	if errExt != nil {
+		return nil, fmt.Errorf("erro ao estruturar usuários: %v", errExt)
+	}
+
+	var result []GLPIUserDTO
+	for _, item := range rows {
+		var u GLPIUserDTO
+		if userVal, ok := item["1"].(string); ok {
+			u.Username = userVal
+		}
+		if idStr := fmt.Sprintf("%v", item["2"]); idStr != "" && idStr != "<nil>" {
+			u.ID, _ = strconv.Atoi(idStr)
+		}
+		if firstVal, ok := item["9"].(string); ok {
+			u.FirstName = firstVal
+		}
+		if realVal, ok := item["34"].(string); ok {
+			u.RealName = realVal
+		}
+
+		if u.ID == 0 {
+			if idVal, ok := item["id"].(float64); ok {
+				u.ID = int(idVal)
+			}
+		}
+		if u.Username == "" {
+			if nameVal, ok := item["name"].(string); ok {
+				u.Username = nameVal
+			}
+		}
+
+		u.Name = montarNome(u.FirstName, u.RealName, u.Username)
+		if u.Username != "" && u.ID > 0 && !strings.HasPrefix(u.Username, "visitante_") {
+			result = append(result, u)
+		}
+	}
+
+	fmt.Printf("✅ [GLPI API] %d usuários carregados via /search/User!\n", len(result))
+	return result, nil
+}
+
+// AutenticarUsuarioGLPI tenta autenticar as credenciais informadas diretamente na API do GLPI
+func AutenticarUsuarioGLPI(username, password string) (bool, error) {
+	cfg := config.GetConfig()
+	rawURL := strings.TrimSpace(cfg.GLPIApiURL)
+	appToken := strings.TrimSpace(cfg.GLPIAppToken)
+
+	if rawURL == "" || appToken == "" {
+		return false, fmt.Errorf("URL ou App-Token da API do GLPI não configurados")
+	}
+
+	authStr := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+	userAuthHeader := "Basic " + authStr
+
+	candidates := []string{strings.TrimSuffix(rawURL, "/")}
+	if idx := strings.Index(rawURL, "/api.php"); idx != -1 {
+		baseDomain := rawURL[:idx]
+		candidates = append(candidates, baseDomain+"/apirest.php")
+	} else if !strings.Contains(rawURL, "apirest.php") {
+		candidates = append(candidates, strings.TrimSuffix(rawURL, "/")+"/apirest.php")
+	}
+
+	var lastErr error
+	for _, cand := range candidates {
+		// Modo A: Via Header Basic Authorization
+		urlStr := fmt.Sprintf("%s/initSession", cand)
+		fmt.Printf("🔐 [GLPI AUTH A] Autenticando '@%s' via Basic Header em %s ...\n", username, urlStr)
+
+		req, err := http.NewRequest(http.MethodGet, urlStr, nil)
+		if err == nil {
+			req.Header.Set("App-Token", appToken)
+			req.Header.Set("Authorization", userAuthHeader)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp, errDo := httpClient.Do(req)
+			if errDo == nil {
+				bodyBytes, _ := io.ReadAll(resp.Body)
+				resp.Body.Close()
+				fmt.Printf("📊 [GLPI AUTH A] Status HTTP %d (Tamanho: %d bytes)\n", resp.StatusCode, len(bodyBytes))
+
+				if resp.StatusCode == http.StatusOK {
+					var resMap map[string]interface{}
+					if err := json.Unmarshal(bodyBytes, &resMap); err == nil {
+						if sessToken, ok := resMap["session_token"].(string); ok && sessToken != "" {
+							closeURL := fmt.Sprintf("%s/killSession", cand)
+							cReq, _ := http.NewRequest(http.MethodGet, closeURL, nil)
+							setCommonHeaders(cReq, appToken, sessToken)
+							_, _ = httpClient.Do(cReq)
+						}
+					}
+					fmt.Printf("✅ [GLPI AUTH] Usuário '@%s' autenticado com sucesso no GLPI!\n", username)
+					return true, nil
+				}
+				fmt.Printf("⚠️ [GLPI AUTH A] GLPI retornou HTTP %d: %s\n", resp.StatusCode, string(bodyBytes))
+				lastErr = fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(bodyBytes))
+			} else {
+				lastErr = errDo
+			}
+		}
+
+		// Modo B: Via Query Params (?login=...&password=...) caso o Nginx/Apache remova o header Authorization
+		urlQueryStr := fmt.Sprintf("%s/initSession?login=%s&password=%s", cand, url.QueryEscape(username), url.QueryEscape(password))
+		fmt.Printf("🔐 [GLPI AUTH B] Autenticando '@%s' via Query Params em %s ...\n", username, cand)
+
+		reqB, errB := http.NewRequest(http.MethodGet, urlQueryStr, nil)
+		if errB == nil {
+			reqB.Header.Set("App-Token", appToken)
+			reqB.Header.Set("Content-Type", "application/json")
+
+			respB, errDoB := httpClient.Do(reqB)
+			if errDoB == nil {
+				bodyBytesB, _ := io.ReadAll(respB.Body)
+				respB.Body.Close()
+				fmt.Printf("📊 [GLPI AUTH B] Status HTTP %d (Tamanho: %d bytes)\n", respB.StatusCode, len(bodyBytesB))
+
+				if respB.StatusCode == http.StatusOK {
+					var resMap map[string]interface{}
+					if err := json.Unmarshal(bodyBytesB, &resMap); err == nil {
+						if sessToken, ok := resMap["session_token"].(string); ok && sessToken != "" {
+							closeURL := fmt.Sprintf("%s/killSession", cand)
+							cReq, _ := http.NewRequest(http.MethodGet, closeURL, nil)
+							setCommonHeaders(cReq, appToken, sessToken)
+							_, _ = httpClient.Do(cReq)
+						}
+					}
+					fmt.Printf("✅ [GLPI AUTH] Usuário '@%s' autenticado com sucesso via Query Params!\n", username)
+					return true, nil
+				}
+				fmt.Printf("⚠️ [GLPI AUTH B] GLPI retornou HTTP %d: %s\n", respB.StatusCode, string(bodyBytesB))
+				lastErr = fmt.Errorf("HTTP %d: %s", respB.StatusCode, string(bodyBytesB))
+			}
+		}
+	}
+
+	return false, lastErr
+}
+

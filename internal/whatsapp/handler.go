@@ -23,6 +23,15 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+// Struct UserSession guarda as informações do usuário autenticado no painel
+type UserSession struct {
+	UserID   int       `json:"user_id"`
+	Username string    `json:"username"`
+	Name     string    `json:"name"`
+	Role     string    `json:"role"`
+	Expiry   time.Time `json:"expiry"`
+}
+
 // ─── Estado global compartilhado ─────────────────────────────────────────────
 
 var (
@@ -34,7 +43,7 @@ var (
 
 	// Banco de dados e sessões do painel web
 	webDB      *sql.DB
-	sessions   = make(map[string]time.Time)
+	sessions   = make(map[string]UserSession)
 	sessionsMu sync.Mutex
 )
 
@@ -225,6 +234,8 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 		return
 	}
 
+
+
 	// ── Encerramento do chat ao vivo ──────────────────────────────────────
 	if textLower == "#encerrar" && activeUserFull != "" {
 		activeJID, _ := types.ParseJID(activeUserFull)
@@ -327,6 +338,18 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 		return
 	}
 
+	// ── Mídia enviada fora das etapas permitidas de anexo ──────────────────
+	isMedia := imgMsg != nil || docMsg != nil || videoMsg != nil || v.Message.GetAudioMessage() != nil
+	if isMedia {
+		if currentStep != 2 && currentStep != 3 && currentStep != 100 {
+			sendTextMessage(ctx, client, chatJID, "❌ *Aviso:* Antes de enviar fotos ou arquivos, por favor selecione uma das opções na enquete para continuar o atendimento.\n\n_💡 Se quiser cancelar ou recomeçar, digite *#cancelar*._")
+			if currentStep == 1000 || currentStep == -1 {
+				ReexibirMenuAtual(ctx, client, chatJID, uState)
+			}
+			return
+		}
+	}
+
 	// ── Máquina de estados principal ──────────────────────────────────────
 	switch currentStep {
 	case -1:
@@ -339,10 +362,20 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 		processarGravacaoTitulo(ctx, client, v, uState, text, imgMsg, docMsg)
 	case 3:
 		processarGravacaoDescricao(ctx, client, v, uState, sender, text, imgMsg, docMsg)
+	case 30:
+		sendTextMessage(ctx, client, chatJID, "❌ Por favor, selecione *Sim* ou *Não* na enquete acima para confirmar sua identidade.")
+	case 35, 37, 40, 42:
+		sendTextMessage(ctx, client, chatJID, "❌ Por favor, selecione *Sim* ou *Não* na enquete acima para prosseguir.")
 	case 50:
 		processarBuscaChamadoInfo(ctx, client, v, uState, sender, text)
 	case 52:
 		processarNovaMensagemChamado(ctx, client, v, uState, text)
+	case 1000:
+		sendTextMessage(ctx, client, chatJID, "❌ Antes de seguir, preciso que selecione uma opção na enquete acima.")
+		ReexibirMenuAtual(ctx, client, chatJID, uState)
+	default:
+		sendTextMessage(ctx, client, chatJID, "❌ Por favor, selecione uma das opções na enquete acima para continuar.")
+		ReexibirMenuAtual(ctx, client, chatJID, uState)
 	}
 }
 

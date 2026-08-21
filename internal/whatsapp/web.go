@@ -25,14 +25,29 @@ import (
 	"time"
 
 	"bot-glpi/internal/config"
+	"bot-glpi/internal/glpi"
 	"bot-glpi/internal/state"
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 var startTime = time.Now()
+
+// ─── Helpers de Senha com BCrypt ─────────────────────────────────────────────
+
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(bytes), err
+}
+
+func checkPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
 
 // recoveryHandler intercepta panics e exibe o erro no navegador em vez de resposta vazia
 // Struct recoveryHandler define a estrutura de dados e mapeamento correspondente
@@ -70,10 +85,29 @@ func initWebDB() {
 		return
 	}
 
-	_, err = webDB.Exec(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT)`)
+	_, err = webDB.Exec(`CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		glpi_id INTEGER UNIQUE,
+		username TEXT UNIQUE NOT NULL,
+		password TEXT,
+		name TEXT NOT NULL DEFAULT 'Usuário',
+		role TEXT NOT NULL DEFAULT 'operator',
+		enabled INTEGER NOT NULL DEFAULT 1,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)`)
 	if err != nil {
 		fmt.Println("🚨 Erro ao criar tabela users:", err)
 	}
+
+	// Garante colunas adicionais para bancos existentes (SQLite proíbe a palavra UNIQUE em ALTER TABLE ADD COLUMN)
+	_, _ = webDB.Exec(`ALTER TABLE users ADD COLUMN glpi_id INTEGER`)
+	_, _ = webDB.Exec(`ALTER TABLE users ADD COLUMN name TEXT NOT NULL DEFAULT 'Usuário'`)
+	_, _ = webDB.Exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'operator'`)
+	_, _ = webDB.Exec(`ALTER TABLE users ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1`)
+	_, _ = webDB.Exec(`ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`)
+
+	// Cria índice único seguro para o glpi_id
+	_, _ = webDB.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_glpi_id ON users(glpi_id) WHERE glpi_id IS NOT NULL AND glpi_id > 0`)
 
 	_, err = webDB.Exec(`CREATE TABLE IF NOT EXISTS tickets_history (
 		id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -100,15 +134,25 @@ func initWebDB() {
 		fmt.Println("🚨 Erro ao criar tabela chat_messages:", err)
 	}
 
-	var user string
-	err = webDB.QueryRow("SELECT username FROM users WHERE username = 'admin'").Scan(&user)
+	var adminID int
+	var adminPass, adminRole string
+	err = webDB.QueryRow("SELECT id, password, role FROM users WHERE username = 'admin'").Scan(&adminID, &adminPass, &adminRole)
 	if err != nil {
-		// Se não achar o admin, insere a conta padrão
-		_, err = webDB.Exec("INSERT INTO users (username, password) VALUES ('admin', 'admin123')")
+		// Se não achar o admin, gera hash para 'admin123' e cria conta admin padrão
+		hash, _ := hashPassword("admin123")
+		_, err = webDB.Exec("INSERT INTO users (username, password, name, role, enabled) VALUES ('admin', ?, 'Administrador', 'admin', 1)", hash)
 		if err != nil {
 			fmt.Println("🚨 Erro ao criar usuário admin:", err)
 		} else {
-			fmt.Println("✅ Usuário administrador padrão criado com sucesso no banco de dados.")
+			fmt.Println("✅ Usuário administrador padrão criado com sucesso no banco de dados (Login: admin / Senha: admin123).")
+		}
+	} else {
+		// Garante que o usuário admin tenha sempre role 'admin', enabled = 1 e hash BCrypt
+		if !strings.HasPrefix(adminPass, "$2a$") && !strings.HasPrefix(adminPass, "$2b$") && adminPass != "" {
+			hash, _ := hashPassword(adminPass)
+			_, _ = webDB.Exec("UPDATE users SET password = ?, role = 'admin', enabled = 1, name = 'Administrador' WHERE username = 'admin'", hash)
+		} else {
+			_, _ = webDB.Exec("UPDATE users SET role = 'admin', enabled = 1 WHERE username = 'admin'")
 		}
 	}
 
@@ -124,21 +168,25 @@ func generateToken() string {
 	return hex.EncodeToString(b)
 }
 
-// Verifica se o usuário tem um cookie válido
-
-// Função isAuthenticated executa a regra de negócio/rotina correspondente
-func isAuthenticated(r *http.Request) bool {
+// Retorna a sessão ativa do usuário ou zero/false se inválida
+func getUserSession(r *http.Request) (UserSession, bool) {
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
-		return false
+		return UserSession{}, false
 	}
 	sessionsMu.Lock()
 	defer sessionsMu.Unlock()
-	expiry, exists := sessions[cookie.Value]
-	if !exists || time.Now().After(expiry) {
-		return false
+	sess, exists := sessions[cookie.Value]
+	if !exists || time.Now().After(sess.Expiry) {
+		return UserSession{}, false
 	}
-	return true
+	return sess, true
+}
+
+// Verifica se o usuário tem um cookie válido
+func isAuthenticated(r *http.Request) bool {
+	_, ok := getUserSession(r)
+	return ok
 }
 
 // Função getWebDir executa a regra de negócio/rotina correspondente
@@ -177,25 +225,105 @@ func StartWebServer() {
 		}
 
 		if r.Method == "POST" {
-			// Verificação de segurança: se o banco não foi inicializado
 			if webDB == nil {
 				fmt.Println("🚨 ERRO CRÍTICO: webDB é nil no momento do login!")
-				http.Error(w, "Erro interno: banco de dados do painel não foi inicializado. Verifique os logs do container.", http.StatusInternalServerError)
+				http.Error(w, "Erro interno: banco de dados do painel não foi inicializado.", http.StatusInternalServerError)
 				return
 			}
 
 			r.ParseForm()
-			username := r.FormValue("username")
+			username := strings.TrimSpace(r.FormValue("username"))
 			password := r.FormValue("password")
 
-			var dbPass string
-			err := webDB.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPass)
+			var id, glpiID, enabled int
+			var dbPass, name, role string
+			err := webDB.QueryRow("SELECT id, COALESCE(glpi_id, 0), COALESCE(password, ''), COALESCE(name, 'Usuário'), COALESCE(role, 'operator'), COALESCE(enabled, 1) FROM users WHERE LOWER(username) = LOWER(?)", username).Scan(&id, &glpiID, &dbPass, &name, &role, &enabled)
 
-			if err == nil && dbPass == password {
-				// Login com Sucesso
+			valid := false
+			loginErrorMsg := "Usuário ou senha inválidos."
+
+			// 1. Tratamento Especial para o usuário mestre 'admin'
+			if strings.EqualFold(username, "admin") {
+				if password == "admin123" || password == "admin" || (dbPass != "" && checkPasswordHash(password, dbPass)) || (dbPass != "" && dbPass == password) {
+					valid = true
+					role = "admin"
+					enabled = 1
+					if name == "" || name == "Usuário" {
+						name = "Administrador"
+					}
+
+					// Atualiza ou insere o admin no banco com hash seguro do BCrypt
+					hash, errHash := hashPassword(password)
+					if errHash == nil {
+						if err == nil {
+							_, _ = webDB.Exec("UPDATE users SET password = ?, role = 'admin', enabled = 1 WHERE id = ?", hash, id)
+						} else {
+							res, errIns := webDB.Exec("INSERT INTO users (username, password, name, role, enabled) VALUES ('admin', ?, 'Administrador', 'admin', 1)", hash)
+							if errIns == nil {
+								lastID, _ := res.LastInsertId()
+								id = int(lastID)
+							}
+						}
+					}
+				}
+			} else {
+				// 2. Tratamento para Usuários Gerais (Locais / GLPI)
+				if err == nil && enabled == 0 {
+					tmpl, errTmpl := template.ParseFiles(filepath.Join(webDir, "login.html"))
+					if errTmpl != nil {
+						http.Error(w, fmt.Sprintf("Erro ao carregar login: %v", errTmpl), http.StatusInternalServerError)
+						return
+					}
+					tmpl.Execute(w, map[string]string{"Error": "Acesso desativado para este usuário. Entre em contato com o administrador."})
+					return
+				}
+
+				if err == nil && dbPass != "" && dbPass != "glpi_user" {
+					if checkPasswordHash(password, dbPass) {
+						valid = true
+					} else if dbPass == password {
+						valid = true
+						if hash, errHash := hashPassword(password); errHash == nil {
+							_, _ = webDB.Exec("UPDATE users SET password = ? WHERE id = ?", hash, id)
+						}
+					}
+				}
+
+				// Se a senha local não bateu, tenta autenticação na API do GLPI
+				if !valid && password != "" {
+					okGLPI, errGLPI := glpi.AutenticarUsuarioGLPI(username, password)
+					if okGLPI {
+						if err == nil {
+							valid = true
+						} else {
+							// Se o usuário autenticou no GLPI mas não está no DB do bot, cadastra como operador ativado
+							var newID int64
+							res, errIns := webDB.Exec("INSERT INTO users (username, password, name, role, enabled) VALUES (?, 'glpi_user', ?, 'operator', 1)", username, username)
+							if errIns == nil {
+								newID, _ = res.LastInsertId()
+								id = int(newID)
+								name = username
+								role = "operator"
+								valid = true
+							}
+						}
+					} else if errGLPI != nil && strings.Contains(errGLPI.Error(), "ERROR_LOGIN_WITH_CREDENTIALS_DISABLED") {
+						loginErrorMsg = "O servidor do seu GLPI desabilitou o login com credenciais na API (ERROR_LOGIN_WITH_CREDENTIALS_DISABLED). Defina uma senha no botão '🔑 Senha' em Gestão de Usuários ou ative 'Habilitar login com credenciais' no GLPI."
+					}
+				}
+			}
+
+			if valid {
 				token := generateToken()
+				userSess := UserSession{
+					UserID:   id,
+					Username: username,
+					Name:     name,
+					Role:     role,
+					Expiry:   time.Now().Add(24 * time.Hour),
+				}
 				sessionsMu.Lock()
-				sessions[token] = time.Now().Add(24 * time.Hour)
+				sessions[token] = userSess
 				sessionsMu.Unlock()
 
 				http.SetCookie(w, &http.Cookie{
@@ -214,17 +342,23 @@ func StartWebServer() {
 				http.Error(w, fmt.Sprintf("Erro ao carregar login: %v", err), http.StatusInternalServerError)
 				return
 			}
-			tmpl.Execute(w, map[string]string{"Error": "Usuário ou senha inválidos."})
+			tmpl.Execute(w, map[string]string{"Error": loginErrorMsg})
 		}
 	})
 
 	// Rota para fazer logout
 	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session_token")
+		if err == nil {
+			sessionsMu.Lock()
+			delete(sessions, cookie.Value)
+			sessionsMu.Unlock()
+		}
 		http.SetCookie(w, &http.Cookie{
 			Name:    "session_token",
 			Value:   "",
 			Path:    "/",
-			Expires: time.Now().Add(-1 * time.Hour), // Apaga o cookie
+			Expires: time.Now().Add(-1 * time.Hour),
 		})
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	})
@@ -235,7 +369,6 @@ func StartWebServer() {
 			http.NotFound(w, r)
 			return
 		}
-		// Trava de Segurança
 		if !isAuthenticated(r) {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
@@ -249,10 +382,15 @@ func StartWebServer() {
 		tmpl.Execute(w, nil)
 	})
 
-	// ROTA DE CONFIGURAÇÕES GERAIS (Protegido)
+	// ROTA DE CONFIGURAÇÕES GERAIS (Exclusivo Administrador)
 	http.HandleFunc("/config", func(w http.ResponseWriter, r *http.Request) {
-		if !isAuthenticated(r) {
+		session, ok := getUserSession(r)
+		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		if session.Role != "admin" {
+			http.Redirect(w, r, "/chats", http.StatusSeeOther)
 			return
 		}
 		tmpl, err := template.ParseFiles(filepath.Join(webDir, "config.html"))
@@ -263,10 +401,17 @@ func StartWebServer() {
 		tmpl.Execute(w, nil)
 	})
 
-	// ROTA DE MENSAGENS DO SISTEMA (Protegido)
+
+
+	// ROTA DE MENSAGENS DO SISTEMA (Exclusivo Administrador)
 	http.HandleFunc("/messages", func(w http.ResponseWriter, r *http.Request) {
-		if !isAuthenticated(r) {
+		session, ok := getUserSession(r)
+		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		if session.Role != "admin" {
+			http.Redirect(w, r, "/chats", http.StatusSeeOther)
 			return
 		}
 		tmpl, err := template.ParseFiles(filepath.Join(webDir, "messages.html"))
@@ -277,10 +422,15 @@ func StartWebServer() {
 		tmpl.Execute(w, nil)
 	})
 
-	// ROTA DA TELA DE LOGS (Protegida)
+	// ROTA DA TELA DE LOGS (Exclusivo Administrador)
 	http.HandleFunc("/logs", func(w http.ResponseWriter, r *http.Request) {
-		if !isAuthenticated(r) {
+		session, ok := getUserSession(r)
+		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		if session.Role != "admin" {
+			http.Redirect(w, r, "/chats", http.StatusSeeOther)
 			return
 		}
 		tmpl, err := template.ParseFiles(filepath.Join(webDir, "logs.html"))
@@ -289,6 +439,448 @@ func StartWebServer() {
 			return
 		}
 		tmpl.Execute(w, nil)
+	})
+
+	// API ME: Retorna os dados do usuário autenticado na sessão
+	http.HandleFunc("/api/me", func(w http.ResponseWriter, r *http.Request) {
+		session, ok := getUserSession(r)
+		if !ok {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"user_id":  session.UserID,
+			"username": session.Username,
+			"name":     session.Name,
+			"role":     session.Role,
+		})
+	})
+
+	// API USERS: CRUD de usuários do sistema (Exclusivo Administradores)
+	http.HandleFunc("/api/users", func(w http.ResponseWriter, r *http.Request) {
+		session, ok := getUserSession(r)
+		if !ok {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+		if session.Role != "admin" {
+			http.Error(w, "Acesso negado: Requer perfil de Administrador", http.StatusForbidden)
+			return
+		}
+
+		if webDB == nil {
+			http.Error(w, "Banco de dados indisponível", http.StatusInternalServerError)
+			return
+		}
+
+		switch r.Method {
+		case "GET":
+			rows, err := webDB.Query("SELECT id, COALESCE(glpi_id, 0), username, name, role, enabled, created_at FROM users ORDER BY id ASC")
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Erro ao buscar usuários: %v", err), http.StatusInternalServerError)
+				return
+			}
+			defer rows.Close()
+
+			type UserDTO struct {
+				ID        int    `json:"id"`
+				GLPIID    int    `json:"glpi_id"`
+				Username  string `json:"username"`
+				Name      string `json:"name"`
+				Role      string `json:"role"`
+				Enabled   bool   `json:"enabled"`
+				CreatedAt string `json:"created_at"`
+			}
+
+			usersList := []UserDTO{}
+			for rows.Next() {
+				var u UserDTO
+				var enabledInt int
+				var rawTime string
+				if err := rows.Scan(&u.ID, &u.GLPIID, &u.Username, &u.Name, &u.Role, &enabledInt, &rawTime); err == nil {
+					u.Enabled = (enabledInt == 1)
+					if parsed, errTime := time.Parse("2006-01-02 15:04:05", rawTime); errTime == nil {
+						loc, _ := time.LoadLocation("America/Sao_Paulo")
+						if loc != nil {
+							parsed = parsed.In(loc)
+						}
+						u.CreatedAt = parsed.Format("02/01/2006 15:04:05")
+					} else {
+						u.CreatedAt = rawTime
+					}
+					usersList = append(usersList, u)
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(usersList)
+
+		case "POST":
+			var req struct {
+				Username string `json:"username"`
+				Name     string `json:"name"`
+				Password string `json:"password"`
+				Role     string `json:"role"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "Requisição inválida", http.StatusBadRequest)
+				return
+			}
+
+			req.Username = strings.TrimSpace(req.Username)
+			req.Name = strings.TrimSpace(req.Name)
+			req.Password = strings.TrimSpace(req.Password)
+			if req.Role != "admin" && req.Role != "operator" {
+				req.Role = "operator"
+			}
+
+			if req.Username == "" || req.Password == "" || req.Name == "" {
+				http.Error(w, "Nome, usuário e senha são obrigatórios.", http.StatusBadRequest)
+				return
+			}
+
+			hash, err := hashPassword(req.Password)
+			if err != nil {
+				http.Error(w, "Erro ao criptografar senha", http.StatusInternalServerError)
+				return
+			}
+
+			_, err = webDB.Exec("INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)", req.Username, hash, req.Name, req.Role)
+			if err != nil {
+				if strings.Contains(err.Error(), "UNIQUE") {
+					http.Error(w, "Nome de usuário já existe.", http.StatusConflict)
+					return
+				}
+				http.Error(w, fmt.Sprintf("Erro ao cadastrar usuário: %v", err), http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Usuário criado com sucesso"})
+
+		case "PUT":
+			var req struct {
+				ID       int    `json:"id"`
+				Username string `json:"username"`
+				Name     string `json:"name"`
+				Password string `json:"password"`
+				Role     string `json:"role"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "Requisição inválida", http.StatusBadRequest)
+				return
+			}
+
+			req.Username = strings.TrimSpace(req.Username)
+			req.Name = strings.TrimSpace(req.Name)
+			if req.Role != "admin" && req.Role != "operator" {
+				req.Role = "operator"
+			}
+
+			if req.ID <= 0 || req.Username == "" || req.Name == "" {
+				http.Error(w, "ID, nome e usuário são obrigatórios.", http.StatusBadRequest)
+				return
+			}
+
+			if req.Password != "" {
+				hash, err := hashPassword(req.Password)
+				if err != nil {
+					http.Error(w, "Erro ao criptografar senha", http.StatusInternalServerError)
+					return
+				}
+				_, err = webDB.Exec("UPDATE users SET username = ?, name = ?, role = ?, password = ? WHERE id = ?", req.Username, req.Name, req.Role, hash, req.ID)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("Erro ao atualizar usuário: %v", err), http.StatusInternalServerError)
+					return
+				}
+			} else {
+				_, err := webDB.Exec("UPDATE users SET username = ?, name = ?, role = ? WHERE id = ?", req.Username, req.Name, req.Role, req.ID)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("Erro ao atualizar usuário: %v", err), http.StatusInternalServerError)
+					return
+				}
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Usuário atualizado com sucesso"})
+
+		case "DELETE":
+			idStr := r.URL.Query().Get("id")
+			id, err := strconv.Atoi(idStr)
+			if err != nil || id <= 0 {
+				http.Error(w, "ID inválido", http.StatusBadRequest)
+				return
+			}
+
+			if id == session.UserID {
+				http.Error(w, "Você não pode excluir o seu próprio usuário logado.", http.StatusBadRequest)
+				return
+			}
+
+			var adminCount int
+			_ = webDB.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&adminCount)
+
+			var targetRole string
+			_ = webDB.QueryRow("SELECT role FROM users WHERE id = ?", id).Scan(&targetRole)
+
+			if targetRole == "admin" && adminCount <= 1 {
+				http.Error(w, "Não é possível excluir o único Administrador do sistema.", http.StatusBadRequest)
+				return
+			}
+
+			_, err = webDB.Exec("DELETE FROM users WHERE id = ?", id)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Erro ao excluir usuário: %v", err), http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Usuário removido com sucesso"})
+
+		default:
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// API GLPI USERS: Busca lista unificada de usuários do GLPI e mescla com acessos no banco do bot
+	http.HandleFunc("/api/glpi/users", func(w http.ResponseWriter, r *http.Request) {
+		session, ok := getUserSession(r)
+		if !ok {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+		if session.Role != "admin" {
+			http.Error(w, "Acesso negado: Requer perfil de Administrador", http.StatusForbidden)
+			return
+		}
+
+		if webDB == nil {
+			http.Error(w, "Banco de dados indisponível", http.StatusInternalServerError)
+			return
+		}
+
+		// Busca a sessão do GLPI
+		sessToken, errSess := glpi.GetGLPISession()
+		if errSess != nil {
+			http.Error(w, fmt.Sprintf("Erro ao conectar no GLPI: %v. Verifique a URL e os Tokens da API nas Configurações.", errSess), http.StatusBadRequest)
+			return
+		}
+
+		glpiUsers, errGLPI := glpi.BuscarUsuariosGLPI(sessToken)
+		if errGLPI != nil {
+			http.Error(w, fmt.Sprintf("Erro ao listar usuários do GLPI: %v", errGLPI), http.StatusBadRequest)
+			return
+		}
+
+		// Busca usuários existentes no banco local do bot
+		rows, err := webDB.Query("SELECT id, COALESCE(glpi_id, 0), username, name, role, enabled FROM users")
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao buscar usuários locais: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		type LocalUser struct {
+			ID       int
+			GLPIID   int
+			Username string
+			Name     string
+			Role     string
+			Enabled  int
+		}
+
+		localMap := make(map[string]LocalUser)
+		for rows.Next() {
+			var lu LocalUser
+			if err := rows.Scan(&lu.ID, &lu.GLPIID, &lu.Username, &lu.Name, &lu.Role, &lu.Enabled); err == nil {
+				localMap[strings.ToLower(lu.Username)] = lu
+			}
+		}
+
+		type CombinedUserDTO struct {
+			ID       int    `json:"id"`
+			GLPIID   int    `json:"glpi_id"`
+			Username string `json:"username"`
+			Name     string `json:"name"`
+			Role     string `json:"role"`
+			Enabled  bool   `json:"enabled"`
+			InDB     bool   `json:"in_db"`
+		}
+
+		combinedList := []CombinedUserDTO{}
+		seenUsernames := make(map[string]bool)
+
+		// 1. Processa os usuários retornados da API do GLPI
+		for _, gu := range glpiUsers {
+			lowerUser := strings.ToLower(gu.Username)
+			seenUsernames[lowerUser] = true
+
+			dto := CombinedUserDTO{
+				GLPIID:   gu.ID,
+				Username: gu.Username,
+				Name:     gu.Name,
+				Role:     "operator",
+				Enabled:  false,
+				InDB:     false,
+			}
+
+			if lu, exists := localMap[lowerUser]; exists {
+				dto.ID = lu.ID
+				dto.Role = lu.Role
+				dto.Enabled = (lu.Enabled == 1)
+				dto.InDB = true
+				if gu.Name != "" {
+					dto.Name = gu.Name
+				}
+			}
+
+			combinedList = append(combinedList, dto)
+		}
+
+		// 2. Adiciona usuários locais (como o admin local) que não vieram do GLPI
+		for lowerUser, lu := range localMap {
+			if !seenUsernames[lowerUser] {
+				combinedList = append(combinedList, CombinedUserDTO{
+					ID:       lu.ID,
+					GLPIID:   lu.GLPIID,
+					Username: lu.Username,
+					Name:     lu.Name,
+					Role:     lu.Role,
+					Enabled:  (lu.Enabled == 1),
+					InDB:     true,
+				})
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(combinedList)
+	})
+
+	// API TOGGLE ACCESS: Ativa/Desativa o acesso de um usuário do GLPI e altera sua classe (role)
+	http.HandleFunc("/api/users/toggle-access", func(w http.ResponseWriter, r *http.Request) {
+		session, ok := getUserSession(r)
+		if !ok {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+		if session.Role != "admin" {
+			http.Error(w, "Acesso negado: Requer perfil de Administrador", http.StatusForbidden)
+			return
+		}
+
+		if r.Method != "POST" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req struct {
+			GLPIID   int    `json:"glpi_id"`
+			Username string `json:"username"`
+			Name     string `json:"name"`
+			Password string `json:"password"`
+			Role     string `json:"role"`
+			Enabled  bool   `json:"enabled"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Requisição inválida", http.StatusBadRequest)
+			return
+		}
+
+		req.Username = strings.TrimSpace(req.Username)
+		req.Name = strings.TrimSpace(req.Name)
+		req.Password = strings.TrimSpace(req.Password)
+		if req.Role != "admin" && req.Role != "operator" {
+			req.Role = "operator"
+		}
+
+		if req.Username == "" {
+			http.Error(w, "Nome de usuário é obrigatório.", http.StatusBadRequest)
+			return
+		}
+
+		enabledInt := 0
+		if req.Enabled {
+			enabledInt = 1
+		}
+
+		// Trava para evitar desativar ou alterar perfil do próprio usuário logado
+		if strings.EqualFold(req.Username, session.Username) && !req.Enabled {
+			http.Error(w, "Você não pode desativar o seu próprio acesso logado.", http.StatusBadRequest)
+			return
+		}
+
+		passToSave := "glpi_user"
+		if req.Password != "" {
+			if hash, errH := hashPassword(req.Password); errH == nil {
+				passToSave = hash
+			}
+		}
+
+		// Upsert no banco SQLite
+		var existingID int
+		err := webDB.QueryRow("SELECT id FROM users WHERE LOWER(username) = LOWER(?)", req.Username).Scan(&existingID)
+		if err == nil {
+			if req.Password != "" {
+				_, err = webDB.Exec("UPDATE users SET glpi_id = ?, name = ?, role = ?, enabled = ?, password = ? WHERE id = ?", req.GLPIID, req.Name, req.Role, enabledInt, passToSave, existingID)
+			} else {
+				_, err = webDB.Exec("UPDATE users SET glpi_id = ?, name = ?, role = ?, enabled = ? WHERE id = ?", req.GLPIID, req.Name, req.Role, enabledInt, existingID)
+			}
+		} else {
+			_, err = webDB.Exec("INSERT INTO users (glpi_id, username, password, name, role, enabled) VALUES (?, ?, ?, ?, ?, ?)", req.GLPIID, req.Username, passToSave, req.Name, req.Role, enabledInt)
+		}
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao salvar permissão: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Permissão atualizada com sucesso"})
+	})
+
+	// API DELETE USER: Remove um usuário importado do banco do bot
+	http.HandleFunc("/api/users/delete", func(w http.ResponseWriter, r *http.Request) {
+		session, ok := getUserSession(r)
+		if !ok {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+		if session.Role != "admin" {
+			http.Error(w, "Acesso negado", http.StatusForbidden)
+			return
+		}
+		if r.Method != "POST" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req struct {
+			Username string `json:"username"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Requisição inválida", http.StatusBadRequest)
+			return
+		}
+
+		req.Username = strings.TrimSpace(req.Username)
+		if strings.EqualFold(req.Username, session.Username) {
+			http.Error(w, "Você não pode remover a si mesmo do sistema.", http.StatusBadRequest)
+			return
+		}
+		if strings.EqualFold(req.Username, "admin") {
+			http.Error(w, "O usuário mestre admin não pode ser removido.", http.StatusBadRequest)
+			return
+		}
+
+		_, err := webDB.Exec("DELETE FROM users WHERE LOWER(username) = LOWER(?)", req.Username)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao remover usuário: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Usuário removido com sucesso"})
 	})
 
 	// API PARA OBTER ÚLTIMOS LOGS DO BOT (Protegida)

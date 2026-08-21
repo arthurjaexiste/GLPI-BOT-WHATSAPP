@@ -1,65 +1,88 @@
-/* Design System Global - GLPI-BOT (Monochrome Theme) */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+/* Design System Global - GLPI-BOT (Humanized & Modern SaaS Architecture) */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --bg-primary: #000000;
-    --bg-secondary: #09090b;
-    --accent-indigo: #ffffff;
-    --accent-purple: #d4d4d8;
-    --accent-pink: #a1a1aa;
-    --accent-emerald: #10b981;
-    /* Keep connected green */
-    --accent-teal: #71717a;
-    --accent-cyan: #e4e4e7;
-    --text-primary: #f4f4f5;
+    --bg-primary: #0a0a0c;
+    --bg-card: #121215;
+    --text-primary: rgba(255, 255, 255, 0.92);
     --text-secondary: #a1a1aa;
+    --text-label: #71717a;
 }
 
 body {
-    font-family: 'Outfit', sans-serif;
-    background: radial-gradient(circle at 50% 0%, #1e1e24 0%, #09090b 80%) no-repeat, #09090b !important;
+    font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #0a0a0c !important;
+    background: #0a0a0c !important;
     color: var(--text-primary);
     min-height: 100vh;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Glassmorphism Cards */
+/* 1. LEI DAS CURVAS PROPORCIONAIS */
 .glass-card {
-    background: rgba(9, 9, 11, 0.8) !important;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7) !important;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+    background: #121215 !important;
+    border-radius: 1rem !important; /* 16px rounded-2xl */
+    border: none !important;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.glass-card:hover {
-    border-color: rgba(255, 255, 255, 0.15) !important;
-    box-shadow: 0 16px 48px 0 rgba(255, 255, 255, 0.02) !important;
-}
-
-/* Form Controls */
-input[type="text"],
-input[type="password"],
-input[type="number"],
+/* 2. PROFUNDIDADE SEM DEGRADÊ CAFONA (Wash & Light Rings) */
+input,
 textarea,
 select {
-    background: rgba(9, 9, 11, 0.7) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 12px !important;
-    padding: 12px 16px !important;
-    color: #f3f4f6 !important;
-    font-size: 0.875rem !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    color-scheme: dark !important;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="time"],
+textarea,
+select {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: none !important;
+    border-radius: 0.5rem !important; /* 8px rounded-lg */
+    padding: 10px 14px !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.8125rem !important;
+    font-weight: 400 !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    transition: all 0.2s ease !important;
     width: 100%;
+}
+
+input[type="password"],
+input.input-with-eye,
+input[type="text"].input-with-eye,
+input[type="password"].input-with-eye,
+.input-with-eye {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: none !important;
+    border-radius: 0.5rem !important;
+    padding-left: 14px !important;
+    padding-right: 48px !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.8125rem !important;
+    font-weight: 400 !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    transition: all 0.2s ease !important;
+    width: 100%;
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-    border-color: var(--accent-indigo) !important;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
-    background: rgba(9, 9, 11, 0.9) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     outline: none !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), 0 0 12px rgba(255, 255, 255, 0.05) !important;
 }
 
 /* Custom Scrollbars */
