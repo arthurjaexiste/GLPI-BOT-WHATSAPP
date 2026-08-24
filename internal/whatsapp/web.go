@@ -31,6 +31,7 @@ import (
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
+	"google.golang.org/protobuf/proto"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -128,11 +129,17 @@ func initWebDB() {
 		message_text TEXT, 
 		message_type TEXT, 
 		is_from_me INTEGER, 
+		media_url TEXT,
 		timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`)
 	if err != nil {
 		fmt.Println("🚨 Erro ao criar tabela chat_messages:", err)
 	}
+
+	_, _ = webDB.Exec(`ALTER TABLE chat_messages ADD COLUMN media_url TEXT`)
+	_, _ = webDB.Exec(`ALTER TABLE chat_messages ADD COLUMN reply_to_name TEXT`)
+	_, _ = webDB.Exec(`ALTER TABLE chat_messages ADD COLUMN reply_to_text TEXT`)
+	_, _ = webDB.Exec(`ALTER TABLE chat_messages ADD COLUMN wa_message_id TEXT`)
 
 	var adminID int
 	var adminPass, adminRole string
@@ -1212,7 +1219,7 @@ func StartWebServer() {
 		}
 
 		rows, err := webDB.Query(`
-			SELECT id, sender_name, sender_jid, message_text, message_type, is_from_me, timestamp 
+			SELECT id, sender_name, sender_jid, message_text, message_type, is_from_me, timestamp, COALESCE(media_url, ''), COALESCE(reply_to_name, ''), COALESCE(reply_to_text, ''), COALESCE(wa_message_id, '') 
 			FROM chat_messages 
 			WHERE chat_jid = ? 
 			ORDER BY id ASC
@@ -1225,13 +1232,17 @@ func StartWebServer() {
 
 		// Struct MsgInfo define a estrutura de dados e mapeamento correspondente
 		type MsgInfo struct {
-			ID         int    `json:"id"`
-			SenderName string `json:"sender_name"`
-			SenderJID  string `json:"sender_jid"`
-			Text       string `json:"text"`
-			Type       string `json:"type"`
-			IsFromMe   bool   `json:"is_from_me"`
-			Timestamp  string `json:"timestamp"`
+			ID          int    `json:"id"`
+			SenderName  string `json:"sender_name"`
+			SenderJID   string `json:"sender_jid"`
+			Text        string `json:"text"`
+			Type        string `json:"type"`
+			IsFromMe    bool   `json:"is_from_me"`
+			Timestamp   string `json:"timestamp"`
+			MediaURL    string `json:"media_url,omitempty"`
+			ReplyToName string `json:"reply_to_name,omitempty"`
+			ReplyToText string `json:"reply_to_text,omitempty"`
+			WAMessageID string `json:"wa_message_id,omitempty"`
 		}
 
 		messages := []MsgInfo{}
@@ -1239,7 +1250,7 @@ func StartWebServer() {
 			var m MsgInfo
 			var rawTime string
 			var isFromMeInt int
-			if err := rows.Scan(&m.ID, &m.SenderName, &m.SenderJID, &m.Text, &m.Type, &isFromMeInt, &rawTime); err == nil {
+			if err := rows.Scan(&m.ID, &m.SenderName, &m.SenderJID, &m.Text, &m.Type, &isFromMeInt, &rawTime, &m.MediaURL, &m.ReplyToName, &m.ReplyToText, &m.WAMessageID); err == nil {
 				m.IsFromMe = isFromMeInt == 1
 				if parsed, errTime := time.Parse("2006-01-02 15:04:05", rawTime); errTime == nil {
 					loc, _ := time.LoadLocation("America/Sao_Paulo")
@@ -1382,8 +1393,12 @@ func StartWebServer() {
 		}
 
 		var req struct {
-			JID  string `json:"jid"`
-			Text string `json:"text"`
+			JID         string `json:"jid"`
+			Text        string `json:"text"`
+			ReplyToName string `json:"reply_to_name"`
+			ReplyToText string `json:"reply_to_text"`
+			QuotedID    string `json:"quoted_id"`
+			QuotedJID   string `json:"quoted_jid"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "JSON inválido", http.StatusBadRequest)
@@ -1412,10 +1427,258 @@ func StartWebServer() {
 		}
 		state.Mu.Unlock()
 
-		sendTextMessage(context.Background(), client, targetJID, req.Text)
+		if req.ReplyToText != "" {
+			qJID := req.QuotedJID
+			if qJID == "" {
+				qJID = targetJID.String()
+			}
+			sendQuotedTextMessage(context.Background(), client, targetJID, req.Text, qJID, req.ReplyToText, req.QuotedID)
+		} else {
+			sendTextMessage(context.Background(), client, targetJID, req.Text)
+		}
+
+		// Grava as informações da resposta citada na última mensagem enviada
+		if webDB != nil && req.ReplyToText != "" {
+			_, _ = webDB.Exec(
+				"UPDATE chat_messages SET reply_to_name = ?, reply_to_text = ? WHERE id = (SELECT MAX(id) FROM chat_messages WHERE chat_jid = ? AND is_from_me = 1)",
+				req.ReplyToName, req.ReplyToText, targetJID.String(),
+			)
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+
+	// API PARA ENVIAR IMAGENS E ARQUIVOS DO PAINEL WEB PARA O WHATSAPP (Protegida)
+	http.HandleFunc("/api/chats/send-media", func(w http.ResponseWriter, r *http.Request) {
+		if !isAuthenticated(r) {
+			http.Error(w, "Não autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method != "POST" {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+
+		ClientMu.Lock()
+		client := GlobalClient
+		ClientMu.Unlock()
+
+		if client == nil || !client.IsConnected() {
+			http.Error(w, "WhatsApp desconectado", http.StatusServiceUnavailable)
+			return
+		}
+
+		// Limite de 20MB para upload
+		if err := r.ParseMultipartForm(20 << 20); err != nil {
+			http.Error(w, "Falha ao processar arquivo enviado", http.StatusBadRequest)
+			return
+		}
+
+		jidStr := r.FormValue("jid")
+		caption := r.FormValue("caption")
+		replyToName := r.FormValue("reply_to_name")
+		replyToText := r.FormValue("reply_to_text")
+		quotedID := r.FormValue("quoted_id")
+		quotedJID := r.FormValue("quoted_jid")
+
+		if jidStr == "" {
+			http.Error(w, "JID é obrigatório", http.StatusBadRequest)
+			return
+		}
+
+		targetJID, err := types.ParseJID(jidStr)
+		if err != nil {
+			http.Error(w, "JID inválido", http.StatusBadRequest)
+			return
+		}
+
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			http.Error(w, "Nenhum arquivo enviado", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		fileBytes, err := io.ReadAll(file)
+		if err != nil || len(fileBytes) == 0 {
+			http.Error(w, "Arquivo vazio ou ilegível", http.StatusBadRequest)
+			return
+		}
+
+		mimeType := header.Header.Get("Content-Type")
+		if mimeType == "" {
+			mimeType = http.DetectContentType(fileBytes)
+		}
+
+		// Salva o arquivo no disco local em static/uploads/
+		uploadDir := filepath.Join(getWebDir(), "static", "uploads")
+		_ = os.MkdirAll(uploadDir, 0777)
+
+		fileName := fmt.Sprintf("media_sent_%d_%s", time.Now().UnixNano(), strings.ReplaceAll(header.Filename, " ", "_"))
+		filePath := filepath.Join(uploadDir, fileName)
+		if errWrite := os.WriteFile(filePath, fileBytes, 0644); errWrite != nil {
+			fmt.Printf("🚨 Erro ao salvar mídia do painel no disco: %v\n", errWrite)
+		}
+		webMediaURL := "/static/uploads/" + fileName
+
+		// Coloca o usuário em chat ao vivo/pausa o bot automático
+		userNumber := NormalizePhoneLocal(targetJID.User)
+		state.Mu.Lock()
+		uState, exists := state.Users[userNumber]
+		if !exists {
+			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
+			state.Users[userNumber] = uState
+		}
+		uState.Step = 100
+		if state.ActiveLiveChatUser == "" {
+			state.ActiveLiveChatUser = targetJID.String()
+		}
+		state.Mu.Unlock()
+
+		// Prepara envio no whatsmeow
+		ctx := context.Background()
+		var msg *waE2E.Message
+		msgType := "image"
+
+		var contextInfo *waE2E.ContextInfo
+		if replyToText != "" {
+			qJID := quotedJID
+			if qJID == "" {
+				qJID = targetJID.String()
+			}
+			if pJID, errP := types.ParseJID(qJID); errP == nil {
+				qJID = pJID.ToNonAD().String()
+			}
+			contextInfo = &waE2E.ContextInfo{
+				Participant: proto.String(qJID),
+				QuotedMessage: &waE2E.Message{
+					Conversation: proto.String(replyToText),
+				},
+			}
+			if quotedID != "" {
+				contextInfo.StanzaID = proto.String(quotedID)
+			}
+		}
+
+		lowerFilename := strings.ToLower(header.Filename)
+		isAudio := strings.HasPrefix(mimeType, "audio/") ||
+			strings.Contains(mimeType, "ogg") ||
+			strings.Contains(mimeType, "webm") ||
+			strings.HasPrefix(lowerFilename, "audio") ||
+			strings.HasPrefix(lowerFilename, "voice") ||
+			strings.HasSuffix(lowerFilename, ".ogg") ||
+			strings.HasSuffix(lowerFilename, ".mp3") ||
+			strings.HasSuffix(lowerFilename, ".m4a") ||
+			strings.HasSuffix(lowerFilename, ".wav") ||
+			strings.HasSuffix(lowerFilename, ".webm")
+
+		if strings.HasPrefix(mimeType, "image/") {
+			uploadResp, errUp := client.Upload(ctx, fileBytes, whatsmeow.MediaImage)
+			if errUp != nil {
+				http.Error(w, fmt.Sprintf("Falha ao enviar imagem ao WhatsApp: %v", errUp), http.StatusInternalServerError)
+				return
+			}
+
+			imgMsg := &waE2E.ImageMessage{
+				URL:           proto.String(uploadResp.URL),
+				DirectPath:    proto.String(uploadResp.DirectPath),
+				MediaKey:      uploadResp.MediaKey,
+				Mimetype:      proto.String(mimeType),
+				FileSHA256:    uploadResp.FileSHA256,
+				FileEncSHA256: uploadResp.FileEncSHA256,
+				FileLength:    proto.Uint64(uint64(len(fileBytes))),
+				ContextInfo:   contextInfo,
+			}
+			if caption != "" {
+				imgMsg.Caption = proto.String(caption)
+			}
+			msg = &waE2E.Message{ImageMessage: imgMsg}
+		} else if isAudio {
+			msgType = "audio"
+			audioMime := "audio/ogg; codecs=opus"
+			if strings.HasSuffix(lowerFilename, ".mp3") {
+				audioMime = "audio/mp3"
+			} else if strings.HasSuffix(lowerFilename, ".m4a") {
+				audioMime = "audio/mp4"
+			}
+
+			uploadResp, errUp := client.Upload(ctx, fileBytes, whatsmeow.MediaAudio)
+			if errUp != nil {
+				http.Error(w, fmt.Sprintf("Falha ao enviar áudio ao WhatsApp: %v", errUp), http.StatusInternalServerError)
+				return
+			}
+
+			audioMsg := &waE2E.AudioMessage{
+				URL:           proto.String(uploadResp.URL),
+				DirectPath:    proto.String(uploadResp.DirectPath),
+				MediaKey:      uploadResp.MediaKey,
+				Mimetype:      proto.String(audioMime),
+				FileSHA256:    uploadResp.FileSHA256,
+				FileEncSHA256: uploadResp.FileEncSHA256,
+				FileLength:    proto.Uint64(uint64(len(fileBytes))),
+				PTT:           proto.Bool(true),
+				ContextInfo:   contextInfo,
+			}
+			msg = &waE2E.Message{AudioMessage: audioMsg}
+		} else {
+			msgType = "document"
+			uploadResp, errUp := client.Upload(ctx, fileBytes, whatsmeow.MediaDocument)
+			if errUp != nil {
+				http.Error(w, fmt.Sprintf("Falha ao enviar documento ao WhatsApp: %v", errUp), http.StatusInternalServerError)
+				return
+			}
+
+			docMsg := &waE2E.DocumentMessage{
+				URL:           proto.String(uploadResp.URL),
+				DirectPath:    proto.String(uploadResp.DirectPath),
+				MediaKey:      uploadResp.MediaKey,
+				Mimetype:      proto.String(mimeType),
+				FileName:      proto.String(header.Filename),
+				FileSHA256:    uploadResp.FileSHA256,
+				FileEncSHA256: uploadResp.FileEncSHA256,
+				FileLength:    proto.Uint64(uint64(len(fileBytes))),
+				ContextInfo:   contextInfo,
+			}
+			if caption != "" {
+				docMsg.Caption = proto.String(caption)
+			}
+			msg = &waE2E.Message{DocumentMessage: docMsg}
+		}
+
+		resp, errSend := sendMessage(ctx, client, targetJID, msg)
+		if errSend != nil {
+			http.Error(w, fmt.Sprintf("Erro ao entregar mídia: %v", errSend), http.StatusInternalServerError)
+			return
+		}
+
+		// Atualiza o registro no webDB com media_url, reply_to e wa_message_id
+		if webDB != nil {
+			senderName := "GLPI-BOT (Suporte)"
+			if sess, ok := getUserSession(r); ok && sess.Name != "" {
+				senderName = sess.Name + " (Suporte)"
+			}
+
+			msgText := caption
+			if msgText == "" {
+				if msgType == "image" {
+					msgText = "[Imagem]"
+				} else if msgType == "audio" {
+					msgText = "[Áudio]"
+				} else {
+					msgText = "[Documento] " + header.Filename
+				}
+			}
+
+			_, _ = webDB.Exec(
+				"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, media_url, reply_to_name, reply_to_text, wa_message_id) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
+				targetJID.String(), senderName, "", msgText, msgType, webMediaURL, replyToName, replyToText, resp.ID,
+			)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "ok", "media_url": webMediaURL})
 	})
 
 	// API PARA LISTAR OS ATENDENTES/TÉCNICOS (Protegida)

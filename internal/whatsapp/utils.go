@@ -159,6 +159,40 @@ func sendTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JI
 	_, _ = sendMessage(ctx, client, jid, &waE2E.Message{Conversation: proto.String(text)})
 }
 
+// sendQuotedTextMessage envia uma mensagem citando nativamente outra mensagem no WhatsApp.
+func sendQuotedTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string, quotedJID string, quotedText string, quotedMsgID string) {
+	participant := quotedJID
+	if participant == "" {
+		participant = jid.String()
+	}
+	if pJID, err := types.ParseJID(participant); err == nil {
+		participant = pJID.ToNonAD().String()
+	}
+	if strings.HasSuffix(participant, "@c.us") {
+		participant = strings.TrimSuffix(participant, "@c.us") + "@s.whatsapp.net"
+	}
+
+	contextInfo := &waE2E.ContextInfo{
+		Participant: proto.String(participant),
+		QuotedMessage: &waE2E.Message{
+			Conversation: proto.String(quotedText),
+		},
+	}
+
+	if quotedMsgID != "" {
+		contextInfo.StanzaID = proto.String(quotedMsgID)
+	}
+
+	msg := &waE2E.Message{
+		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
+			Text:        proto.String(text),
+			ContextInfo: contextInfo,
+		},
+	}
+
+	_, _ = sendMessage(ctx, client, jid, msg)
+}
+
 // sendMessage envia qualquer tipo de mensagem, simulando digitação para chats de usuário.
 
 // Função sendMessage executa a regra de negócio/rotina correspondente
@@ -200,8 +234,8 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 
 			if msgText != "" {
 				_, _ = webDB.Exec(
-					"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me) VALUES (?, ?, ?, ?, ?, 1)",
-					jid.String(), "GLPI-BOT (Bot)", "", msgText, msgType,
+					"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, wa_message_id) VALUES (?, ?, ?, ?, ?, 1, ?)",
+					jid.String(), "GLPI-BOT (Bot)", "", msgText, msgType, resp.ID,
 				)
 			}
 		}
@@ -317,15 +351,16 @@ func unwrapMessage(msg *waE2E.Message) *waE2E.Message {
 // extrairConteudoMensagem extrai o texto e possíveis mídias de um evento de mensagem.
 
 // Função extrairConteudoMensagem executa a regra de negócio/rotina correspondente
-func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *waE2E.DocumentMessage, *waE2E.VideoMessage) {
+func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *waE2E.DocumentMessage, *waE2E.VideoMessage, *waE2E.AudioMessage) {
 	msg := unwrapMessage(v.Message)
 	if msg == nil {
-		return "", nil, nil, nil
+		return "", nil, nil, nil, nil
 	}
 
 	imgMsg := msg.GetImageMessage()
 	docMsg := msg.GetDocumentMessage()
 	videoMsg := msg.GetVideoMessage()
+	audioMsg := msg.GetAudioMessage()
 
 	var rawText string
 	switch {
@@ -341,7 +376,7 @@ func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *w
 		rawText = msg.GetConversation()
 	}
 
-	return rawText, imgMsg, docMsg, videoMsg
+	return rawText, imgMsg, docMsg, videoMsg, audioMsg
 }
 
 // ─── Horário de atendimento ───────────────────────────────────────────────────

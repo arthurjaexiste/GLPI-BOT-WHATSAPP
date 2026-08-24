@@ -9,6 +9,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -174,7 +176,7 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 	sender := NormalizePhoneLocal(senderJID)
 	pollUpdate := v.Message.GetPollUpdateMessage()
 
-	rawText, imgMsg, docMsg, videoMsg := extrairConteudoMensagem(v)
+	rawText, imgMsg, docMsg, videoMsg, audioMsg := extrairConteudoMensagem(v)
 	text := strings.TrimSpace(rawText)
 	textLower := strings.ToLower(text)
 
@@ -204,23 +206,77 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 		msgText := text
 		msgType := "text"
+		var mediaURL string
+
 		if imgMsg != nil {
 			msgText = "[Imagem]"
-			if imgMsg.Caption != nil {
+			if imgMsg.Caption != nil && *imgMsg.Caption != "" {
 				msgText = "[Imagem] " + *imgMsg.Caption
 			}
 			msgType = "image"
+
+			if imgData, errDl := client.Download(ctx, imgMsg); errDl == nil && len(imgData) > 0 {
+				uploadDir := filepath.Join(getWebDir(), "static", "uploads")
+				_ = os.MkdirAll(uploadDir, 0777)
+				ext := ".jpg"
+				if mime := imgMsg.GetMimetype(); strings.Contains(mime, "png") {
+					ext = ".png"
+				} else if strings.Contains(mime, "webp") {
+					ext = ".webp"
+				}
+				fileName := fmt.Sprintf("img_%d_%d%s", time.Now().UnixNano(), v.Info.Timestamp.Unix(), ext)
+				filePath := filepath.Join(uploadDir, fileName)
+				if errWrite := os.WriteFile(filePath, imgData, 0644); errWrite == nil {
+					mediaURL = "/static/uploads/" + fileName
+					fmt.Printf("✅ [UPLOAD OK] Imagem do WhatsApp salva com sucesso: %s (%d bytes)\n", mediaURL, len(imgData))
+				} else {
+					fmt.Printf("🚨 [UPLOAD] Erro ao salvar imagem no disco: %v\n", errWrite)
+				}
+			} else if errDl != nil {
+				fmt.Printf("🚨 [UPLOAD] Erro ao baixar imagem do WhatsApp: %v\n", errDl)
+			}
+		} else if audioMsg != nil {
+			msgText = "[Áudio]"
+			msgType = "audio"
+
+			if audioData, errDl := client.Download(ctx, audioMsg); errDl == nil && len(audioData) > 0 {
+				uploadDir := filepath.Join(getWebDir(), "static", "uploads")
+				_ = os.MkdirAll(uploadDir, 0777)
+				ext := ".ogg"
+				if mime := audioMsg.GetMimetype(); strings.Contains(mime, "mp3") {
+					ext = ".mp3"
+				} else if strings.Contains(mime, "mp4") || strings.Contains(mime, "m4a") {
+					ext = ".m4a"
+				}
+				fileName := fmt.Sprintf("audio_%d_%d%s", time.Now().UnixNano(), v.Info.Timestamp.Unix(), ext)
+				filePath := filepath.Join(uploadDir, fileName)
+				if errWrite := os.WriteFile(filePath, audioData, 0644); errWrite == nil {
+					mediaURL = "/static/uploads/" + fileName
+					fmt.Printf("✅ [AUDIO OK] Áudio do WhatsApp salvo com sucesso: %s (%d bytes)\n", mediaURL, len(audioData))
+				}
+			}
 		} else if docMsg != nil {
 			msgText = "[Documento] " + docMsg.GetFileName()
 			msgType = "document"
+
+			if docData, errDl := client.Download(ctx, docMsg); errDl == nil && len(docData) > 0 {
+				uploadDir := filepath.Join(getWebDir(), "static", "uploads")
+				_ = os.MkdirAll(uploadDir, 0777)
+				safeName := strings.ReplaceAll(docMsg.GetFileName(), " ", "_")
+				fileName := fmt.Sprintf("doc_%d_%s", time.Now().UnixNano(), safeName)
+				filePath := filepath.Join(uploadDir, fileName)
+				if errWrite := os.WriteFile(filePath, docData, 0644); errWrite == nil {
+					mediaURL = "/static/uploads/" + fileName
+				}
+			}
 		} else if pollUpdate != nil {
 			msgText = "[Voto em Enquete]"
 			msgType = "poll"
 		}
 
 		_, _ = webDB.Exec(
-			"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me) VALUES (?, ?, ?, ?, ?, 0)",
-			chatJID.String(), senderName, v.Info.Sender.String(), msgText, msgType,
+			"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, media_url, wa_message_id) VALUES (?, ?, ?, ?, ?, 0, ?, ?)",
+			chatJID.String(), senderName, v.Info.Sender.String(), msgText, msgType, mediaURL, v.Info.ID,
 		)
 	}
 
@@ -342,9 +398,16 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 	isMedia := imgMsg != nil || docMsg != nil || videoMsg != nil || v.Message.GetAudioMessage() != nil
 	if isMedia {
 		if currentStep != 2 && currentStep != 3 && currentStep != 100 {
-			sendTextMessage(ctx, client, chatJID, "❌ *Aviso:* Antes de enviar fotos ou arquivos, por favor selecione uma das opções na enquete para continuar o atendimento.\n\n_💡 Se quiser cancelar ou recomeçar, digite *#cancelar*._")
-			if currentStep == 1000 || currentStep == -1 {
-				ReexibirMenuAtual(ctx, client, chatJID, uState)
+			if currentStep == -1 || currentStep == 1 || currentStep == 12 {
+				if currentStep == -1 {
+					processarSaudacaoInicial(ctx, client, v, uState, sender)
+				}
+				sendTextMessage(ctx, client, chatJID, "❌ *Aviso:* Para começarmos, por favor digite o seu *Nome e Sobrenome* em texto. Você poderá enviar fotos e arquivos mais adiante!")
+			} else {
+				sendTextMessage(ctx, client, chatJID, "❌ *Aviso:* Antes de enviar fotos ou arquivos, por favor selecione uma das opções na enquete para continuar o atendimento.\n\n_💡 Se quiser cancelar ou recomeçar, digite *#cancelar*._")
+				if currentStep == 1000 {
+					ReexibirMenuAtual(ctx, client, chatJID, uState)
+				}
 			}
 			return
 		}
