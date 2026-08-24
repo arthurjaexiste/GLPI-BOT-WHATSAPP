@@ -219,16 +219,182 @@ async function refreshActiveMessages(forceScroll = false) {
     }
 }
 
-function replyToMessage(originalText) {
-    const input = document.getElementById("chat-message-input");
-    if (!input) return;
-    input.focus();
-    if (originalText && originalText !== "[Imagem]") {
-        const cleanSnippet = originalText.length > 30 ? originalText.substring(0, 30) + '...' : originalText;
-        input.placeholder = `Respondendo a: "${cleanSnippet}"...`;
-    } else {
-        input.placeholder = "Digite uma resposta...";
+let activeReplyQuote = null;
+let selectedMediaFile = null;
+
+function handleFileSelected(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    selectedMediaFile = files[0];
+    const preview = document.getElementById("media-attachment-preview");
+    const imgEl = document.getElementById("media-preview-img");
+    const iconEl = document.getElementById("media-preview-icon");
+    const nameEl = document.getElementById("media-preview-filename");
+    const sizeEl = document.getElementById("media-preview-size");
+
+    if (nameEl) nameEl.textContent = selectedMediaFile.name;
+    if (sizeEl) {
+        const kb = selectedMediaFile.size / 1024;
+        sizeEl.textContent = kb > 1024 ? (kb / 1024).toFixed(1) + " MB" : Math.round(kb) + " KB";
     }
+
+    if (selectedMediaFile.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            if (imgEl) {
+                imgEl.src = e.target.result;
+                imgEl.classList.remove("hidden");
+            }
+            if (iconEl) iconEl.classList.add("hidden");
+        };
+        reader.readAsDataURL(selectedMediaFile);
+    } else {
+        if (imgEl) imgEl.classList.add("hidden");
+        if (iconEl) iconEl.classList.remove("hidden");
+    }
+
+    if (preview) preview.classList.remove("hidden");
+    const input = document.getElementById("chat-message-input");
+    if (input) input.focus();
+}
+
+function clearSelectedMedia() {
+    selectedMediaFile = null;
+    const fileInput = document.getElementById("chat-file-input");
+    if (fileInput) fileInput.value = "";
+    const preview = document.getElementById("media-attachment-preview");
+    if (preview) preview.classList.add("hidden");
+    const imgEl = document.getElementById("media-preview-img");
+    if (imgEl) imgEl.src = "";
+}
+
+// Suporte para colar imagem da área de transferência (Ctrl+V)
+document.addEventListener("paste", function (e) {
+    if (!e.clipboardData || !e.clipboardData.items) return;
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+            const file = items[i].getAsFile();
+            if (file) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                const fileInput = document.getElementById("chat-file-input");
+                if (fileInput) {
+                    fileInput.files = dt.files;
+                    handleFileSelected({ target: fileInput });
+                }
+            }
+            break;
+        }
+    }
+});
+
+// ─── Gravação de Áudio de Voz (Microfone) ───────────────────────────────────
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingTimerInterval = null;
+let recordingSeconds = 0;
+
+async function toggleAudioRecording() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        stopAndSendAudioRecording();
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = function (e) {
+            if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = async function () {
+            stream.getTracks().forEach(track => track.stop());
+            clearInterval(recordingTimerInterval);
+            const recBar = document.getElementById("audio-recording-bar");
+            if (recBar) recBar.classList.add("hidden");
+
+            if (audioChunks.length > 0) {
+                const audioBlob = new Blob(audioChunks, { type: "audio/ogg; codecs=opus" });
+                const audioFile = new File([audioBlob], `audio_recorded_${Date.now()}.ogg`, { type: "audio/ogg" });
+                
+                selectedMediaFile = audioFile;
+                await sendConsoleMessage();
+            }
+        };
+
+        mediaRecorder.start();
+        recordingSeconds = 0;
+        const timerEl = document.getElementById("recording-timer");
+        if (timerEl) timerEl.textContent = "00:00";
+        const recBar = document.getElementById("audio-recording-bar");
+        if (recBar) recBar.classList.remove("hidden");
+
+        recordingTimerInterval = setInterval(() => {
+            recordingSeconds++;
+            const mins = String(Math.floor(recordingSeconds / 60)).padStart(2, '0');
+            const secs = String(recordingSeconds % 60).padStart(2, '0');
+            if (timerEl) timerEl.textContent = `${mins}:${secs}`;
+        }, 1000);
+
+    } catch (err) {
+        console.error(err);
+        showToast("Permissão de microfone negada ou indisponível.", false);
+    }
+}
+
+function cancelAudioRecording() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        audioChunks = []; // Esvazia para não enviar ao parar
+        mediaRecorder.stop();
+    }
+    clearInterval(recordingTimerInterval);
+    const recBar = document.getElementById("audio-recording-bar");
+    if (recBar) recBar.classList.add("hidden");
+}
+
+function stopAndSendAudioRecording() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+    }
+}
+
+function replyToMessage(senderName, originalText, waMsgId = '', senderJid = '') {
+    activeReplyQuote = {
+        name: senderName || activeChatName || "Contato",
+        text: originalText || "",
+        quoted_id: waMsgId || "",
+        quoted_jid: senderJid || ""
+    };
+
+    const preview = document.getElementById("reply-quote-preview");
+    const nameEl = document.getElementById("reply-quote-name");
+    const textEl = document.getElementById("reply-quote-text");
+    const input = document.getElementById("chat-message-input");
+
+    if (preview && nameEl && textEl) {
+        nameEl.textContent = `Respondendo a ${activeReplyQuote.name}`;
+        let snippet = activeReplyQuote.text;
+        if (snippet.length > 60) snippet = snippet.substring(0, 60) + "...";
+        textEl.textContent = snippet || "Mensagem em mídia";
+        preview.classList.remove("hidden");
+    }
+
+    if (input) input.focus();
+}
+
+function cancelReplyQuote() {
+    activeReplyQuote = null;
+    const preview = document.getElementById("reply-quote-preview");
+    if (preview) preview.classList.add("hidden");
+}
+
+function escapeHTML(str) {
+    if (!str) return "";
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 // Renderiza o histórico de mensagens
@@ -252,10 +418,21 @@ function renderMessages(messages, forceScroll = false) {
 
     messages.forEach(msg => {
         const row = document.createElement("div");
-        row.className = `w-full flex ${msg.is_from_me ? 'justify-end' : 'justify-start'} group`;
+        row.className = `w-full flex ${msg.is_from_me ? 'justify-end' : 'justify-start'} items-center gap-2 my-1 group`;
 
         const bubble = document.createElement("div");
-        bubble.className = `message-bubble ${msg.is_from_me ? 'message-outgoing' : 'message-incoming'} relative`;
+        bubble.className = `message-bubble ${msg.is_from_me ? 'message-outgoing' : 'message-incoming'}`;
+
+        // Renderização de Mensagem Citada (WhatsApp Quote Box)
+        let quoteHTML = "";
+        if (msg.reply_to_text) {
+            quoteHTML = `
+                <div class="whatsapp-quote-box">
+                    <div class="whatsapp-quote-author">${escapeHTML(msg.reply_to_name || 'Contato')}</div>
+                    <div class="whatsapp-quote-text truncate">${escapeHTML(msg.reply_to_text)}</div>
+                </div>
+            `;
+        }
 
         let mediaHTML = "";
         let textContent = msg.text || '';
@@ -263,8 +440,12 @@ function renderMessages(messages, forceScroll = false) {
         if (msg.media_url) {
             const lowerUrl = msg.media_url.toLowerCase();
             if (msg.type === "image" || lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp") || lowerUrl.endsWith(".gif")) {
-                mediaHTML = `<div class="mb-2">
-                    <img src="${msg.media_url}" alt="Imagem do WhatsApp" class="max-w-[280px] max-h-72 rounded-xl object-contain border border-white/10 shadow-lg cursor-pointer hover:opacity-90 transition" onclick="window.open('${msg.media_url}', '_blank')" title="Clique para expandir em nova aba" />
+                mediaHTML = `<div class="mb-2 overflow-hidden rounded-xl">
+                    <img src="${msg.media_url}" alt="Imagem do WhatsApp" class="w-full max-h-80 object-cover rounded-xl border border-white/10 shadow-lg cursor-pointer hover:opacity-90 transition" onclick="window.open('${msg.media_url}', '_blank')" title="Clique para expandir em nova aba" />
+                </div>`;
+            } else if (msg.type === "audio" || lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm")) {
+                mediaHTML = `<div class="mb-1 py-1">
+                    <audio controls src="${msg.media_url}" class="max-w-[250px] h-9 accent-emerald-500 rounded-lg focus:outline-none"></audio>
                 </div>`;
             } else if (msg.type === "document" || lowerUrl.endsWith(".pdf") || lowerUrl.endsWith(".doc") || lowerUrl.endsWith(".docx") || lowerUrl.endsWith(".txt") || lowerUrl.endsWith(".zip")) {
                 mediaHTML = `<div class="mb-2">
@@ -273,8 +454,12 @@ function renderMessages(messages, forceScroll = false) {
                     </a>
                 </div>`;
             }
-            if (textContent.startsWith("[Imagem]")) {
-                textContent = textContent.replace("[Imagem]", "").trim();
+            if (textContent.startsWith("[Imagem]") || textContent.startsWith("[Áudio]") || textContent.startsWith("[Documento] audio_") || textContent.startsWith("[Documento] voice_")) {
+                if (lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm") || msg.type === "audio") {
+                    textContent = "";
+                } else {
+                    textContent = textContent.replace("[Imagem]", "").replace("[Áudio]", "").trim();
+                }
             }
         } else if (msg.type === "image" || textContent.includes("[Imagem]")) {
             mediaHTML = `<div class="mb-1 flex items-center gap-2 text-xs font-semibold text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">
@@ -286,33 +471,39 @@ function renderMessages(messages, forceScroll = false) {
             } else {
                 textContent = textContent.replace(/\[Imagem\]/g, "").trim();
             }
+        } else if (msg.type === "audio" || textContent.includes("[Áudio]")) {
+            mediaHTML = `<div class="mb-1 flex items-center gap-2 text-xs font-semibold text-emerald-300 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
+                <span class="text-sm">🎙️</span>
+                <span>Áudio de Voz do WhatsApp</span>
+            </div>`;
+            if (textContent === "[Áudio]") {
+                textContent = "";
+            }
         }
 
         const formattedText = textContent ? textContent.replace(/\n/g, "<br>") : "";
 
-        // Botão "Responder" rápido para mensagens recebidas
-        const replyBtn = !msg.is_from_me ? `
-            <button onclick="replyToMessage('${escapeQuotes(msg.text)}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded-md self-center ml-2 shrink-0 border border-white/5 cursor-pointer" title="Responder esta mensagem">
-                ↩️ Responder
-            </button>
-        ` : '';
-
         const bubbleHTML = `
+            ${quoteHTML}
             ${mediaHTML}
             ${formattedText ? `<div class="font-medium">${formattedText}</div>` : ''}
-            <div class="text-[9px] mt-1 text-right ${msg.is_from_me ? 'text-zinc-600' : 'text-zinc-400'}">${msg.timestamp}</div>
+            <div class="text-[9px] mt-1 text-right ${msg.is_from_me ? 'text-zinc-500' : 'text-zinc-400'}">${msg.timestamp}</div>
         `;
 
         bubble.innerHTML = bubbleHTML;
 
+        // Botão "Responder" rápido no hover
+        const replyBtn = !msg.is_from_me ? `
+            <button onclick="replyToMessage('${escapeQuotes(msg.sender_name || activeChatName)}', '${escapeQuotes(msg.text)}', '${escapeQuotes(msg.wa_message_id || '')}', '${escapeQuotes(msg.sender_jid || '')}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-lg shrink-0 border border-white/5 cursor-pointer" title="Responder esta mensagem">
+                ↩️ Responder
+            </button>
+        ` : '';
+
         if (!msg.is_from_me) {
-            const wrapper = document.createElement("div");
-            wrapper.className = "flex items-center gap-1 max-w-[85%]";
-            wrapper.appendChild(bubble);
+            row.appendChild(bubble);
             const btnSpan = document.createElement("span");
             btnSpan.innerHTML = replyBtn;
-            wrapper.appendChild(btnSpan);
-            row.appendChild(wrapper);
+            row.appendChild(btnSpan);
         } else {
             row.appendChild(bubble);
         }
@@ -335,28 +526,61 @@ async function sendConsoleMessage() {
     const input = document.getElementById("chat-message-input");
     const text = input.value.trim();
 
-    if (!text || !activeChatJID) return;
+    if (!text && !selectedMediaFile) return;
+    if (!activeChatJID) return;
 
     const sendBtn = document.getElementById("btn-send-msg");
     sendBtn.disabled = true;
     sendBtn.textContent = "Enviando...";
 
     try {
-        const response = await fetch("/api/chats/send", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
+        let response;
+        if (selectedMediaFile) {
+            const formData = new FormData();
+            formData.append("file", selectedMediaFile);
+            formData.append("jid", activeChatJID);
+            if (text) formData.append("caption", text);
+            if (activeReplyQuote) {
+                formData.append("reply_to_name", activeReplyQuote.name);
+                formData.append("reply_to_text", activeReplyQuote.text);
+                if (activeReplyQuote.quoted_id) formData.append("quoted_id", activeReplyQuote.quoted_id);
+                if (activeReplyQuote.quoted_jid) formData.append("quoted_jid", activeReplyQuote.quoted_jid);
+            }
+
+            response = await fetch("/api/chats/send-media", {
+                method: "POST",
+                body: formData
+            });
+        } else {
+            const payload = {
                 jid: activeChatJID,
                 text: text
-            })
-        });
+            };
 
-        if (!response.ok) throw new Error("Falha ao enviar mensagem");
+            if (activeReplyQuote) {
+                payload.reply_to_name = activeReplyQuote.name;
+                payload.reply_to_text = activeReplyQuote.text;
+                payload.quoted_id = activeReplyQuote.quoted_id;
+                payload.quoted_jid = activeReplyQuote.quoted_jid;
+            }
+
+            response = await fetch("/api/chats/send", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+        }
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || "Falha ao enviar mensagem");
+        }
 
         input.value = "";
-        input.placeholder = "Digite uma resposta...";
+        clearSelectedMedia();
+        cancelReplyQuote();
         
         // Atualiza o estado da UI para Live Chat se estiver em bot ou fila
         if (activeChatStatus !== "live_chat") {
@@ -371,12 +595,12 @@ async function sendConsoleMessage() {
             if (banner) banner.style.display = "none";
         }
 
-        showToast("Mensagem enviada para o WhatsApp com sucesso!", true);
+        showToast("Enviado com sucesso!", true);
         await refreshActiveMessages(true);
         loadChatsList(true); // Atualiza snippet lateral
     } catch (error) {
         console.error(error);
-        showToast("Falha ao enviar mensagem para o WhatsApp.", false);
+        showToast(error.message || "Falha ao enviar mensagem.", false);
     } finally {
         sendBtn.disabled = false;
         sendBtn.textContent = "Enviar";

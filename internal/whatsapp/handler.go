@@ -176,7 +176,7 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 	sender := NormalizePhoneLocal(senderJID)
 	pollUpdate := v.Message.GetPollUpdateMessage()
 
-	rawText, imgMsg, docMsg, videoMsg := extrairConteudoMensagem(v)
+	rawText, imgMsg, docMsg, videoMsg, audioMsg := extrairConteudoMensagem(v)
 	text := strings.TrimSpace(rawText)
 	textLower := strings.ToLower(text)
 
@@ -235,6 +235,26 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 			} else if errDl != nil {
 				fmt.Printf("🚨 [UPLOAD] Erro ao baixar imagem do WhatsApp: %v\n", errDl)
 			}
+		} else if audioMsg != nil {
+			msgText = "[Áudio]"
+			msgType = "audio"
+
+			if audioData, errDl := client.Download(ctx, audioMsg); errDl == nil && len(audioData) > 0 {
+				uploadDir := filepath.Join(getWebDir(), "static", "uploads")
+				_ = os.MkdirAll(uploadDir, 0777)
+				ext := ".ogg"
+				if mime := audioMsg.GetMimetype(); strings.Contains(mime, "mp3") {
+					ext = ".mp3"
+				} else if strings.Contains(mime, "mp4") || strings.Contains(mime, "m4a") {
+					ext = ".m4a"
+				}
+				fileName := fmt.Sprintf("audio_%d_%d%s", time.Now().UnixNano(), v.Info.Timestamp.Unix(), ext)
+				filePath := filepath.Join(uploadDir, fileName)
+				if errWrite := os.WriteFile(filePath, audioData, 0644); errWrite == nil {
+					mediaURL = "/static/uploads/" + fileName
+					fmt.Printf("✅ [AUDIO OK] Áudio do WhatsApp salvo com sucesso: %s (%d bytes)\n", mediaURL, len(audioData))
+				}
+			}
 		} else if docMsg != nil {
 			msgText = "[Documento] " + docMsg.GetFileName()
 			msgType = "document"
@@ -255,8 +275,8 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 		}
 
 		_, _ = webDB.Exec(
-			"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, media_url) VALUES (?, ?, ?, ?, ?, 0, ?)",
-			chatJID.String(), senderName, v.Info.Sender.String(), msgText, msgType, mediaURL,
+			"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, media_url, wa_message_id) VALUES (?, ?, ?, ?, ?, 0, ?, ?)",
+			chatJID.String(), senderName, v.Info.Sender.String(), msgText, msgType, mediaURL, v.Info.ID,
 		)
 	}
 

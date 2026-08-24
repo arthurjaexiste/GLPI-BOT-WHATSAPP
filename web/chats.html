@@ -11,8 +11,8 @@
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=2.5">
-    <link rel="stylesheet" href="/static/css/chats.css?v=2.5">
+    <link rel="stylesheet" href="/static/css/style.css?v=7.0">
+    <link rel="stylesheet" href="/static/css/chats.css?v=7.0">
 </head>
 
 <body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
@@ -177,15 +177,68 @@
                     <!-- Messages will be dynamically rendered here -->
                 </div>
 
-                <!-- Input Box -->
-                <div class="p-4 border-t border-white/5 bg-zinc-950/20 flex items-center gap-3">
-                    <input type="text" id="chat-message-input" placeholder="Digite uma resposta..."
-                        onkeydown="handleInputKey(event)"
-                        class="flex-1 text-xs p-3 bg-black/40 border border-white/5 rounded-xl">
-                    <button id="btn-send-msg" onclick="sendConsoleMessage()"
-                        class="px-5 py-3 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl transition duration-200 shadow-md">
-                        Enviar
-                    </button>
+                <!-- Banner de Resposta Citada (WhatsApp Quote Preview) -->
+                <div id="reply-quote-preview" class="hidden px-4 py-2 bg-zinc-900 border-t border-white/5 flex items-center justify-between gap-3 text-xs border-l-4 border-amber-400">
+                    <div class="flex flex-col min-w-0">
+                        <span id="reply-quote-name" class="font-bold text-amber-400 text-[11px]"></span>
+                        <span id="reply-quote-text" class="text-zinc-300 text-[11px] truncate"></span>
+                    </div>
+                    <button type="button" onclick="cancelReplyQuote()" class="text-zinc-400 hover:text-white p-1 transition cursor-pointer text-sm font-bold" title="Cancelar resposta">✕</button>
+                </div>
+
+                <!-- Input Box Container -->
+                <div class="p-4 border-t border-white/5 bg-zinc-950/20 flex flex-col gap-2">
+                    <!-- File Attachment Preview Bar (hidden by default) -->
+                    <div id="media-attachment-preview" class="hidden p-2.5 bg-zinc-900 border border-white/10 rounded-xl flex items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <img id="media-preview-img" src="" class="w-10 h-10 rounded-lg object-cover border border-white/10 hidden" />
+                            <div id="media-preview-icon" class="w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-lg shrink-0">📄</div>
+                            <div class="flex flex-col min-w-0">
+                                <span id="media-preview-filename" class="font-bold text-zinc-200 truncate text-[11px]">foto.png</span>
+                                <span id="media-preview-size" class="text-[10px] text-zinc-400">1.2 MB</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="clearSelectedMedia()" class="text-zinc-400 hover:text-white p-1 transition cursor-pointer font-bold text-sm" title="Remover anexo">✕</button>
+                    </div>
+
+                    <!-- Bar de Gravação de Áudio (hidden por padrão) -->
+                    <div id="audio-recording-bar" class="hidden p-2.5 bg-rose-950/60 border border-rose-500/30 rounded-xl flex items-center justify-between gap-3 text-xs text-rose-300">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-rose-500 animate-ping"></span>
+                            <span class="font-bold font-mono text-sm" id="recording-timer">00:00</span>
+                            <span class="text-[11px] text-rose-200">Gravando áudio de voz...</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="cancelAudioRecording()" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-zinc-300 text-xs transition cursor-pointer">Cancelar</button>
+                            <button type="button" onclick="stopAndSendAudioRecording()" class="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow-md cursor-pointer">Enviar 🎙️</button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <!-- File Input (Hidden) -->
+                        <input type="file" id="chat-file-input" accept="image/*,audio/*,.pdf,.doc,.docx,.txt,.zip" class="hidden" onchange="handleFileSelected(event)">
+
+                        <!-- Attachment Button -->
+                        <button type="button" onclick="document.getElementById('chat-file-input').click()" 
+                            class="p-2.5 text-zinc-400 hover:text-white bg-black/40 hover:bg-white/10 border border-white/5 rounded-xl transition duration-200 cursor-pointer text-base shrink-0" title="Anexar Imagem ou Arquivo (ou cole com Ctrl+V)">
+                            📷
+                        </button>
+
+                        <!-- Audio Record Button -->
+                        <button type="button" id="btn-record-audio" onclick="toggleAudioRecording()" 
+                            class="p-2.5 text-zinc-400 hover:text-rose-400 bg-black/40 hover:bg-white/10 border border-white/5 rounded-xl transition duration-200 cursor-pointer text-base shrink-0" title="Gravar Áudio de Voz">
+                            🎙️
+                        </button>
+
+                        <input type="text" id="chat-message-input" placeholder="Digite uma mensagem, legenda ou cole uma imagem (Ctrl+V)..."
+                            onkeydown="handleInputKey(event)"
+                            class="flex-1 text-xs p-3 bg-black/40 border border-white/5 rounded-xl">
+                            
+                        <button id="btn-send-msg" onclick="sendConsoleMessage()"
+                            class="px-4 sm:px-5 py-3 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl transition duration-200 shadow-md shrink-0">
+                            Enviar
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -200,8 +253,8 @@
     </div>
 
     <!-- Script loading -->
-    <script src="/static/js/auth-check.js?v=2.5"></script>
-    <script src="/static/js/chats.js?v=2.5"></script>
+    <script src="/static/js/auth-check.js?v=7.0"></script>
+    <script src="/static/js/chats.js?v=7.0"></script>
 </body>
 
 </html>
