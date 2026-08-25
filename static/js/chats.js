@@ -439,23 +439,27 @@ function renderMessages(messages, forceScroll = false) {
 
         if (msg.media_url) {
             const lowerUrl = msg.media_url.toLowerCase();
-            if (msg.type === "image" || lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp") || lowerUrl.endsWith(".gif")) {
+            const isBase64Img = lowerUrl.startsWith("data:image/");
+            const isBase64Audio = lowerUrl.startsWith("data:audio/");
+            const isBase64Doc = lowerUrl.startsWith("data:application/") || lowerUrl.startsWith("data:text/");
+
+            if (msg.type === "image" || isBase64Img || lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp") || lowerUrl.endsWith(".gif")) {
                 mediaHTML = `<div class="mb-2 overflow-hidden rounded-xl">
                     <img src="${msg.media_url}" alt="Imagem do WhatsApp" class="w-full max-h-80 object-cover rounded-xl border border-white/10 shadow-lg cursor-pointer hover:opacity-90 transition" onclick="window.open('${msg.media_url}', '_blank')" title="Clique para expandir em nova aba" />
                 </div>`;
-            } else if (msg.type === "audio" || lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm")) {
+            } else if (msg.type === "audio" || isBase64Audio || lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm")) {
                 mediaHTML = `<div class="mb-1 py-1">
                     <audio controls src="${msg.media_url}" class="max-w-[250px] h-9 accent-emerald-500 rounded-lg focus:outline-none"></audio>
                 </div>`;
-            } else if (msg.type === "document" || lowerUrl.endsWith(".pdf") || lowerUrl.endsWith(".doc") || lowerUrl.endsWith(".docx") || lowerUrl.endsWith(".txt") || lowerUrl.endsWith(".zip")) {
+            } else if (msg.type === "document" || isBase64Doc || lowerUrl.endsWith(".pdf") || lowerUrl.endsWith(".doc") || lowerUrl.endsWith(".docx") || lowerUrl.endsWith(".txt") || lowerUrl.endsWith(".zip")) {
                 mediaHTML = `<div class="mb-2">
-                    <a href="${msg.media_url}" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-amber-400 font-mono text-xs transition">
-                        📄 Abrir Documento Anexo
+                    <a href="${msg.media_url}" download="documento" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-amber-400 font-mono text-xs transition">
+                        📄 Baixar / Abrir Documento Anexo
                     </a>
                 </div>`;
             }
             if (textContent.startsWith("[Imagem]") || textContent.startsWith("[Áudio]") || textContent.startsWith("[Documento] audio_") || textContent.startsWith("[Documento] voice_")) {
-                if (lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm") || msg.type === "audio") {
+                if (msg.type === "audio" || isBase64Audio || lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm")) {
                     textContent = "";
                 } else {
                     textContent = textContent.replace("[Imagem]", "").replace("[Áudio]", "").trim();

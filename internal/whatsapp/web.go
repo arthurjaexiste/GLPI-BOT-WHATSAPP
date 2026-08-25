@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -164,6 +165,41 @@ func initWebDB() {
 	}
 
 	fmt.Println("✅ Banco de dados do Painel Web inicializado com sucesso.")
+	iniciarRotinaLimpezaMidias()
+}
+
+// iniciarRotinaLimpezaMidias roda a cada 6 horas e remove mídias em Base64 com mais de 7 dias para liberar espaço no banco.
+func iniciarRotinaLimpezaMidias() {
+	go func() {
+		executarLimpezaMidias()
+		ticker := time.NewTicker(6 * time.Hour)
+		for range ticker.C {
+			executarLimpezaMidias()
+		}
+	}()
+}
+
+func executarLimpezaMidias() {
+	if webDB == nil {
+		return
+	}
+
+	res, err := webDB.Exec(`
+		UPDATE chat_messages 
+		SET media_url = '' 
+		WHERE timestamp < datetime('now', '-7 days') 
+		  AND media_url LIKE 'data:%'
+	`)
+	if err != nil {
+		fmt.Printf("🚨 Erro ao executar rotina de limpeza de mídias antigas: %v\n", err)
+		return
+	}
+
+	rows, _ := res.RowsAffected()
+	if rows > 0 {
+		fmt.Printf("🧹 [LIMPEZA BANCO DB] %d mídias em Base64 com mais de 7 dias foram removidas do banco! (Histórico de texto mantido intacto)\n", rows)
+		_, _ = webDB.Exec("VACUUM")
+	}
 }
 
 // Gera um token de sessão aleatório
@@ -1512,16 +1548,8 @@ func StartWebServer() {
 			mimeType = http.DetectContentType(fileBytes)
 		}
 
-		// Salva o arquivo no disco local em static/uploads/
-		uploadDir := filepath.Join(getWebDir(), "static", "uploads")
-		_ = os.MkdirAll(uploadDir, 0777)
-
-		fileName := fmt.Sprintf("media_sent_%d_%s", time.Now().UnixNano(), strings.ReplaceAll(header.Filename, " ", "_"))
-		filePath := filepath.Join(uploadDir, fileName)
-		if errWrite := os.WriteFile(filePath, fileBytes, 0644); errWrite != nil {
-			fmt.Printf("🚨 Erro ao salvar mídia do painel no disco: %v\n", errWrite)
-		}
-		webMediaURL := "/static/uploads/" + fileName
+		// Converte os bytes da mídia diretamente para Base64 Data URL (sem salvar no disco do servidor)
+		webMediaURL := fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(fileBytes))
 
 		// Coloca o usuário em chat ao vivo/pausa o bot automático
 		userNumber := NormalizePhoneLocal(targetJID.User)

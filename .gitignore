@@ -35,3 +35,8 @@ db/
 
 # Binarios gerados
 /bot
+
+# Uploads temporarios
+static/uploads/*
+!static/uploads/.gitkeep
+!static/uploads/.gitignore

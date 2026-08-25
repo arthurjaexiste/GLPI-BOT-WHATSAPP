@@ -8,9 +8,8 @@ package whatsapp
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -216,22 +215,12 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 			msgType = "image"
 
 			if imgData, errDl := client.Download(ctx, imgMsg); errDl == nil && len(imgData) > 0 {
-				uploadDir := filepath.Join(getWebDir(), "static", "uploads")
-				_ = os.MkdirAll(uploadDir, 0777)
-				ext := ".jpg"
-				if mime := imgMsg.GetMimetype(); strings.Contains(mime, "png") {
-					ext = ".png"
-				} else if strings.Contains(mime, "webp") {
-					ext = ".webp"
+				mime := imgMsg.GetMimetype()
+				if mime == "" {
+					mime = "image/jpeg"
 				}
-				fileName := fmt.Sprintf("img_%d_%d%s", time.Now().UnixNano(), v.Info.Timestamp.Unix(), ext)
-				filePath := filepath.Join(uploadDir, fileName)
-				if errWrite := os.WriteFile(filePath, imgData, 0644); errWrite == nil {
-					mediaURL = "/static/uploads/" + fileName
-					fmt.Printf("✅ [UPLOAD OK] Imagem do WhatsApp salva com sucesso: %s (%d bytes)\n", mediaURL, len(imgData))
-				} else {
-					fmt.Printf("🚨 [UPLOAD] Erro ao salvar imagem no disco: %v\n", errWrite)
-				}
+				mediaURL = fmt.Sprintf("data:%s;base64,%s", mime, base64.StdEncoding.EncodeToString(imgData))
+				fmt.Printf("✅ [MEDIA BASE64 OK] Imagem convertida para Base64 (%d bytes)\n", len(imgData))
 			} else if errDl != nil {
 				fmt.Printf("🚨 [UPLOAD] Erro ao baixar imagem do WhatsApp: %v\n", errDl)
 			}
@@ -240,34 +229,23 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 			msgType = "audio"
 
 			if audioData, errDl := client.Download(ctx, audioMsg); errDl == nil && len(audioData) > 0 {
-				uploadDir := filepath.Join(getWebDir(), "static", "uploads")
-				_ = os.MkdirAll(uploadDir, 0777)
-				ext := ".ogg"
-				if mime := audioMsg.GetMimetype(); strings.Contains(mime, "mp3") {
-					ext = ".mp3"
-				} else if strings.Contains(mime, "mp4") || strings.Contains(mime, "m4a") {
-					ext = ".m4a"
+				mime := audioMsg.GetMimetype()
+				if mime == "" {
+					mime = "audio/ogg; codecs=opus"
 				}
-				fileName := fmt.Sprintf("audio_%d_%d%s", time.Now().UnixNano(), v.Info.Timestamp.Unix(), ext)
-				filePath := filepath.Join(uploadDir, fileName)
-				if errWrite := os.WriteFile(filePath, audioData, 0644); errWrite == nil {
-					mediaURL = "/static/uploads/" + fileName
-					fmt.Printf("✅ [AUDIO OK] Áudio do WhatsApp salvo com sucesso: %s (%d bytes)\n", mediaURL, len(audioData))
-				}
+				mediaURL = fmt.Sprintf("data:%s;base64,%s", mime, base64.StdEncoding.EncodeToString(audioData))
+				fmt.Printf("✅ [AUDIO BASE64 OK] Áudio convertido para Base64 (%d bytes)\n", len(audioData))
 			}
 		} else if docMsg != nil {
 			msgText = "[Documento] " + docMsg.GetFileName()
 			msgType = "document"
 
 			if docData, errDl := client.Download(ctx, docMsg); errDl == nil && len(docData) > 0 {
-				uploadDir := filepath.Join(getWebDir(), "static", "uploads")
-				_ = os.MkdirAll(uploadDir, 0777)
-				safeName := strings.ReplaceAll(docMsg.GetFileName(), " ", "_")
-				fileName := fmt.Sprintf("doc_%d_%s", time.Now().UnixNano(), safeName)
-				filePath := filepath.Join(uploadDir, fileName)
-				if errWrite := os.WriteFile(filePath, docData, 0644); errWrite == nil {
-					mediaURL = "/static/uploads/" + fileName
+				mime := docMsg.GetMimetype()
+				if mime == "" {
+					mime = "application/octet-stream"
 				}
+				mediaURL = fmt.Sprintf("data:%s;base64,%s", mime, base64.StdEncoding.EncodeToString(docData))
 			}
 		} else if pollUpdate != nil {
 			msgText = "[Voto em Enquete]"
