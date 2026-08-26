@@ -6,8 +6,84 @@
 let activeChatJID = null;
 let activeChatName = "";
 let activeChatStatus = null;
+let activeChatAgent = null;
 let agentsList = [];
 let chatsData = [];
+let currentUserInfo = null;
+
+async function fetchCurrentUserInfo() {
+    try {
+        const response = await fetch("/api/me");
+        if (response.ok) {
+            currentUserInfo = await response.json();
+            // Re-avalia o bloqueio caso a conversa esteja aberta
+            if (activeChatJID) {
+                updateChatInputLockState(activeChatStatus, activeChatAgent);
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao obter dados da sessao:", e);
+    }
+}
+fetchCurrentUserInfo();
+
+function updateChatInputLockState(status, agentName) {
+    const input = document.getElementById("chat-message-input");
+    const sendBtn = document.getElementById("btn-send-msg");
+    const recBtn = document.getElementById("btn-record-audio");
+    const fileBtn = document.querySelector("button[title*='Anexar']");
+    const closeBtn = document.querySelector("button[title*='Finalizar']");
+
+    const myName = (currentUserInfo && (currentUserInfo.name || currentUserInfo.username)) || "";
+
+    const isAssignedToOther = (status === "live_chat" && agentName && myName && agentName !== myName);
+
+    if (isAssignedToOther) {
+        if (input) {
+            input.disabled = true;
+            input.placeholder = `🔒 Atendimento exclusivo do técnico: ${agentName}`;
+            input.classList.add("opacity-50", "cursor-not-allowed");
+        }
+        if (sendBtn) {
+            sendBtn.disabled = true;
+            sendBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+        if (recBtn) {
+            recBtn.disabled = true;
+            recBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+        if (fileBtn) {
+            fileBtn.disabled = true;
+            fileBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+        if (closeBtn) {
+            closeBtn.disabled = true;
+            closeBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+    } else {
+        if (input) {
+            input.disabled = false;
+            input.placeholder = "Digite uma mensagem, legenda ou cole uma imagem (Ctrl+V)...";
+            input.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+        if (recBtn) {
+            recBtn.disabled = false;
+            recBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+        if (fileBtn) {
+            fileBtn.disabled = false;
+            fileBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+        if (closeBtn) {
+            closeBtn.disabled = false;
+            closeBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+    }
+}
 
 // Formata JID para exibir o número do telefone de forma legível
 
@@ -155,6 +231,10 @@ async function selectChat(jid, name, status, agentName = null) {
     activeChatJID = jid;
     activeChatName = name || jid;
     activeChatStatus = status;
+    activeChatAgent = agentName;
+
+    // Atualiza trava de envio de mensagens de acordo com o técnico responsável
+    updateChatInputLockState(status, agentName);
 
     // Esconde o placeholder
     document.getElementById("chat-placeholder").style.display = "none";
@@ -585,8 +665,9 @@ async function sendConsoleMessage() {
         }
 
         if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(errText || "Falha ao enviar mensagem");
+            const data = await response.json().catch(() => null);
+            const errMsg = data ? data.message : await response.text();
+            throw new Error(errMsg || "Falha ao enviar mensagem");
         }
 
         input.value = "";
@@ -732,10 +813,15 @@ async function closeChat(jid) {
             method: "POST"
         });
 
-        if (!response.ok) throw new Error("Erro ao finalizar atendimento");
+        if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            throw new Error((data && data.message) || "Erro ao finalizar atendimento");
+        }
 
         showToast("Atendimento finalizado. Bot reativado!");
         activeChatStatus = "bot";
+        activeChatAgent = null;
+        updateChatInputLockState("bot", null);
         document.getElementById("assume-chat-banner").style.display = "flex";
 
         // Recarrega a lista de chats para atualizar o status visual
@@ -750,7 +836,7 @@ async function closeChat(jid) {
         }
     } catch (error) {
         console.error(error);
-        showToast("Falha ao finalizar atendimento.", false);
+        showToast(error.message || "Falha ao finalizar atendimento.", false);
     }
 }
 

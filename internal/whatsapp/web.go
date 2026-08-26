@@ -1415,7 +1415,30 @@ func StartWebServer() {
 
 		userNumber := NormalizePhoneLocal(targetJID.User)
 
+		agentName := ""
+		if sess, ok := getUserSession(r); ok {
+			if sess.Name != "" {
+				agentName = sess.Name
+			} else if sess.Username != "" {
+				agentName = sess.Username
+			}
+		}
+
 		state.Mu.Lock()
+		assignedAgent := state.GetAgentForUser(userNumber)
+		// SE O ATENDIMENTO PERTENCE A OUTRO TÉCNICO -> NÃO PERMITE FINALIZAR!
+		if assignedAgent != "" && agentName != "" && assignedAgent != agentName {
+			state.Mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "error",
+				"message": fmt.Sprintf("🚨 Apenas o técnico *%s* pode finalizar este atendimento!", assignedAgent),
+				"agent":   assignedAgent,
+			})
+			return
+		}
+
 		uState, exists := state.Users[userNumber]
 		if exists {
 			// Reseta o passo para voltar ao bot
@@ -1490,8 +1513,7 @@ func StartWebServer() {
 
 		// Coloca o usuário em chat ao vivo/pausa o bot automático
 		userNumber := NormalizePhoneLocal(targetJID.User)
-		state.Mu.Lock()
-		uState, exists := state.Users[userNumber]
+
 		// Obtém o nome do técnico logado para identificação no WhatsApp
 		agentName := ""
 		if sess, ok := getUserSession(r); ok {
@@ -1502,12 +1524,25 @@ func StartWebServer() {
 			}
 		}
 		if agentName == "" {
-			state.Mu.Lock()
-			agentName = state.GetAgentForUser(userNumber)
-			state.Mu.Unlock()
-		}
-		if agentName == "" {
 			agentName = "Suporte"
+		}
+
+		state.Mu.Lock()
+		assignedAgent := state.GetAgentForUser(userNumber)
+		uState, exists := state.Users[userNumber]
+		isLiveChat := exists && uState.Step == 100
+
+		// SE O ATENDIMENTO JÁ ESTÁ EM LIVE CHAT COM OUTRO TÉCNICO -> BLOQUEIA O ENVIO DE MENSAGENS!
+		if isLiveChat && assignedAgent != "" && assignedAgent != agentName {
+			state.Mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "error",
+				"message": fmt.Sprintf("🚨 Apenas o técnico *%s* pode responder esta conversa!", assignedAgent),
+				"agent":   assignedAgent,
+			})
+			return
 		}
 
 		if !exists {
@@ -1627,14 +1662,28 @@ func StartWebServer() {
 				agentName = sess.Username
 			}
 		}
-		state.Mu.Lock()
-		if agentName == "" {
-			agentName = state.GetAgentForUser(userNumber)
-		}
 		if agentName == "" {
 			agentName = "Suporte"
 		}
+
+		state.Mu.Lock()
+		assignedAgent := state.GetAgentForUser(userNumber)
 		uState, exists := state.Users[userNumber]
+		isLiveChat := exists && uState.Step == 100
+
+		// SE O ATENDIMENTO JÁ ESTÁ EM LIVE CHAT COM OUTRO TÉCNICO -> BLOQUEIA O ENVIO DE MÍDIAS!
+		if isLiveChat && assignedAgent != "" && assignedAgent != agentName {
+			state.Mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "error",
+				"message": fmt.Sprintf("🚨 Apenas o técnico *%s* pode enviar mídias nesta conversa!", assignedAgent),
+				"agent":   assignedAgent,
+			})
+			return
+		}
+
 		if !exists {
 			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
 			state.Users[userNumber] = uState
