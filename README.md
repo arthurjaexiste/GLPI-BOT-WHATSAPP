@@ -4,7 +4,7 @@
 
 # 🤖 GLPI-BOT: WhatsApp & Web Admin Panel
 
-Um ecossistema robusto de alta performance desenvolvido em **Go (Golang)** projetado para conectar o **WhatsApp** diretamente ao sistema de chamados **GLPI**. Através de uma interface web administrativa moderna, responsiva e elegante, os administradores de TI podem estruturar árvores de conversação dinâmicas, gerenciar atendimentos humanos ao vivo (transbordo), configurar parâmetros de conexão GLPI e acompanhar logs operacionais em tempo real.
+Um ecossistema robusto de alta performance desenvolvido em **Go (Golang)** projetado para conectar o **WhatsApp** diretamente ao sistema de chamados **GLPI**. Através de uma interface web administrativa moderna, responsiva e elegante, os administradores de TI e equipes de suporte podem estruturar árvores de conversação dinâmicas, gerenciar atendimentos humanos ao vivo (transbordo), controlar filas de espera com **RBAC (Administrador vs Operador)**, configurar parâmetros de conexão GLPI e acompanhar logs operacionais em tempo real.
 
 ---
 
@@ -23,16 +23,16 @@ GLPI-BOT/
 │   ├── glpi/
 │   │   └── glpi.go                 # Integração direta com a API Rest do GLPI (Abertura de chamados, envio de mídias e busca de usuários)
 │   ├── state/
-│   │   └── state.go                # Máquina de estados para rastrear o contexto de atendimento de cada número no WhatsApp
+│   │   └── state.go                # Máquina de estados thread-safe com ActiveLiveChats map para cada número no WhatsApp
 │   └── whatsapp/
 │       ├── flow.go                 # Lógica de árvore de fluxo de navegação e enquetes interativas (WhatsApp Polls)
-│       ├── handler.go              # Ouvinte de mensagens do whatsmeow, tratando reconexões, recebimento de mídias e mensagens de ausência
+│       ├── handler.go              # Ouvinte de mensagens do whatsmeow, tratando reconexões, recebimento de mídias e ausência
 │       ├── livechat.go             # Fila de atendimento humano ao vivo, transbordo e controle de atendentes ativos
 │       ├── polls.go                # Utilitários para criação e processamento de votos/interações de enquetes
 │       ├── smtp.go                 # Verificador de saúde da conexão que envia e-mails em caso de queda do bot
 │       ├── ticket.go               # Fluxo passo a passo de coleta de dados de ticket (título, descrição, fotos e documentos)
-│       ├── utils.go                # Funções utilitárias como sanitização de números, validação de horários e tratamento de mídias
-│       └── web.go                  # Painel Web administrativo rodando em servidor HTTP nativo com endpoints REST JSON
+│       ├── utils.go                # Funções utilitárias, citação de respostas (extrairInfoCitada), sanitização de JIDs e mídias
+│       └── web.go                  # Painel Web administrativo rodando em servidor HTTP nativo com endpoints REST JSON e RBAC
 ├── static/                         # Ativos estáticos do painel administrativo (CSS, JS, Imagens, Ícones PWA)
 ├── web/                            # Templates HTML das páginas administrativas do painel
 ├── Dockerfile                      # Dockerfile otimizado para build multi-stage gerando uma imagem final ultra-leve
@@ -55,19 +55,23 @@ Diferente dos bots legados baseados em digitação de números ("Digite 1 para s
 - **Validação Automática de Solicitante:** Busca o número do remetente no banco de dados do GLPI e vincula o ticket ao colaborador correto automaticamente.
 - **Suporte a Múltiplos Anexos:** Permite habilitar o envio opcional ou obrigatório de **imagens (prints)** e/ou **documentos (PDF, DOCX, XLSX)**. O bot faz o download da mídia do WhatsApp, converte-a e insere-a na aba de Documentos do GLPI, vinculando-a diretamente ao ticket gerado.
 
-### 3. 📅 Controle de Expediente & Mensagem de Ausência
-O administrador define os dias úteis e a faixa de horário em que o suporte funciona. 
-- **Fora do expediente:** O chamado ainda pode ser aberto, mas o usuário recebe uma notificação configurável de ausência para alinhar expectativas de atendimento.
+### 3. 👥 Live Chat Multi-Atendente com RBAC & Trava por Técnico
+- **Controle de Acesso por Papel (RBAC)**:
+  - **Operador (`role: operator`)**: Atendimento exclusivo por técnico. Quando um operador assume um cliente, o painel de outros operadores é bloqueado (`🔒 Atendimento exclusivo do técnico: Nome`), ocultando o botão `✓ Finalizar` e desativando a caixa de mensagens.
+  - **Administrador (`role: admin`)**: Privilégios totais. Administradores podem visualizar o botão `✓ Finalizar`, responder, enviar mídias ou assumir qualquer atendimento humano em andamento.
+- **Identificação com Bloco de Citação Nativo (`> 👨‍💻 *Nome:*`)**: As mensagens entregues ao WhatsApp do cliente chegam formatadas com o cabeçalho do técnico em bloco de citação nativo do WhatsApp, enquanto no painel web o histórico permanece limpo e elegante.
+- **Citação de Mensagens (`extrairInfoCitada`)**: Suporte completo a respostas citadas no WhatsApp, exibindo os cartões de citação dentro dos balões do painel com o nome real do remetente ou técnico responsável.
 
-### 4. 🔔 Alertas para Equipes Técnicas
-- Assim que um ticket é gerado, o bot dispara um alerta no WhatsApp do técnico designado contendo o número do chamado e um link clicável direto para a página do ticket no GLPI.
+### 4. 🧹 Gestão Otimizada de Mídias Zero-Disk
+- As mídias recebidas e enviadas são convertidas e armazenadas em **Base64 Data URLs** diretamente no banco de dados SQLite.
+- **Rotina Autônoma de Limpeza**: A cada 6 horas, um daemon em background limpa mídias Base64 com mais de 7 dias, exclui arquivos temporários de discos antigos e executa `VACUUM` no banco para otimizar espaço.
 
-### 5. 👥 Fila de Atendimento Humano (Transbordo Livechat)
-- Usuários podem ser direcionados para conversar diretamente com atendentes humanos. O bot gerencia uma fila de espera ordenada em tempo real, informando a posição do usuário na fila enquanto notifica os técnicos registrados para assumirem o chat.
+### 5. 📅 Controle de Expediente & Mensagem de Ausência
+- O administrador define os dias úteis e a faixa de horário em que o suporte funciona. Fora do expediente, o chamado ainda pode ser aberto, mas o usuário recebe uma notificação configurável de ausência para alinhar expectativas de atendimento.
 
-### 6. 🛡️ Monitoramento SMTP & Blacklist
-- **E-mails de Queda:** Emite alertas para os administradores caso a sessão do bot caia.
-- **Blacklist:** Números indesejados (como robôs de spam ou grupos) adicionados à blacklist são totalmente ignorados para preservar recursos.
+### 6. 🔔 Alertas para Equipes Técnicas & Blacklist
+- **Notificações**: Assim que um ticket é gerado, o bot dispara um alerta no WhatsApp do técnico designado contendo o número do chamado e um link clicável direto para a página do ticket no GLPI.
+- **Blacklist**: Números indesejados adicionados à blacklist são totalmente ignorados para preservar recursos.
 
 ---
 
@@ -138,7 +142,7 @@ docker compose logs -f glpi-bot
    > Lembre-se de alterar a senha administrativa padrão na aba **Configurações > Bloqueios & Senha** logo após o primeiro acesso para garantir a segurança da aplicação.
 
 2. **Emparelhar WhatsApp:**
-   Na aba **Status**, clique em **Conectar** para gerar o QR Code. Abre o seu WhatsApp no smartphone de suporte, clique em **Aparelhos conectados > Conectar um aparelho** e realize o escaneamento na tela.
+   Na aba **Status**, clique em **Conectar** para gerar o QR Code. Abra o seu WhatsApp no smartphone de suporte, clique em **Aparelhos conectados > Conectar um aparelho** e realize o escaneamento na tela.
 
 3. **Cadastrar Credenciais do GLPI:**
    Acesse a aba **Configurações**, preencha o link absoluto da API Rest (ex: `https://meu-glpi/apirest.php`), o **App-Token** e o **User-Token** nos campos correspondentes e clique em **Salvar Configurações**.
