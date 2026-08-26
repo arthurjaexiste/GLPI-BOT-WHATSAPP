@@ -37,21 +37,21 @@ function updateChatInputLockState(status, agentName) {
     const myName = (currentUserInfo && (currentUserInfo.name || currentUserInfo.username)) || "";
     
     const isLiveChat = (status === "live_chat");
-    const isMyChat = isLiveChat && myName && agentName && (agentName === myName);
-    const isAssignedToOther = isLiveChat && agentName && myName && (agentName !== myName);
+    const isMyChat = isLiveChat && Boolean(myName) && Boolean(agentName) && (agentName === myName);
+    const isAssignedToOther = isLiveChat && Boolean(agentName) && Boolean(myName) && (agentName !== myName);
 
-    // O botão Finalizar SÓ APARECE se a conversa estiver em Live Chat E for o próprio técnico logado que está atendendo
-    const canClose = isLiveChat && (isMyChat || (!agentName && myName));
+    // O botão Finalizar SÓ APARECE se a conversa estiver em Live Chat E o técnico responsável for EXATAMENTE o operador logado
+    const canClose = isLiveChat && (isMyChat || (!agentName && Boolean(myName)));
 
     if (closeBtn) {
         closeBtn.style.display = canClose ? "inline-flex" : "none";
         closeBtn.disabled = !canClose;
     }
 
-    if (isAssignedToOther || (isLiveChat && !canClose)) {
+    if (isAssignedToOther) {
         if (input) {
             input.disabled = true;
-            input.placeholder = `🔒 Atendimento exclusivo do técnico: ${agentName || "outro operador"}`;
+            input.placeholder = `🔒 Atendimento exclusivo do técnico: ${agentName}`;
             input.classList.add("opacity-50", "cursor-not-allowed");
         }
         if (sendBtn) {
