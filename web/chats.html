@@ -156,20 +156,13 @@
                         <span class="text-lg">🛎️</span>
                         <div>
                             <span class="font-bold text-zinc-200">Conversa sob controle do Bot / Fila</span>
-                            <p class="text-[10px] text-zinc-500">Selecione o técnico responsável para iniciar o suporte
-                                humano</p>
+                            <p class="text-[10px] text-zinc-500">Clique para assumir este atendimento diretamente com o seu usuário logado</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <select id="agent-select"
-                            class="text-xs p-2 bg-black/60 border border-white/10 rounded-xl text-zinc-300 focus:outline-none focus:border-white/30 w-full sm:w-44">
-                            <option value="">Selecione o Técnico...</option>
-                        </select>
-                        <button onclick="assumeActiveChat()"
-                            class="px-4 py-2 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl transition duration-200 shadow-md whitespace-nowrap">
-                            Assumir
-                        </button>
-                    </div>
+                    <button onclick="assumeActiveChat()"
+                        class="px-4 py-2 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl transition duration-200 shadow-md whitespace-nowrap">
+                        Assumir Atendimento
+                    </button>
                 </div>
 
                 <!-- Message History Box -->

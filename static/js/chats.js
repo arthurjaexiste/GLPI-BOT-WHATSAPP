@@ -33,7 +33,6 @@ function formatJIDToPhone(jid) {
 // Ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {
     loadChatsList();
-    loadAgentsList();
 
     // Inicia polling periódico em alta frequência para mensagens em tempo real
     setInterval(() => {
@@ -747,41 +746,9 @@ async function closeChat(jid) {
     }
 }
 
-// Carrega a lista de atendentes/técnicos
-// Função loadAgentsList manipula a rotina correspondente na interface do painel
-async function loadAgentsList() {
-    try {
-        const response = await fetch("/api/agents");
-        if (!response.ok) throw new Error("Erro ao buscar atendentes");
-        agentsList = await response.json();
-
-        const select = document.getElementById("agent-select");
-        if (select) {
-            select.innerHTML = '<option value="">Selecione o Técnico...</option>';
-            agentsList.forEach(agent => {
-                const opt = document.createElement("option");
-                opt.value = agent;
-                opt.textContent = agent;
-                select.appendChild(opt);
-            });
-        }
-    } catch (error) {
-        console.error("Erro ao carregar atendentes:", error);
-    }
-}
-
-// Assume o chat ativo para o técnico selecionado
-// Função assumeActiveChat manipula a rotina correspondente na interface do painel
+// Assume o chat ativo para o técnico logado na sessão
 async function assumeActiveChat() {
     if (!activeChatJID) return;
-
-    const select = document.getElementById("agent-select");
-    const selectedAgent = select.value;
-
-    if (!selectedAgent) {
-        showToast("Selecione um técnico primeiro.", false);
-        return;
-    }
 
     try {
         const response = await fetch("/api/chats/assume", {
@@ -790,14 +757,13 @@ async function assumeActiveChat() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                jid: activeChatJID,
-                agent: selectedAgent
+                jid: activeChatJID
             })
         });
 
         if (!response.ok) throw new Error("Erro ao assumir atendimento");
 
-        showToast(`Atendimento assumido por ${selectedAgent}!`);
+        showToast("Atendimento assumido com sucesso!");
         document.getElementById("assume-chat-banner").style.display = "none";
 
         // Atualiza o status localmente para live_chat
@@ -809,11 +775,11 @@ async function assumeActiveChat() {
             statusText.textContent = "Live Chat / Suporte";
         }
 
-        // Recarrega a lista de chats e as mensagens
-        loadChatsList(true);
+        // Recarrega a lista de chats para atualizar as tags
+        await loadChatsList();
         refreshActiveMessages(true);
     } catch (error) {
-        console.error("Erro ao assumir chat:", error);
+        console.error(error);
         showToast("Falha ao assumir atendimento.", false);
     }
 }

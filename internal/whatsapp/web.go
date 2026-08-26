@@ -1785,7 +1785,7 @@ func StartWebServer() {
 			JID   string `json:"jid"`
 			Agent string `json:"agent"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err.Error() != "EOF" {
 			http.Error(w, "JSON inválido", http.StatusBadRequest)
 			return
 		}
@@ -1794,6 +1794,19 @@ func StartWebServer() {
 		if err != nil {
 			http.Error(w, "JID inválido", http.StatusBadRequest)
 			return
+		}
+
+		// Identifica o técnico logado pela sessão ativa no painel web
+		agentName := req.Agent
+		if sess, ok := getUserSession(r); ok {
+			if sess.Name != "" {
+				agentName = sess.Name
+			} else if sess.Username != "" {
+				agentName = sess.Username
+			}
+		}
+		if agentName == "" {
+			agentName = "Suporte"
 		}
 
 		userNumber := NormalizePhoneLocal(targetJID.User)
@@ -1806,7 +1819,7 @@ func StartWebServer() {
 		}
 		uState.Step = 100
 
-		state.ActiveAgentName = req.Agent
+		state.ActiveAgentName = agentName
 		state.ActiveLiveChatUser = targetJID.String()
 
 		// Remove da fila de espera se estiver nela
@@ -1829,19 +1842,19 @@ func StartWebServer() {
 
 		if client != nil && client.IsConnected() {
 			// Envia a mensagem de suporte assumido para o usuário
-			msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": req.Agent})
+			msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": agentName})
 			sendTextMessage(context.Background(), client, targetJID, msgAssumido)
 
 			// Notifica o grupo/número de suporte
 			supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
 			sendTextMessage(context.Background(), client, supportJID, fmt.Sprintf(
 				"✅ O atendimento de *%s* foi assumido via Painel por *%s*.",
-				nomeUsuario, req.Agent,
+				nomeUsuario, agentName,
 			))
 		} else {
 			// Se o bot estiver desconectado, podemos pelo menos inserir a mensagem de sistema no banco para que o painel mostre
 			if webDB != nil {
-				msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": req.Agent})
+				msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": agentName})
 				_, _ = webDB.Exec(
 					"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me) VALUES (?, ?, ?, ?, ?, 1)",
 					targetJID.String(), "GLPI-BOT (Bot)", "", msgAssumido, "text",
