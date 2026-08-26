@@ -180,25 +180,48 @@ func iniciarRotinaLimpezaMidias() {
 }
 
 func executarLimpezaMidias() {
-	if webDB == nil {
-		return
+	if webDB != nil {
+		res, err := webDB.Exec(`
+			UPDATE chat_messages 
+			SET media_url = '' 
+			WHERE timestamp < datetime('now', '-7 days') 
+			  AND media_url LIKE 'data:%'
+		`)
+		if err != nil {
+			fmt.Printf("🚨 Erro ao executar rotina de limpeza de mídias antigas no banco: %v\n", err)
+		} else {
+			rows, _ := res.RowsAffected()
+			if rows > 0 {
+				fmt.Printf("🧹 [LIMPEZA BANCO DB] %d mídias em Base64 com mais de 7 dias foram removidas do banco! (Histórico de texto mantido intacto)\n", rows)
+				_, _ = webDB.Exec("VACUUM")
+			}
+		}
 	}
 
-	res, err := webDB.Exec(`
-		UPDATE chat_messages 
-		SET media_url = '' 
-		WHERE timestamp < datetime('now', '-7 days') 
-		  AND media_url LIKE 'data:%'
-	`)
-	if err != nil {
-		fmt.Printf("🚨 Erro ao executar rotina de limpeza de mídias antigas: %v\n", err)
-		return
-	}
+	// Limpa fisicamente arquivos temporários residuais do disco na pasta static/uploads
+	uploadDir := filepath.Join(getWebDir(), "static", "uploads")
+	entries, errRead := os.ReadDir(uploadDir)
+	if errRead == nil {
+		limite7Dias := time.Now().Add(-7 * 24 * time.Hour)
+		removidosCount := 0
 
-	rows, _ := res.RowsAffected()
-	if rows > 0 {
-		fmt.Printf("🧹 [LIMPEZA BANCO DB] %d mídias em Base64 com mais de 7 dias foram removidas do banco! (Histórico de texto mantido intacto)\n", rows)
-		_, _ = webDB.Exec("VACUUM")
+		for _, entry := range entries {
+			if entry.IsDir() || entry.Name() == ".gitkeep" || entry.Name() == ".gitignore" {
+				continue
+			}
+
+			filePath := filepath.Join(uploadDir, entry.Name())
+			info, errInfo := entry.Info()
+			if errInfo == nil && info.ModTime().Before(limite7Dias) {
+				if errRemove := os.Remove(filePath); errRemove == nil {
+					removidosCount++
+				}
+			}
+		}
+
+		if removidosCount > 0 {
+			fmt.Printf("🧹 [LIMPEZA DISCO] %d arquivos temporários com mais de 7 dias foram excluídos da pasta uploads do servidor!\n", removidosCount)
+		}
 	}
 }
 
