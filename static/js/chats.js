@@ -82,7 +82,7 @@ function renderChatsList(filteredData = null) {
         let statusText = "Bot";
         let statusClass = "status-bot";
         if (chat.status === "live_chat") {
-            statusText = "Suporte";
+            statusText = chat.agent_name ? `Suporte (${chat.agent_name})` : "Suporte";
             statusClass = "status-live_chat";
         } else if (chat.status === "queue") {
             statusText = "Fila";
@@ -96,7 +96,7 @@ function renderChatsList(filteredData = null) {
 
         const card = document.createElement("div");
         card.className = `p-3 rounded-xl border cursor-pointer transition flex flex-col gap-1.5 relative group ${cardClass}`;
-        card.onclick = () => selectChat(chat.jid, chat.name, chat.status);
+        card.onclick = () => selectChat(chat.jid, chat.name, chat.status, chat.agent_name);
 
         // Limita o tamanho do texto da última mensagem
         let snippet = chat.last_message || "Nenhuma mensagem...";
@@ -151,7 +151,7 @@ function filterChats() {
 
 // Seleciona um chat da lista
 // Função selectChat manipula a rotina correspondente na interface do painel
-async function selectChat(jid, name, status) {
+async function selectChat(jid, name, status, agentName = null) {
     activeChatJID = jid;
     activeChatName = name || jid;
     activeChatStatus = status;
@@ -176,7 +176,7 @@ async function selectChat(jid, name, status) {
     statusDot.className = "w-1.5 h-1.5 rounded-full";
     if (status === "live_chat") {
         statusDot.classList.add("status-live_chat");
-        statusText.textContent = "Live Chat / Suporte";
+        statusText.textContent = agentName ? `Live Chat (${agentName})` : "Live Chat / Suporte";
         document.getElementById("assume-chat-banner").style.display = "none";
     } else if (status === "queue") {
         statusDot.classList.add("status-queue");
@@ -769,7 +769,11 @@ async function assumeActiveChat() {
             })
         });
 
-        if (!response.ok) throw new Error("Erro ao assumir atendimento");
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(data.message || "Erro ao assumir atendimento");
+        }
 
         showToast("Atendimento assumido com sucesso!");
         document.getElementById("assume-chat-banner").style.display = "none";
@@ -780,7 +784,7 @@ async function assumeActiveChat() {
         const statusText = document.getElementById("active-chat-status-text");
         if (statusDot && statusText) {
             statusDot.className = "w-1.5 h-1.5 rounded-full status-live_chat";
-            statusText.textContent = "Live Chat / Suporte";
+            statusText.textContent = data.agent ? `Live Chat (${data.agent})` : "Live Chat / Suporte";
         }
 
         // Recarrega a lista de chats para atualizar as tags

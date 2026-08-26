@@ -1168,6 +1168,7 @@ func StartWebServer() {
 			LastMsg    string `json:"last_message"`
 			Timestamp  string `json:"timestamp"`
 			UserStatus string `json:"status"` // "live_chat", "queue", "bot"
+			AgentName  string `json:"agent_name,omitempty"`
 		}
 
 		chats := []ChatInfo{}
@@ -1201,6 +1202,9 @@ func StartWebServer() {
 				if uState, exists := state.Users[userJIDStr]; exists {
 					if uState.Step == 100 {
 						c.UserStatus = "live_chat"
+						if NormalizePhoneLocal(state.ActiveLiveChatUser) == userJIDStr && state.ActiveAgentName != "" {
+							c.AgentName = state.ActiveAgentName
+						}
 					} else if uState.Step == 99 {
 						c.UserStatus = "queue"
 					}
@@ -1841,6 +1845,21 @@ func StartWebServer() {
 		userNumber := NormalizePhoneLocal(targetJID.User)
 
 		state.Mu.Lock()
+		// Impede que outro técnico assuma uma conversa que já possui atendimento ativo
+		if state.ActiveLiveChatUser != "" && NormalizePhoneLocal(state.ActiveLiveChatUser) == userNumber && state.ActiveAgentName != "" && state.ActiveAgentName != agentName {
+			currentAgent := state.ActiveAgentName
+			state.Mu.Unlock()
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "error",
+				"message": fmt.Sprintf("Esta conversa já está em atendimento pelo técnico: %s", currentAgent),
+				"agent":   currentAgent,
+			})
+			return
+		}
+
 		uState, exists := state.Users[userNumber]
 		if !exists {
 			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
