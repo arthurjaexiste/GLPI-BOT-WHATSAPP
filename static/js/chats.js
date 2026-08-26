@@ -35,18 +35,23 @@ function updateChatInputLockState(status, agentName) {
     const closeBtn = document.getElementById("btn-close-chat") || document.querySelector("button[title*='Finalizar']");
 
     const myName = (currentUserInfo && (currentUserInfo.name || currentUserInfo.username)) || "";
-    const isAssignedToOther = (status === "live_chat" && agentName && myName && agentName !== myName);
+    
+    const isLiveChat = (status === "live_chat");
+    const isMyChat = isLiveChat && myName && agentName && (agentName === myName);
+    const isAssignedToOther = isLiveChat && agentName && myName && (agentName !== myName);
 
-    const canClose = (status === "live_chat") && (!agentName || !myName || agentName === myName);
+    // O botão Finalizar SÓ APARECE se a conversa estiver em Live Chat E for o próprio técnico logado que está atendendo
+    const canClose = isLiveChat && (isMyChat || (!agentName && myName));
+
     if (closeBtn) {
         closeBtn.style.display = canClose ? "inline-flex" : "none";
         closeBtn.disabled = !canClose;
     }
 
-    if (isAssignedToOther) {
+    if (isAssignedToOther || (isLiveChat && !canClose)) {
         if (input) {
             input.disabled = true;
-            input.placeholder = `🔒 Atendimento exclusivo do técnico: ${agentName}`;
+            input.placeholder = `🔒 Atendimento exclusivo do técnico: ${agentName || "outro operador"}`;
             input.classList.add("opacity-50", "cursor-not-allowed");
         }
         if (sendBtn) {
@@ -225,12 +230,18 @@ function filterChats() {
 // Seleciona um chat da lista
 // Função selectChat manipula a rotina correspondente na interface do painel
 async function selectChat(jid, name, status, agentName = null) {
+    if (!agentName) {
+        const found = chatsData.find(c => c.jid === jid);
+        if (found && found.agent_name) {
+            agentName = found.agent_name;
+        }
+    }
     activeChatJID = jid;
     activeChatName = name || jid;
     activeChatStatus = status;
     activeChatAgent = agentName;
 
-    // Atualiza trava de envio de mensagens de acordo com o técnico responsável
+    // Atualiza trava de envio de mensagens e visibilidade do botão Finalizar
     updateChatInputLockState(status, agentName);
 
     // Esconde o placeholder
