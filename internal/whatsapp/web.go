@@ -1506,22 +1506,51 @@ func StartWebServer() {
 		}
 		state.Mu.Unlock()
 
+		// Obtém o nome do técnico logado para identificação no WhatsApp
+		agentName := ""
+		if sess, ok := getUserSession(r); ok {
+			if sess.Name != "" {
+				agentName = sess.Name
+			} else if sess.Username != "" {
+				agentName = sess.Username
+			}
+		}
+		if agentName == "" {
+			state.Mu.Lock()
+			agentName = state.ActiveAgentName
+			state.Mu.Unlock()
+		}
+		if agentName == "" {
+			agentName = "Suporte"
+		}
+
+		// Envia para o WhatsApp do cliente formatado com o nome do técnico
+		waText := fmt.Sprintf("👨‍💻 *%s:*\n\n%s", agentName, req.Text)
+
 		if req.ReplyToText != "" {
 			qJID := req.QuotedJID
 			if qJID == "" {
 				qJID = targetJID.String()
 			}
-			sendQuotedTextMessage(context.Background(), client, targetJID, req.Text, qJID, req.ReplyToText, req.QuotedID)
+			sendQuotedTextMessage(context.Background(), client, targetJID, waText, qJID, req.ReplyToText, req.QuotedID)
 		} else {
-			sendTextMessage(context.Background(), client, targetJID, req.Text)
+			sendTextMessage(context.Background(), client, targetJID, waText)
 		}
 
-		// Grava as informações da resposta citada na última mensagem enviada
-		if webDB != nil && req.ReplyToText != "" {
-			_, _ = webDB.Exec(
-				"UPDATE chat_messages SET reply_to_name = ?, reply_to_text = ? WHERE id = (SELECT MAX(id) FROM chat_messages WHERE chat_jid = ? AND is_from_me = 1)",
-				req.ReplyToName, req.ReplyToText, targetJID.String(),
-			)
+		// Atualiza a mensagem no banco para exibir o texto limpo no painel (sem a tag) e o nome do técnico
+		cleanChatJID := CleanJIDString(targetJID.String())
+		if webDB != nil {
+			if req.ReplyToText != "" {
+				_, _ = webDB.Exec(
+					"UPDATE chat_messages SET message_text = ?, sender_name = ?, reply_to_name = ?, reply_to_text = ? WHERE id = (SELECT MAX(id) FROM chat_messages WHERE (chat_jid = ? OR chat_jid = ?) AND is_from_me = 1)",
+					req.Text, agentName, req.ReplyToName, req.ReplyToText, cleanChatJID, targetJID.String(),
+				)
+			} else {
+				_, _ = webDB.Exec(
+					"UPDATE chat_messages SET message_text = ?, sender_name = ? WHERE id = (SELECT MAX(id) FROM chat_messages WHERE (chat_jid = ? OR chat_jid = ?) AND is_from_me = 1)",
+					req.Text, agentName, cleanChatJID, targetJID.String(),
+				)
+			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")
