@@ -1,108 +1,206 @@
 <p align="center">
-  <img src="static/img/logo.png" alt="GLPI-BOT Logo" width="150" height="150">
+  <img src="static/img/logo.png" alt="GLPI-BOT Logo" width="160" height="160">
 </p>
 
-# 🤖 GLPI-BOT: WhatsApp & Web Admin Panel
+<h1 align="center">🤖 GLPI-BOT | WhatsApp Automation & Multi-Agent Web Admin Panel</h1>
 
-Um ecossistema robusto de alta performance desenvolvido em **Go (Golang)** projetado para conectar o **WhatsApp** diretamente ao sistema de chamados **GLPI**. Através de uma interface web administrativa moderna, responsiva e elegante, os administradores de TI e equipes de suporte podem estruturar árvores de conversação dinâmicas, gerenciar atendimentos humanos ao vivo (transbordo), controlar filas de espera com **RBAC (Administrador vs Operador)**, configurar parâmetros de conexão GLPI e acompanhar logs operacionais em tempo real.
+<p align="center">
+  <b>Ecossistema Enterprise de Atendimento e Automação de Suporte Técnico via WhatsApp integrado ao GLPI Helpdesk.</b>
+</p>
+
+<p align="center">
+  <a href="#-visão-geral"><img src="https://img.shields.io/badge/Language-Go%201.22+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go Version"></a>
+  <a href="#-instalação-e-execução-via-docker"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Ready"></a>
+  <a href="#-integração-com-glpi"><img src="https://img.shields.io/badge/GLPI-API%20REST-005596?style=for-the-badge&logo=backend&logoColor=white" alt="GLPI API"></a>
+  <a href="#-página-5-live-chat--gestão-multi-atendente"><img src="https://img.shields.io/badge/LiveChat-Multi--Agent-emerald?style=for-the-badge&logo=whatsapp&logoColor=white" alt="LiveChat"></a>
+  <a href="#-segurança-rbac--gestão-de-mídias"><img src="https://img.shields.io/badge/Security-RBAC%20Enabled-rose?style=for-the-badge&logo=shield&logoColor=white" alt="RBAC Security"></a>
+</p>
 
 ---
 
-## 🚀 Arquitetura Geral & Estrutura de Pastas
+## 📌 Sumário Completo
 
-O projeto segue a estrutura padrão recomendada para aplicações Go modernas, separando o ponto de entrada (`cmd`) da lógica interna reutilizável (`internal`) e das interfaces de frontend (`web` / `static`):
+1. [📖 Visão Geral & Proposta de Valor](#-visão-geral)
+2. [🏗️ Arquitetura do Sistema & Diagramas de Fluxo](#️-arquitetura-do-sistema--diagramas-de-fluxo)
+3. [📂 Estrutura de Diretórios Detalhada](#-estrutura-de-diretórios-detalhada)
+4. [🖥️ Mapeamento Completo das Páginas do Painel Web](#️-mapeamento-completo-das-páginas-do-painel-web)
+   - [📊 Página 1: Status & Conexão WhatsApp](#-página-1-status--conexão-whatsapp)
+   - [🔀 Página 2: Fluxo do Bot & Visual Flow Builder](#-página-2-fluxo-do-bot--visual-flow-builder)
+   - [⚙️ Página 3: Configurações Gerais & Parâmetros GLPI](#-página-3-configurações-gerais--parâmetros-glpi)
+   - [✉️ Página 4: Central de Mensagens & Templates Dinâmicos](#-página-4-central-de-mensagens--templates-dinâmicos)
+   - [💬 Página 5: Live Chat & Gestão Multi-Atendente](#-página-5-live-chat--gestão-multi-atendente)
+   - [👥 Página 6: Gestão de Usuários & RBAC](#-página-6-gestão-de-usuários--rbac)
+   - [📋 Página 7: Logs Operacionais & Auditoria](#-página-7-logs-operacionais--auditoria)
+5. [🔑 Requisitos & Integração Passo a Passo com o GLPI](#-requisitos--integração-passo-a-passo-com-o-glpi)
+6. [🚀 Instalação e Execução via Docker Compose](#-instalação-e-execução-via-docker-compose)
+7. [💻 Execução Nativa / Compilação Manual (Go)](#-execução-nativa--compilação-manual-go)
+8. [📡 Documentação das APIs REST Internas](#-documentação-das-apis-rest-internas)
+9. [🛡️ Segurança, RBAC & Gestão de Mídias Zero-Disk](#️-segurança-rbac--gestão-de-mídias-zero-disk)
+10. [🛠️ Resolução de Problemas Comuns (Troubleshooting)](#️-resolução-de-problemas-comuns-troubleshooting)
+11. [📄 Licença e Contribuição](#-licença-e-contribuição)
+
+---
+
+## 📖 Visão Geral & Proposta de Valor
+
+O **GLPI-BOT** foi construído a partir do zero em **Go (Golang)** para resolver os gargalos de atendimento inicial e suporte N1/N2 em TI. Ele integra a API nativa do **whatsmeow** (protocolo WhatsApp Multi-Device) ao webservice do **GLPI Helpdesk**.
+
+### 💥 Principais Problemas Resolvidos:
+- **Erros de Digitação do Usuário:** Eliminados através da utilização de **Enquetes Nativas do WhatsApp (Polls)** em vez de menus de texto legados.
+- **Abertura de Chamados Sem Vínculo:** O bot consulta o número do remetente no GLPI e atribui o ticket diretamente ao colaborador correto.
+- **Conflito de Atendentes:** Sistema de **trava exclusiva de atendimento por técnico**, impedindo que dois operadores respondam ou assumam o mesmo cliente simultaneamente.
+- **Acúmulo de Mídias em Disco:** Mecanismo **Zero-Disk Media** que converte imagens, áudios e arquivos em Base64 no SQLite e executa limpeza autônoma a cada 6 horas (retenção configurável de 7 dias com `VACUUM`).
+
+---
+
+## 🏗️ Arquitetura do Sistema & Diagramas de Fluxo
+
+```mermaid
+flowchart TD
+    A[📱 Usuário no WhatsApp] -->|Envia mensagem / Voto em Enquete| B[⚡ Whatsmeow Engine - Go]
+    B --> C{Máquina de Estados / state.go}
+    
+    C -->|Autoatendimento / Nó da Árvore| D[📊 Fluxo de Enquetes - Polls]
+    C -->|Abertura de Ticket| E[🎫 Módulo de Ticket / ticket.go]
+    C -->|Solicita Atendente| F[👥 Fila de Espera / livechat.go]
+    
+    E -->|API REST - App/User Token| G[🟢 GLPI Helpdesk Server]
+    G -->|Retorna ID do Ticket| E
+    E -->|Alerta de Novo Chamado| A
+    
+    F -->|Transbordo Live Chat| H[💻 Painel Web Admin / web.go]
+    H -->|Técnico Assume / Responde| B
+    H -->|Trava RBAC Operador vs Admin| H
+```
+
+---
+
+## 📂 Estrutura de Diretórios Detalhada
 
 ```
 GLPI-BOT/
 ├── cmd/
 │   └── bot/
-│       └── main.go                 # Ponto de entrada do bot, redirecionamento de logs e inicialização dos serviços
+│       └── main.go                 # Ponto de entrada da aplicação, inicialização de rotinas e servidores
 ├── internal/
 │   ├── config/
-│   │   └── config.go               # Definição do schema de configurações, migração automática e valores padrões
+│   │   └── config.go               # Definição do schema de configurações, migração e persistência JSON
 │   ├── glpi/
-│   │   └── glpi.go                 # Integração direta com a API Rest do GLPI (Abertura de chamados, envio de mídias e busca de usuários)
+│   │   └── glpi.go                 # Cliente HTTP REST para abertura de chamados, busca de colaboradores e anexos
 │   ├── state/
-│   │   └── state.go                # Máquina de estados thread-safe com ActiveLiveChats map para cada número no WhatsApp
+│   │   └── state.go                # Estado global thread-safe com mapa ActiveLiveChats por número de cliente
 │   └── whatsapp/
-│       ├── flow.go                 # Lógica de árvore de fluxo de navegação e enquetes interativas (WhatsApp Polls)
-│       ├── handler.go              # Ouvinte de mensagens do whatsmeow, tratando reconexões, recebimento de mídias e ausência
-│       ├── livechat.go             # Fila de atendimento humano ao vivo, transbordo e controle de atendentes ativos
-│       ├── polls.go                # Utilitários para criação e processamento de votos/interações de enquetes
-│       ├── smtp.go                 # Verificador de saúde da conexão que envia e-mails em caso de queda do bot
-│       ├── ticket.go               # Fluxo passo a passo de coleta de dados de ticket (título, descrição, fotos e documentos)
-│       ├── utils.go                # Funções utilitárias, citação de respostas (extrairInfoCitada), sanitização de JIDs e mídias
-│       └── web.go                  # Painel Web administrativo rodando em servidor HTTP nativo com endpoints REST JSON e RBAC
-├── static/                         # Ativos estáticos do painel administrativo (CSS, JS, Imagens, Ícones PWA)
-├── web/                            # Templates HTML das páginas administrativas do painel
-├── Dockerfile                      # Dockerfile otimizado para build multi-stage gerando uma imagem final ultra-leve
-├── docker-compose.yml              # Arquivo de orquestração local para execução do banco e do bot
-├── go.mod                          # Módulo Go contendo todas as dependências declaradas (whatsmeow, SQLite)
-└── README.md                       # Documentação mestre do projeto
+│       ├── flow.go                 # Processador da árvore visual de navegação e nós de enquetes
+│       ├── handler.go              # Listener principal do Whatsmeow (recebimento de texto, mídia, ausência)
+│       ├── livechat.go             # Fila de espera, transbordo e gerenciamento de atendentes ativos
+│       ├── polls.go                # Utilitários de criação e casamento de hashs de enquetes nativas
+│       ├── smtp.go                 # Monitor da saúde da aplicação que envia e-mails em caso de desconexão
+│       ├── ticket.go               # Coleta estruturada de título, descrição, fotos e documentos
+│       ├── utils.go                # Sanitização de JID, citação de respostas (extrairInfoCitada) e utilitários
+│       └── web.go                  # Servidor HTTP nativo com endpoints REST JSON, sessão e controle RBAC
+├── static/                         # Ativos de frontend (CSS estilizado, JS reativo, logos, PWA)
+├── web/                            # Páginas HTML do painel administrativo
+├── Dockerfile                      # Dockerfile multi-stage otimizado
+├── docker-compose.yml              # Arquivo de execução e orquestração simplificada
+├── go.mod                          # Arquivo de dependências do módulo Go
+└── README.md                       # Documentação mestre completa
 ```
 
 ---
 
-## 🌟 Funcionalidades Detalhadas
+## 🖥️ Mapeamento Completo das Páginas do Painel Web
 
-### 1. 💬 Fluxo Interativo com WhatsApp Polls (Enquetes)
-Diferente dos bots legados baseados em digitação de números ("Digite 1 para suporte..."), o **GLPI-BOT** utiliza **enquetes nativas do WhatsApp (Polls)** para renderizar opções clicáveis de menu. Isso reduz a zero a taxa de erro do usuário e torna o fluxo extremamente ágil no celular.
-- **Voltar ao Menu:** Permite configurar botões especiais para retornar ao nó pai da árvore de navegação de maneira imediata.
-- **Visual Flow Builder:** Árvore de navegação customizável diretamente no painel administrativo.
-
-### 2. 🎫 Coleta Inteligente de Tickets & Envio de Mídias
-- **Abertura Passo a Passo:** O robô conduz a conversa coletando um título resumido e uma descrição detalhada do incidente.
-- **Validação Automática de Solicitante:** Busca o número do remetente no banco de dados do GLPI e vincula o ticket ao colaborador correto automaticamente.
-- **Suporte a Múltiplos Anexos:** Permite habilitar o envio opcional ou obrigatório de **imagens (prints)** e/ou **documentos (PDF, DOCX, XLSX)**. O bot faz o download da mídia do WhatsApp, converte-a e insere-a na aba de Documentos do GLPI, vinculando-a diretamente ao ticket gerado.
-
-### 3. 👥 Live Chat Multi-Atendente com RBAC & Trava por Técnico
-- **Controle de Acesso por Papel (RBAC)**:
-  - **Operador (`role: operator`)**: Atendimento exclusivo por técnico. Quando um operador assume um cliente, o painel de outros operadores é bloqueado (`🔒 Atendimento exclusivo do técnico: Nome`), ocultando o botão `✓ Finalizar` e desativando a caixa de mensagens.
-  - **Administrador (`role: admin`)**: Privilégios totais. Administradores podem visualizar o botão `✓ Finalizar`, responder, enviar mídias ou assumir qualquer atendimento humano em andamento.
-- **Identificação com Bloco de Citação Nativo (`> 👨‍💻 *Nome:*`)**: As mensagens entregues ao WhatsApp do cliente chegam formatadas com o cabeçalho do técnico em bloco de citação nativo do WhatsApp, enquanto no painel web o histórico permanece limpo e elegante.
-- **Citação de Mensagens (`extrairInfoCitada`)**: Suporte completo a respostas citadas no WhatsApp, exibindo os cartões de citação dentro dos balões do painel com o nome real do remetente ou técnico responsável.
-
-### 4. 🧹 Gestão Otimizada de Mídias Zero-Disk
-- As mídias recebidas e enviadas são convertidas e armazenadas em **Base64 Data URLs** diretamente no banco de dados SQLite.
-- **Rotina Autônoma de Limpeza**: A cada 6 horas, um daemon em background limpa mídias Base64 com mais de 7 dias, exclui arquivos temporários de discos antigos e executa `VACUUM` no banco para otimizar espaço.
-
-### 5. 📅 Controle de Expediente & Mensagem de Ausência
-- O administrador define os dias úteis e a faixa de horário em que o suporte funciona. Fora do expediente, o chamado ainda pode ser aberto, mas o usuário recebe uma notificação configurável de ausência para alinhar expectativas de atendimento.
-
-### 6. 🔔 Alertas para Equipes Técnicas & Blacklist
-- **Notificações**: Assim que um ticket é gerado, o bot dispara um alerta no WhatsApp do técnico designado contendo o número do chamado e um link clicável direto para a página do ticket no GLPI.
-- **Blacklist**: Números indesejados adicionados à blacklist são totalmente ignorados para preservar recursos.
+O painel administrativo é uma **Single/Multi-Page Application moderna** construída com HTML5, Vanilla JavaScript de alta velocidade e TailwindCSS, sem a necessidade de frameworks pesados.
 
 ---
 
-## 🔑 Requisitos de Configuração no GLPI
+### 📊 Página 1: Status & Conexão WhatsApp
+* **Conexão via QR Code:** Exibe o QR Code dinâmico gerado pelo `whatsmeow` para conexão direta com o número corporativo.
+* **Indicadores de Saúde:** Status do serviço em tempo real (Conectado / Desconectado / Reconectando).
+* **Métricas Principais:** Quantidade de atendimentos em andamento, fila de espera atual e total de chamados abertos no dia.
+* **Ações Rápidas:** Botões para **Conectar**, **Desconectar** ou **Reiniciar a Engine**.
 
-A integração depende inteiramente do módulo de **API REST** do GLPI. Para configurar:
+---
 
-1. **Ative a API REST:**
-   - Acesse o GLPI como Admin e vá em **Configurar > Geral > API**.
-   - Habilite a opção **Habilitar API Rest**.
-   - Ative **Habilitar login com credenciais de usuário** ou **external tokens**.
-   - Adicione um novo cliente e obtenha o **App-Token** correspondente.
+### 🔀 Página 2: Fluxo do Bot & Visual Flow Builder
+* **Nós da Árvore de Navegação:** Interface para adicionar, editar ou remover opções do menu do bot.
+* **Integração com Enquetes Nativas:** Cada opção configurada no painel é automaticamente convertida em um botão clicável de enquete no WhatsApp do usuário.
+* **Nó "Voltar ao Menu":** Configuração de botões de retorno inteligente ao nó pai.
+* **Abertura de Ticket Direta:** Vinculação de categorias do menu com a abertura direta de chamados.
 
-2. **Gere o User-Token:**
-   - Acesse as preferências do usuário administrador (ou conta dedicada à automação do bot) no GLPI.
-   - Vá na aba **Chaves de acesso remoto** (Remote Access Keys) e crie um **Token de API** (User-Token).
+---
 
-3. **Perfil de Permissões (Perfil Recomendado):**
-   Garante que o usuário do bot tenha as seguintes permissões básicas ativas no GLPI:
-   - **Usuários:** Leitura (Read) para localizar o telefone do solicitante.
-   - **Chamados:** Criação e Atualização (Create/Update) para abrir e alimentar tickets.
-   - **Documentos:** Criação (Create) para vincular imagens e anexos à base de conhecimento do ticket.
+### ⚙️ Página 3: Configurações Gerais & Parâmetros GLPI
+* **Conexão GLPI:** Configuração da URL da API REST (ex: `https://suporte.empresa.com.br/apirest.php`), **App-Token** e **User-Token**.
+* **Controle de Expediente:** Definição de horário de início/fim e dias da semana em que o suporte funciona.
+* **Mensagem de Ausência:** Texto personalizado entregue aos usuários que entrarem em contato fora do horário comercial.
+* **Configuração SMTP:** Parâmetros de servidor de e-mail (Host, Porta, Usuário, Senha) para envio de alertas em caso de desconexão.
+
+---
+
+### ✉️ Página 4: Central de Mensagens & Templates Dinâmicos
+* **Templates Customizáveis:** Edição de todas as mensagens automáticas enviadas pelo robô.
+* **Variáveis Dinâmicas Suportadas:**
+  - `{nome}`: Nome do colaborador/contato.
+  - `{posicao}`: Posição atual na fila de espera do suporte.
+  - `{agente}`: Nome do técnico responsável pelo atendimento.
+  - `{ticket_id}`: Número do chamado gerado no GLPI.
+  - `{titulo}`: Título resumido do chamado.
+
+---
+
+### 💬 Página 5: Live Chat & Gestão Multi-Atendente
+* **Interface Estilo WhatsApp Web:** Visual escuro (Dark Mode) moderno com histórico completo de mensagens.
+* **Identificação com Bloco de Citação Nativo (`> 👨‍💻 *Nome:*`)**: As mensagens entregues ao celular do cliente chegam formatadas com o cabeçalho do técnico em bloco de citação do WhatsApp, enquanto o painel exibe o histórico limpo e sem poluidores.
+* **Mensagens Citadas (Reply Quote)**: Exibição dos cartões de resposta citada dentro das bolhas do chat com o nome do autor resolvido (`extrairInfoCitada`).
+* **Trava Exclusiva por Técnico**:
+  - Quando o técnico **Arthur da Silva Salles** assume um atendimento, a caixa de entrada de outros operadores fica **bloqueada** (`🔒 Atendimento exclusivo do técnico: Arthur da Silva Salles`), ocultando o botão `✓ Finalizar`.
+  - Administradores (`admin`) possuem permissão especial para visualizar, responder e encerrar qualquer conversa a qualquer momento.
+
+---
+
+### 👥 Página 6: Gestão de Usuários & RBAC
+* **Controle de Acesso Baseado em Papéis (RBAC)**:
+  - **Administrador (`role: admin`)**: Acesso total ao painel, configurações, usuários, logs e capacidade de intervir/finalizar qualquer atendimento humano.
+  - **Operador (`role: operator`)**: Acesso restrito às conversas e ao módulo de Live Chat, respeitando a trava de exclusividade do técnico atribuído.
+* **CRUD Completo:** Criação, edição de nome, alteração de senha e ativação/desativação de contas de acesso ao painel.
+
+---
+
+### 📋 Página 7: Logs Operacionais & Auditoria
+* **Console de Logs em Tempo Real:** Acompanhamento de todas as requisições HTTP, eventos do WhatsApp, erros de API do GLPI e ações de atendentes.
+* **Filtros e Busca:** Busca rápida por nível de log (INFO, WARN, ERROR) e palavras-chave.
+
+---
+
+## 🔑 Requisitos & Integração Passo a Passo com o GLPI
+
+A integração entre o **GLPI-BOT** e o seu servidor GLPI utiliza a **API REST nativa**.
+
+### 1. Habilitar a API REST no GLPI:
+1. Acesse o GLPI com uma conta de Administrador.
+2. Vá em **Configurar > Geral > API**.
+3. Marque a opção **Habilitar API Rest** como `Sim`.
+4. Habilite **Habilitar login com credenciais de usuário** como `Sim`.
+5. Em **Clientes API**, clique em `+ Adicionar`, preencha o nome (ex: `GLPI-BOT`) e adicione o IP do servidor onde o bot rodará (ou deixe em branco para permitir qualquer IP).
+6. Copie o **App-Token** gerado.
+
+### 2. Gerar o User-Token:
+1. Acesse as preferências do usuário no GLPI (recomendado criar um usuário exclusivo para a automação, ex: `bot.whatsapp`).
+2. Acesse a aba **Chaves de acesso remoto** (Remote Access Keys).
+3. Clique em **Gerar chave API** para obter o **User-Token**.
+
+### 3. Permissões Necessárias no Perfil GLPI:
+Garantir que o perfil associado ao usuário do bot no GLPI possua as seguintes permissões:
+* **Usuários:** `Leitura` (para pesquisar o solicitante pelo número de telefone).
+* **Chamados:** `Criar` e `Atualizar` (para criar tickets e inserir acompanhamentos).
+* **Documentos:** `Criar` (para anexo de fotos e arquivos).
 
 ---
 
 ## 🚀 Instalação e Execução via Docker Compose
 
-O bot foi empacotado em uma imagem estável hospedada e pode ser executado facilmente através de containers.
-
 ### Arquivo `docker-compose.yml`
-Crie um diretório de trabalho no servidor e salve o arquivo com o seguinte conteúdo:
 
 ```yaml
 version: "3.8"
@@ -117,48 +215,103 @@ services:
     volumes:
       - ./db:/app/db
       - ./config:/app/config
+    environment:
+      - TZ=America/Sao_Paulo
 ```
 
-### Inicializando o Bot
-Execute no terminal da pasta do arquivo:
+### Inicializando o serviço:
 ```bash
 docker compose up -d
 ```
-Acompanhe os logs operacionais para verificar a correta inicialização dos servidores internos:
+
+### Acompanhar logs de execução:
 ```bash
 docker compose logs -f glpi-bot
 ```
 
 ---
 
-## ⚙️ Primeiro Acesso & Configurações Iniciais
+## 💻 Execução Nativa / Compilação Manual (Go)
 
-1. **Acessar o Painel:**
-   Abra o navegador em `http://IP_DO_SERVIDOR:33090`. As credenciais padrão de primeiro acesso são:
-   - **Usuário:** `admin`
-   - **Senha:** `admin123`
-   
-   > [!IMPORTANT]
-   > Lembre-se de alterar a senha administrativa padrão na aba **Configurações > Bloqueios & Senha** logo após o primeiro acesso para garantir a segurança da aplicação.
+Caso deseje executar ou compilar o projeto diretamente a partir do código fonte:
 
-2. **Emparelhar WhatsApp:**
-   Na aba **Status**, clique em **Conectar** para gerar o QR Code. Abra o seu WhatsApp no smartphone de suporte, clique em **Aparelhos conectados > Conectar um aparelho** e realize o escaneamento na tela.
+### Pré-requisitos:
+* Go 1.22 ou superior
+* GCC / Cgo habilitado (para compilação do SQLite)
 
-3. **Cadastrar Credenciais do GLPI:**
-   Acesse a aba **Configurações**, preencha o link absoluto da API Rest (ex: `https://meu-glpi/apirest.php`), o **App-Token** e o **User-Token** nos campos correspondentes e clique em **Salvar Configurações**.
+### Passos:
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/arthurjaexiste/GLPI-BOT.git
+cd GLPI-BOT
+
+# 2. Baixar as dependências
+go mod download
+
+# 3. Compilar a aplicação
+go build -o bot cmd/bot/main.go
+
+# 4. Executar o binário gerado
+./bot
+```
 
 ---
 
-## 🛠️ Resolução de Problemas Comuns
+## 📡 Documentação das APIs REST Internas
 
-### 1. QR Code não carrega ou sessão desconecta frequentemente
-- Certifique-se de que o container possui conexão ativa com a internet.
-- Se o bot travar na tela de conexão, vá em **Configurações > Manutenção do Sistema** e utilize o botão **Reiniciar Bot** para limpar a engine local do whatsmeow e iniciar uma nova varredura de QR Code limpa.
+O painel administrativo expõe endpoints JSON protegidos por autenticação de sessão:
 
-### 2. Chamados criados como "Usuário Anônimo" ou GlpiUser não localizado
-- Certifique-se de que o número do WhatsApp do solicitante está cadastrado no campo **Telefone** do seu respectivo usuário no GLPI no formato internacional sem o símbolo `+` (ex: `5511999999999`).
-- O Perfil (Profile) da conta que gerou o `User-Token` deve ter permissão para ler a lista de usuários no GLPI para executar buscas completas.
+| Método | Endpoint | Descrição | Permissão |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/me` | Retorna dados do usuário autenticado na sessão | Autenticado |
+| `GET` | `/api/chats` | Lista conversas ativas, últimos snippets e status | Autenticado |
+| `GET` | `/api/chats/messages` | Carrega o histórico de mensagens de um chat especifico | Autenticado |
+| `POST` | `/api/chats/send` | Envia mensagem de texto para o cliente no WhatsApp | Atribuído / Admin |
+| `POST` | `/api/chats/send-media` | Envia imagens, documentos ou áudios de voz em Base64 | Atribuído / Admin |
+| `POST` | `/api/chats/assume` | Assume o atendimento de uma conversa da fila | Operador / Admin |
+| `POST` | `/api/chats/close` | Finaliza o atendimento humano e reativa o bot | Atribuído / Admin |
+| `DELETE`| `/api/chats/delete` | Apaga o histórico de mensagens de uma conversa | Autenticado |
+| `GET` | `/api/users` | Lista usuários do sistema web | Apenas Admin |
+| `POST` | `/api/users` | Cria ou edita um usuário do sistema | Apenas Admin |
+| `DELETE`| `/api/users/delete` | Exclui um usuário do sistema | Apenas Admin |
 
-### 3. Falha de upload de arquivos anexados
-- O GLPI limita o tamanho padrão de uploads nas configurações de sistema php (`upload_max_filesize` e `post_max_size`). Certifique-se de que os limites do seu servidor GLPI toleram o envio de fotos ou documentos maiores.
-- Valide se o perfil do usuário do bot tem acesso para escrever na pasta física de armazenamento de documentos no servidor onde o GLPI está hospedado.
+---
+
+## 🛡️ Segurança, RBAC & Gestão de Mídias Zero-Disk
+
+### 🔒 Segurança e Isolamento de Sessão (RBAC):
+- O sistema utiliza **cookies de sessão seguros com identificador randômico de 32 bytes (Crypto/Rand)**.
+- Operadores não conseguem interferir em conversas atribuídas a outros técnicos a menos que possuam o papel `admin`.
+
+### 🧹 Gestão de Mídias Zero-Disk:
+- Mídias enviadas e recebidas são convertidas em **Base64 Data URLs** e armazenadas diretamente no SQLite.
+- A cada 6 horas, um daemon executa em background:
+  - Remove mídias Base64 com mais de 7 dias da tabela `chat_messages`.
+  - Exclui arquivos temporários residuais do diretório `static/uploads/`.
+  - Executa a instrução `VACUUM` no SQLite para liberar espaço físico em disco de forma transparente.
+
+---
+
+## 🛠️ Resolução de Problemas Comuns (Troubleshooting)
+
+### 1. O QR Code não carrega no painel
+- Verifique se a porta `33090` está aberta no firewall do servidor.
+- Caso o estado do Whatsmeow fique preso, clique em **Reiniciar Bot** no painel de configurações para limpar a sessão em memória e gerar um novo QR Code.
+
+### 2. Chamados abertos como "Usuário Anônimo"
+- Certifique-se de que o número do WhatsApp do solicitante está cadastrado no campo **Telefone** ou **Celular** do usuário correspondente dentro do GLPI.
+- O formato do telefone no GLPI deve ser informado no padrão internacional sem símbolos de adição (ex: `5575999999999`).
+
+### 3. As mídias enviadas pelo painel não chegam ao WhatsApp do cliente
+- Verifique se o formato do arquivo é suportado (Imagens: JPG, PNG, WEBP; Áudios: OGG, MP3; Documentos: PDF, DOCX, XLSX, TXT, ZIP).
+- Verifique nos logs se a conexão com os servidores do WhatsApp CDN está ativa.
+
+---
+
+## 📄 Licença e Contribuição
+
+Este projeto é distribuído sob a licença **MIT**. Sinta-se à vontade para contribuir com Pull Requests, reportar Issues ou sugerir novas funcionalidades.
+
+<p align="center">
+  Desenvolvido com ❤️ por <b>Arthur Salles</b>
+</p>
