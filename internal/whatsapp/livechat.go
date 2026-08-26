@@ -45,45 +45,26 @@ func obterAtendentesSuporte() []string {
 func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID types.JID, sender string) {
 	state.Mu.Lock()
 
-	if state.ActiveLiveChatUser == "" {
-		// Atendimento disponível: inicia direto
-		state.ActiveLiveChatUser = chatJID.String()
-		state.ActiveAgentName = ""
-		if uState, ok := state.Users[sender]; ok {
-			uState.Step = 100
-		}
-		nome := state.Names[sender]
-		state.Mu.Unlock()
-
-		fmt.Printf("👥 [LIVECHAT] Novo atendimento ao vivo iniciado para %s (%s)\n", nome, sender)
-		sendTextMessage(ctx, client, chatJID, formatarMensagem(config.GetConfig().MsgFilaSuporte, nil))
-		notificarSuporteNovoAtendimento(ctx, client, nome)
-	} else {
-		// Atendimento ocupado: coloca na fila
-		state.LiveChatQueue = append(state.LiveChatQueue, chatJID.String())
-		if uState, ok := state.Users[sender]; ok {
-			uState.Step = 99
-		}
-		pos := len(state.LiveChatQueue)
-		nome := state.Names[sender]
-		state.Mu.Unlock()
-
-		fmt.Printf("👥 [LIVECHAT] Atendimento ocupado. Adicionando %s (%s) à fila (Posição: %d)\n", nome, sender, pos)
-		sendTextMessage(ctx, client, chatJID, formatarMensagem(
-			config.GetConfig().MsgFilaEspera,
-			map[string]string{"posicao": fmt.Sprintf("%d", pos)},
-		))
+	// Atendimento disponível: inicia direto
+	state.SetAgentForUser(sender, "")
+	if uState, ok := state.Users[sender]; ok {
+		uState.Step = 100
 	}
+	nome := state.Names[sender]
+	state.Mu.Unlock()
+
+	fmt.Printf("👥 [LIVECHAT] Novo atendimento ao vivo iniciado para %s (%s)\n", nome, sender)
+	sendTextMessage(ctx, client, chatJID, formatarMensagem(config.GetConfig().MsgFilaSuporte, nil))
+	notificarSuporteNovoAtendimento(ctx, client, nome)
 }
 
-// encerrarChatAoVivo finaliza o atendimento ativo e promove o próximo da fila.
-
-// Função encerrarChatAoVivo executa a regra de negócio/rotina correspondente
 func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerradoPeloSuporte bool) {
 	state.Mu.Lock()
 	currentUserFull := state.ActiveLiveChatUser
-	state.ActiveLiveChatUser = ""
-	state.ActiveAgentName = ""
+	if currentUserFull != "" {
+		uNum := NormalizePhoneLocal(currentUserFull)
+		state.RemoveAgentForUser(uNum)
+	}
 	state.Mu.Unlock()
 
 	supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
@@ -132,11 +113,9 @@ func promoverProximoDaFila(ctx context.Context, client *whatsmeow.Client, suppor
 
 	nextUserFull := state.LiveChatQueue[0]
 	state.LiveChatQueue = state.LiveChatQueue[1:]
-	state.ActiveLiveChatUser = nextUserFull
-	state.ActiveAgentName = ""
-
 	nextUserJID, _ := types.ParseJID(nextUserFull)
 	nextUserNumber := NormalizePhoneLocal(nextUserJID.User)
+	state.SetAgentForUser(nextUserNumber, "")
 
 	if uState, ok := state.Users[nextUserNumber]; ok {
 		uState.Step = 100
@@ -226,7 +205,11 @@ func notificarSuporteNovoAtendimento(ctx context.Context, client *whatsmeow.Clie
 func processarMensagemDoSuporte(ctx context.Context, client *whatsmeow.Client, v *events.Message, textoLimpo string, encerrar bool) {
 	state.Mu.Lock()
 	activeUserFull := state.ActiveLiveChatUser
-	agenteAtual := state.ActiveAgentName
+	userNum := NormalizePhoneLocal(activeUserFull)
+	agenteAtual := state.GetAgentForUser(userNum)
+	if agenteAtual == "" {
+		agenteAtual = "Suporte"
+	}
 	state.Mu.Unlock()
 
 	if activeUserFull == "" {

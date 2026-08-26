@@ -47,17 +47,50 @@ var (
 	Names   = make(map[string]string)
 	UserIDs = make(map[string]int)
 
-	// Controle da fila do Chat ao Vivo
+	// Controle da fila e atendimentos do Chat ao Vivo (Mapeia: userNumber -> agentName)
+	ActiveLiveChats = make(map[string]string)
+	LiveChatQueue   []string
+
+	// Retrocompatibilidade
 	ActiveLiveChatUser string
 	ActiveAgentName    string
-	LiveChatQueue      []string
 )
+
+// GetAgentForUser retorna o nome do técnico responsável pelo usuário (ou vazio se não houver)
+func GetAgentForUser(userNumber string) string {
+	if ActiveLiveChats == nil {
+		return ""
+	}
+	return ActiveLiveChats[userNumber]
+}
+
+// SetAgentForUser atribui um técnico a um usuário
+func SetAgentForUser(userNumber, agentName string) {
+	if ActiveLiveChats == nil {
+		ActiveLiveChats = make(map[string]string)
+	}
+	ActiveLiveChats[userNumber] = agentName
+	ActiveLiveChatUser = userNumber
+	ActiveAgentName = agentName
+}
+
+// RemoveAgentForUser remove o atendimento ativo de um usuário
+func RemoveAgentForUser(userNumber string) {
+	if ActiveLiveChats != nil {
+		delete(ActiveLiveChats, userNumber)
+	}
+	if ActiveLiveChatUser == userNumber {
+		ActiveLiveChatUser = ""
+		ActiveAgentName = ""
+	}
+}
 
 // PersistedState encapsula os mapas globais para gravação física
 type PersistedState struct {
-	Users   map[string]*UserState `json:"users"`
-	Names   map[string]string     `json:"names"`
-	UserIDs map[string]int        `json:"user_ids"`
+	Users           map[string]*UserState `json:"users"`
+	Names           map[string]string     `json:"names"`
+	UserIDs         map[string]int        `json:"user_ids"`
+	ActiveLiveChats map[string]string     `json:"active_live_chats"`
 }
 
 // SaveState grava as informações atuais de sessões de usuários em disco
@@ -66,9 +99,10 @@ func SaveState() {
 	defer Mu.Unlock()
 
 	data := PersistedState{
-		Users:   Users,
-		Names:   Names,
-		UserIDs: UserIDs,
+		Users:           Users,
+		Names:           Names,
+		UserIDs:         UserIDs,
+		ActiveLiveChats: ActiveLiveChats,
 	}
 
 	jsonData, err := json.Marshal(data)
@@ -99,6 +133,9 @@ func LoadState() {
 		}
 		if stateData.UserIDs != nil {
 			UserIDs = stateData.UserIDs
+		}
+		if stateData.ActiveLiveChats != nil {
+			ActiveLiveChats = stateData.ActiveLiveChats
 		}
 	}
 }

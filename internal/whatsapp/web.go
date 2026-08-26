@@ -1374,10 +1374,7 @@ func StartWebServer() {
 
 		// Reseta a sessão de live chat se o usuário estivesse em suporte ou na fila
 		state.Mu.Lock()
-		if state.ActiveLiveChatUser != "" && NormalizePhoneLocal(state.ActiveLiveChatUser) == userNum {
-			state.ActiveLiveChatUser = ""
-			state.ActiveAgentName = ""
-		}
+		state.RemoveAgentForUser(userNum)
 		newQueue := []string{}
 		for _, q := range state.LiveChatQueue {
 			if NormalizePhoneLocal(q) != userNum {
@@ -1426,11 +1423,8 @@ func StartWebServer() {
 			uState.LastGreetingTime = time.Now().Add(-15 * time.Minute) // permite saudação imediata
 		}
 
-		// Se era o usuário ativo do live chat, libera
-		if state.ActiveLiveChatUser == targetJID.String() {
-			state.ActiveLiveChatUser = ""
-			state.ActiveAgentName = ""
-		}
+		// Libera a atribuição de técnico para este usuário
+		state.RemoveAgentForUser(userNumber)
 
 		// Também remove da fila se estivesse nela
 		for i, uFull := range state.LiveChatQueue {
@@ -1498,18 +1492,6 @@ func StartWebServer() {
 		userNumber := NormalizePhoneLocal(targetJID.User)
 		state.Mu.Lock()
 		uState, exists := state.Users[userNumber]
-		if !exists {
-			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
-			state.Users[userNumber] = uState
-		}
-		uState.Step = 100
-
-		// Define como o usuário ativo do Chat ao Vivo se não houver outro ativo
-		if state.ActiveLiveChatUser == "" {
-			state.ActiveLiveChatUser = targetJID.String()
-		}
-		state.Mu.Unlock()
-
 		// Obtém o nome do técnico logado para identificação no WhatsApp
 		agentName := ""
 		if sess, ok := getUserSession(r); ok {
@@ -1521,12 +1503,20 @@ func StartWebServer() {
 		}
 		if agentName == "" {
 			state.Mu.Lock()
-			agentName = state.ActiveAgentName
+			agentName = state.GetAgentForUser(userNumber)
 			state.Mu.Unlock()
 		}
 		if agentName == "" {
 			agentName = "Suporte"
 		}
+
+		if !exists {
+			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
+			state.Users[userNumber] = uState
+		}
+		uState.Step = 100
+		state.SetAgentForUser(userNumber, agentName)
+		state.Mu.Unlock()
 
 		// Envia para o WhatsApp do cliente formatado com o bloco de citação > e o nome do técnico
 		waText := fmt.Sprintf("> 👨‍💻 *%s:*\n%s", agentName, req.Text)
@@ -1629,16 +1619,28 @@ func StartWebServer() {
 
 		// Coloca o usuário em chat ao vivo/pausa o bot automático
 		userNumber := NormalizePhoneLocal(targetJID.User)
+		agentName := ""
+		if sess, ok := getUserSession(r); ok {
+			if sess.Name != "" {
+				agentName = sess.Name
+			} else if sess.Username != "" {
+				agentName = sess.Username
+			}
+		}
 		state.Mu.Lock()
+		if agentName == "" {
+			agentName = state.GetAgentForUser(userNumber)
+		}
+		if agentName == "" {
+			agentName = "Suporte"
+		}
 		uState, exists := state.Users[userNumber]
 		if !exists {
 			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
 			state.Users[userNumber] = uState
 		}
 		uState.Step = 100
-		if state.ActiveLiveChatUser == "" {
-			state.ActiveLiveChatUser = targetJID.String()
-		}
+		state.SetAgentForUser(userNumber, agentName)
 		state.Mu.Unlock()
 
 		// Prepara envio no whatsmeow
