@@ -467,8 +467,6 @@ func StartWebServer() {
 		tmpl.Execute(w, nil)
 	})
 
-
-
 	// ROTA DE MENSAGENS DO SISTEMA (Exclusivo Administrador)
 	http.HandleFunc("/messages", func(w http.ResponseWriter, r *http.Request) {
 		session, ok := getUserSession(r)

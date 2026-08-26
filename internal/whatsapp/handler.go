@@ -268,8 +268,6 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 		return
 	}
 
-
-
 	// ── Encerramento do chat ao vivo ──────────────────────────────────────
 	if textLower == "#encerrar" && activeUserFull != "" {
 		activeJID, _ := types.ParseJID(activeUserFull)

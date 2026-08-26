@@ -754,4 +754,3 @@ func AutenticarUsuarioGLPI(username, password string) (bool, error) {
 
 	return false, lastErr
 }
-
