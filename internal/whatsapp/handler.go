@@ -252,10 +252,11 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 			msgType = "poll"
 		}
 
+		replyToName, replyToText := extrairInfoCitada(v)
 		cleanChatJID := CleanJIDString(chatJID.String())
 		_, _ = webDB.Exec(
-			"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, media_url, wa_message_id) VALUES (?, ?, ?, ?, ?, 0, ?, ?)",
-			cleanChatJID, senderName, v.Info.Sender.String(), msgText, msgType, mediaURL, v.Info.ID,
+			"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, media_url, reply_to_name, reply_to_text, wa_message_id) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)",
+			cleanChatJID, senderName, v.Info.Sender.String(), msgText, msgType, mediaURL, replyToName, replyToText, v.Info.ID,
 		)
 	}
 

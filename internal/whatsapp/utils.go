@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"bot-glpi/internal/config"
+	"bot-glpi/internal/state"
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
@@ -396,6 +397,74 @@ func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *w
 	}
 
 	return rawText, imgMsg, docMsg, videoMsg, audioMsg
+}
+
+// extrairInfoCitada extrai informações de mensagem citada (resposta) enviada pelo usuário no WhatsApp.
+func extrairInfoCitada(v *events.Message) (string, string) {
+	msg := unwrapMessage(v.Message)
+	if msg == nil {
+		return "", ""
+	}
+
+	var ctxInfo *waE2E.ContextInfo
+	switch {
+	case msg.GetExtendedTextMessage() != nil:
+		ctxInfo = msg.GetExtendedTextMessage().GetContextInfo()
+	case msg.GetImageMessage() != nil:
+		ctxInfo = msg.GetImageMessage().GetContextInfo()
+	case msg.GetAudioMessage() != nil:
+		ctxInfo = msg.GetAudioMessage().GetContextInfo()
+	case msg.GetDocumentMessage() != nil:
+		ctxInfo = msg.GetDocumentMessage().GetContextInfo()
+	case msg.GetVideoMessage() != nil:
+		ctxInfo = msg.GetVideoMessage().GetContextInfo()
+	}
+
+	if ctxInfo == nil || ctxInfo.GetQuotedMessage() == nil {
+		return "", ""
+	}
+
+	quoted := unwrapMessage(ctxInfo.GetQuotedMessage())
+	if quoted == nil {
+		return "", ""
+	}
+
+	var quotedText string
+	switch {
+	case quoted.GetExtendedTextMessage() != nil:
+		quotedText = quoted.GetExtendedTextMessage().GetText()
+	case quoted.GetConversation() != "":
+		quotedText = quoted.GetConversation()
+	case quoted.GetImageMessage() != nil:
+		quotedText = "[Imagem]"
+		if quoted.GetImageMessage().GetCaption() != "" {
+			quotedText = "[Imagem] " + quoted.GetImageMessage().GetCaption()
+		}
+	case quoted.GetAudioMessage() != nil:
+		quotedText = "[Áudio]"
+	case quoted.GetDocumentMessage() != nil:
+		quotedText = "[Documento] " + quoted.GetDocumentMessage().GetFileName()
+	}
+
+	replyToName := "Contato"
+	participant := ctxInfo.GetParticipant()
+	if participant != "" {
+		pNum := NormalizePhoneLocal(participant)
+		supportNum := getSupportNumber()
+		if phonesSufixMatch(pNum, supportNum, 8) {
+			replyToName = "Suporte / Bot"
+		} else {
+			state.Mu.Lock()
+			if n, ok := state.Names[pNum]; ok && n != "" {
+				replyToName = n
+			} else {
+				replyToName = pNum
+			}
+			state.Mu.Unlock()
+		}
+	}
+
+	return replyToName, quotedText
 }
 
 // ─── Horário de atendimento ───────────────────────────────────────────────────
