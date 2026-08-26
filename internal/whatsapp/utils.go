@@ -193,6 +193,24 @@ func sendQuotedTextMessage(ctx context.Context, client *whatsmeow.Client, jid ty
 	_, _ = sendMessage(ctx, client, jid, msg)
 }
 
+// CleanJIDString normaliza qualquer JID removendo sufixos de dispositivo AD (:1, :12) e padronizando para @s.whatsapp.net.
+func CleanJIDString(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	parsed, err := types.ParseJID(raw)
+	if err != nil {
+		user := strings.Split(raw, "@")[0]
+		user = strings.Split(user, ":")[0]
+		return user + "@s.whatsapp.net"
+	}
+	nonAD := parsed.ToNonAD()
+	if nonAD.Server == "c.us" || nonAD.Server == "" {
+		nonAD.Server = types.DefaultUserServer
+	}
+	return nonAD.String()
+}
+
 // sendMessage envia qualquer tipo de mensagem, simulando digitação para chats de usuário.
 
 // Função sendMessage executa a regra de negócio/rotina correspondente
@@ -233,9 +251,10 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 			}
 
 			if msgText != "" {
+				cleanChatJID := CleanJIDString(jid.String())
 				_, _ = webDB.Exec(
 					"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, wa_message_id) VALUES (?, ?, ?, ?, ?, 1, ?)",
-					jid.String(), "GLPI-BOT (Bot)", "", msgText, msgType, resp.ID,
+					cleanChatJID, "GLPI-BOT (Bot)", "", msgText, msgType, resp.ID,
 				)
 			}
 		}

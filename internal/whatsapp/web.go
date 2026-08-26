@@ -142,6 +142,10 @@ func initWebDB() {
 	_, _ = webDB.Exec(`ALTER TABLE chat_messages ADD COLUMN reply_to_text TEXT`)
 	_, _ = webDB.Exec(`ALTER TABLE chat_messages ADD COLUMN wa_message_id TEXT`)
 
+	// Padroniza e limpa JIDs antigos no banco de dados para evitar duplicidades
+	_, _ = webDB.Exec(`UPDATE chat_messages SET chat_jid = SUBSTR(chat_jid, 1, INSTR(chat_jid, ':') - 1) || '@s.whatsapp.net' WHERE chat_jid LIKE '%:%'`)
+	_, _ = webDB.Exec(`UPDATE chat_messages SET chat_jid = REPLACE(chat_jid, '@c.us', '@s.whatsapp.net') WHERE chat_jid LIKE '%@c.us'`)
+
 	var adminID int
 	var adminPass, adminRole string
 	err = webDB.QueryRow("SELECT id, password, role FROM users WHERE username = 'admin'").Scan(&adminID, &adminPass, &adminRole)
@@ -1269,18 +1273,22 @@ func StartWebServer() {
 			return
 		}
 
-		jid := r.URL.Query().Get("jid")
-		if jid == "" {
+		rawJID := r.URL.Query().Get("jid")
+		if rawJID == "" {
 			http.Error(w, "JID é obrigatório", http.StatusBadRequest)
 			return
 		}
 
+		cleanJID := CleanJIDString(rawJID)
+		userPhone := NormalizePhoneLocal(cleanJID)
+		userPattern := "%" + userPhone + "%"
+
 		rows, err := webDB.Query(`
 			SELECT id, sender_name, sender_jid, message_text, message_type, is_from_me, timestamp, COALESCE(media_url, ''), COALESCE(reply_to_name, ''), COALESCE(reply_to_text, ''), COALESCE(wa_message_id, '') 
 			FROM chat_messages 
-			WHERE chat_jid = ? 
+			WHERE chat_jid = ? OR chat_jid = ? OR chat_jid LIKE ?
 			ORDER BY id ASC
-		`, jid)
+		`, cleanJID, rawJID, userPattern)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Erro ao buscar mensagens: %v", err), http.StatusInternalServerError)
 			return

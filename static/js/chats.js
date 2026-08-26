@@ -35,16 +35,16 @@ document.addEventListener("DOMContentLoaded", () => {
     loadChatsList();
     loadAgentsList();
 
-    // Inicia polling periódico (atualiza mensagens a cada 3s e lista de chats a cada 6s)
+    // Inicia polling periódico em alta frequência para mensagens em tempo real
     setInterval(() => {
         if (activeChatJID) {
             refreshActiveMessages();
         }
-    }, 3000);
+    }, 1500);
 
     setInterval(() => {
         loadChatsList(true); // silent load
-    }, 6000);
+    }, 2000);
 });
 
 // Busca a lista de chats e exibe na barra lateral
