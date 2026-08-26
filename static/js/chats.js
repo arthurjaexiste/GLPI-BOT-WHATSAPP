@@ -643,10 +643,34 @@ function showToast(message, isSuccess = true) {
     }, 3000);
 }
 
-// Apaga uma conversa e limpa o histórico
-// Função deleteChat manipula a rotina correspondente na interface do painel
+// Limpa completamente o estado da janela de chat e reseta para a tela inicial
+function clearActiveChatUI() {
+    activeChatJID = null;
+    activeChatName = "";
+    activeChatStatus = null;
+    lastMessagesCount = 0;
+
+    const placeholder = document.getElementById("chat-placeholder");
+    const container = document.getElementById("chat-messages-container");
+    const headerName = document.getElementById("active-chat-name");
+    const headerJID = document.getElementById("active-chat-jid");
+    const avatarContainer = document.getElementById("active-chat-avatar");
+    const assumeBanner = document.getElementById("assume-chat-banner");
+
+    if (placeholder) placeholder.style.display = "flex";
+    if (container) container.innerHTML = "";
+    if (headerName) headerName.textContent = "";
+    if (headerJID) headerJID.textContent = "";
+    if (avatarContainer) avatarContainer.innerHTML = "👤";
+    if (assumeBanner) assumeBanner.style.display = "none";
+
+    clearSelectedMedia();
+    cancelReplyQuote();
+}
+
+// Apaga uma conversa específica
 async function deleteChat(jid) {
-    if (!confirm("Tem certeza que deseja apagar esta conversa e todo o seu histórico? Esta ação é irreversível e resetará o atendimento do bot para este contato.")) {
+    if (!confirm("Tem certeza que deseja apagar esta conversa e todo o histórico?")) {
         return;
     }
 
@@ -659,15 +683,16 @@ async function deleteChat(jid) {
 
         showToast("Conversa apagada com sucesso!");
 
-        // Se a conversa apagada for a atualmente ativa, limpa a janela de chat e mostra placeholder
-        if (activeChatJID === jid) {
-            activeChatJID = null;
-            activeChatName = "";
-            document.getElementById("chat-placeholder").style.display = "flex";
+        // Se a conversa apagada for a atualmente ativa ou tiver o mesmo número, reseta a interface
+        const deletedNum = formatJIDToPhone(jid);
+        const activeNum = activeChatJID ? formatJIDToPhone(activeChatJID) : "";
+
+        if (!activeChatJID || activeChatJID === jid || deletedNum === activeNum) {
+            clearActiveChatUI();
         }
 
         // Recarrega a lista de chats
-        loadChatsList();
+        await loadChatsList();
     } catch (error) {
         console.error(error);
         showToast("Falha ao apagar conversa.", false);

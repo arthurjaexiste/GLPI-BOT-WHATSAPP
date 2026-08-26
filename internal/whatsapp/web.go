@@ -1357,17 +1357,31 @@ func StartWebServer() {
 			return
 		}
 
-		// Remove todas as mensagens do banco
-		_, err := webDB.Exec("DELETE FROM chat_messages WHERE chat_jid = ?", jid)
+		cleanJID := CleanJIDString(jid)
+		userNum := NormalizePhoneLocal(cleanJID)
+		userPattern := "%" + userNum + "%"
+
+		// Remove todas as mensagens do banco correspondentes ao JID ou ao número de telefone
+		_, err := webDB.Exec("DELETE FROM chat_messages WHERE chat_jid = ? OR chat_jid = ? OR chat_jid LIKE ?", cleanJID, jid, userPattern)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Erro ao apagar chat: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		// Reseta o estado do bot do usuário
-		userJIDStr := NormalizePhoneLocal(jid)
+		// Reseta a sessão de live chat se o usuário estivesse em suporte ou na fila
 		state.Mu.Lock()
-		delete(state.Users, userJIDStr)
+		if state.ActiveLiveChatUser != "" && NormalizePhoneLocal(state.ActiveLiveChatUser) == userNum {
+			state.ActiveLiveChatUser = ""
+			state.ActiveAgentName = ""
+		}
+		newQueue := []string{}
+		for _, q := range state.LiveChatQueue {
+			if NormalizePhoneLocal(q) != userNum {
+				newQueue = append(newQueue, q)
+			}
+		}
+		state.LiveChatQueue = newQueue
+		delete(state.Users, userNum)
 		state.Mu.Unlock()
 
 		w.Header().Set("Content-Type", "application/json")
