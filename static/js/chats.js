@@ -32,11 +32,16 @@ function updateChatInputLockState(status, agentName) {
     const sendBtn = document.getElementById("btn-send-msg");
     const recBtn = document.getElementById("btn-record-audio");
     const fileBtn = document.querySelector("button[title*='Anexar']");
-    const closeBtn = document.querySelector("button[title*='Finalizar']");
+    const closeBtn = document.getElementById("btn-close-chat") || document.querySelector("button[title*='Finalizar']");
 
     const myName = (currentUserInfo && (currentUserInfo.name || currentUserInfo.username)) || "";
-
     const isAssignedToOther = (status === "live_chat" && agentName && myName && agentName !== myName);
+
+    const canClose = (status === "live_chat") && (!agentName || !myName || agentName === myName);
+    if (closeBtn) {
+        closeBtn.style.display = canClose ? "inline-flex" : "none";
+        closeBtn.disabled = !canClose;
+    }
 
     if (isAssignedToOther) {
         if (input) {
@@ -56,10 +61,6 @@ function updateChatInputLockState(status, agentName) {
             fileBtn.disabled = true;
             fileBtn.classList.add("opacity-50", "cursor-not-allowed");
         }
-        if (closeBtn) {
-            closeBtn.disabled = true;
-            closeBtn.classList.add("opacity-50", "cursor-not-allowed");
-        }
     } else {
         if (input) {
             input.disabled = false;
@@ -77,10 +78,6 @@ function updateChatInputLockState(status, agentName) {
         if (fileBtn) {
             fileBtn.disabled = false;
             fileBtn.classList.remove("opacity-50", "cursor-not-allowed");
-        }
-        if (closeBtn) {
-            closeBtn.disabled = false;
-            closeBtn.classList.remove("opacity-50", "cursor-not-allowed");
         }
     }
 }
