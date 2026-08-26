@@ -1524,8 +1524,8 @@ func StartWebServer() {
 			agentName = "Suporte"
 		}
 
-		// Envia para o WhatsApp do cliente formatado com o nome do técnico
-		waText := fmt.Sprintf("👨‍💻 *%s:*\n\n%s", agentName, req.Text)
+		// Envia para o WhatsApp do cliente formatado com o bloco de citação > e o nome do técnico
+		waText := fmt.Sprintf("> 👨‍💻 *%s:*\n%s", agentName, req.Text)
 
 		if req.ReplyToText != "" {
 			qJID := req.QuotedJID

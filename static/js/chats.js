@@ -362,8 +362,12 @@ function stopAndSendAudioRecording() {
 }
 
 function replyToMessage(senderName, originalText, waMsgId = '', senderJid = '') {
+    let cleanName = senderName;
+    if (!cleanName || cleanName === "Contato" || cleanName.startsWith("17188") || (cleanName.length >= 10 && !isNaN(cleanName))) {
+        cleanName = activeChatName || formatJIDToPhone(activeChatJID);
+    }
     activeReplyQuote = {
-        name: senderName || activeChatName || "Contato",
+        name: cleanName,
         text: originalText || "",
         quoted_id: waMsgId || "",
         quoted_jid: senderJid || ""
@@ -425,9 +429,13 @@ function renderMessages(messages, forceScroll = false) {
         // Renderização de Mensagem Citada (WhatsApp Quote Box)
         let quoteHTML = "";
         if (msg.reply_to_text) {
+            let authorName = msg.reply_to_name || 'Contato';
+            if (!authorName || authorName === 'Contato' || authorName.startsWith("17188") || (authorName.length >= 10 && !isNaN(authorName))) {
+                authorName = activeChatName || formatJIDToPhone(activeChatJID);
+            }
             quoteHTML = `
                 <div class="whatsapp-quote-box">
-                    <div class="whatsapp-quote-author">${escapeHTML(msg.reply_to_name || 'Contato')}</div>
+                    <div class="whatsapp-quote-author">${escapeHTML(authorName)}</div>
                     <div class="whatsapp-quote-text truncate">${escapeHTML(msg.reply_to_text)}</div>
                 </div>
             `;

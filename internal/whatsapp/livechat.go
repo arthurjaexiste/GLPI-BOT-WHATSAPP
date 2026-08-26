@@ -249,7 +249,7 @@ func processarMensagemDoSuporte(ctx context.Context, client *whatsmeow.Client, v
 	videoMsg := v.Message.GetVideoMessage()
 
 	if imgMsg == nil && docMsg == nil && audioMsg == nil && videoMsg == nil {
-		sendTextMessage(ctx, client, userJID, fmt.Sprintf("👨‍💻 *%s:*\n\n%s", agenteAtual, textoLimpo))
+		sendTextMessage(ctx, client, userJID, fmt.Sprintf("> 👨‍💻 *%s:*\n%s", agenteAtual, textoLimpo))
 	} else {
 		_, _ = sendMessage(ctx, client, userJID, v.Message)
 	}

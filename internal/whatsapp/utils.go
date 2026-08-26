@@ -448,11 +448,29 @@ func extrairInfoCitada(v *events.Message) (string, string) {
 
 	replyToName := "Contato"
 	participant := ctxInfo.GetParticipant()
+
+	state.Mu.Lock()
+	agenteAtual := state.ActiveAgentName
+	state.Mu.Unlock()
+
+	if agenteAtual == "" {
+		agenteAtual = "Suporte"
+	}
+
 	if participant != "" {
 		pNum := NormalizePhoneLocal(participant)
 		supportNum := getSupportNumber()
-		if phonesSufixMatch(pNum, supportNum, 8) {
-			replyToName = "Suporte / Bot"
+
+		isBotOrSupport := phonesSufixMatch(pNum, supportNum, 8)
+		if GlobalClient != nil && GlobalClient.Store != nil && GlobalClient.Store.ID != nil {
+			botUserNum := NormalizePhoneLocal(GlobalClient.Store.ID.User)
+			if phonesSufixMatch(pNum, botUserNum, 8) {
+				isBotOrSupport = true
+			}
+		}
+
+		if isBotOrSupport {
+			replyToName = agenteAtual
 		} else {
 			state.Mu.Lock()
 			if n, ok := state.Names[pNum]; ok && n != "" {
@@ -462,6 +480,8 @@ func extrairInfoCitada(v *events.Message) (string, string) {
 			}
 			state.Mu.Unlock()
 		}
+	} else {
+		replyToName = agenteAtual
 	}
 
 	return replyToName, quotedText
