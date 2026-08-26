@@ -35,3 +35,12 @@ db/
 
 # Binarios gerados
 /bot
+
+# Uploads temporarios
+static/uploads/*
+!static/uploads/.gitkeep
+!static/uploads/.gitignore
+
+# Docker Compose
+docker-compose*.yml
+docker-compose*.yaml

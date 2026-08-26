@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -141,6 +142,10 @@ func initWebDB() {
 	_, _ = webDB.Exec(`ALTER TABLE chat_messages ADD COLUMN reply_to_text TEXT`)
 	_, _ = webDB.Exec(`ALTER TABLE chat_messages ADD COLUMN wa_message_id TEXT`)
 
+	// Padroniza e limpa JIDs antigos no banco de dados para evitar duplicidades
+	_, _ = webDB.Exec(`UPDATE chat_messages SET chat_jid = SUBSTR(chat_jid, 1, INSTR(chat_jid, ':') - 1) || '@s.whatsapp.net' WHERE chat_jid LIKE '%:%'`)
+	_, _ = webDB.Exec(`UPDATE chat_messages SET chat_jid = REPLACE(chat_jid, '@c.us', '@s.whatsapp.net') WHERE chat_jid LIKE '%@c.us'`)
+
 	var adminID int
 	var adminPass, adminRole string
 	err = webDB.QueryRow("SELECT id, password, role FROM users WHERE username = 'admin'").Scan(&adminID, &adminPass, &adminRole)
@@ -164,6 +169,64 @@ func initWebDB() {
 	}
 
 	fmt.Println("✅ Banco de dados do Painel Web inicializado com sucesso.")
+	iniciarRotinaLimpezaMidias()
+}
+
+// iniciarRotinaLimpezaMidias roda a cada 6 horas e remove mídias em Base64 com mais de 7 dias para liberar espaço no banco.
+func iniciarRotinaLimpezaMidias() {
+	go func() {
+		executarLimpezaMidias()
+		ticker := time.NewTicker(6 * time.Hour)
+		for range ticker.C {
+			executarLimpezaMidias()
+		}
+	}()
+}
+
+func executarLimpezaMidias() {
+	if webDB != nil {
+		res, err := webDB.Exec(`
+			UPDATE chat_messages 
+			SET media_url = '' 
+			WHERE timestamp < datetime('now', '-7 days') 
+			  AND media_url LIKE 'data:%'
+		`)
+		if err != nil {
+			fmt.Printf("🚨 Erro ao executar rotina de limpeza de mídias antigas no banco: %v\n", err)
+		} else {
+			rows, _ := res.RowsAffected()
+			if rows > 0 {
+				fmt.Printf("🧹 [LIMPEZA BANCO DB] %d mídias em Base64 com mais de 7 dias foram removidas do banco! (Histórico de texto mantido intacto)\n", rows)
+				_, _ = webDB.Exec("VACUUM")
+			}
+		}
+	}
+
+	// Limpa fisicamente arquivos temporários residuais do disco na pasta static/uploads
+	uploadDir := filepath.Join(getWebDir(), "static", "uploads")
+	entries, errRead := os.ReadDir(uploadDir)
+	if errRead == nil {
+		limite7Dias := time.Now().Add(-7 * 24 * time.Hour)
+		removidosCount := 0
+
+		for _, entry := range entries {
+			if entry.IsDir() || entry.Name() == ".gitkeep" || entry.Name() == ".gitignore" {
+				continue
+			}
+
+			filePath := filepath.Join(uploadDir, entry.Name())
+			info, errInfo := entry.Info()
+			if errInfo == nil && info.ModTime().Before(limite7Dias) {
+				if errRemove := os.Remove(filePath); errRemove == nil {
+					removidosCount++
+				}
+			}
+		}
+
+		if removidosCount > 0 {
+			fmt.Printf("🧹 [LIMPEZA DISCO] %d arquivos temporários com mais de 7 dias foram excluídos da pasta uploads do servidor!\n", removidosCount)
+		}
+	}
 }
 
 // Gera um token de sessão aleatório
@@ -407,8 +470,6 @@ func StartWebServer() {
 		}
 		tmpl.Execute(w, nil)
 	})
-
-
 
 	// ROTA DE MENSAGENS DO SISTEMA (Exclusivo Administrador)
 	http.HandleFunc("/messages", func(w http.ResponseWriter, r *http.Request) {
@@ -1107,6 +1168,7 @@ func StartWebServer() {
 			LastMsg    string `json:"last_message"`
 			Timestamp  string `json:"timestamp"`
 			UserStatus string `json:"status"` // "live_chat", "queue", "bot"
+			AgentName  string `json:"agent_name,omitempty"`
 		}
 
 		chats := []ChatInfo{}
@@ -1140,6 +1202,9 @@ func StartWebServer() {
 				if uState, exists := state.Users[userJIDStr]; exists {
 					if uState.Step == 100 {
 						c.UserStatus = "live_chat"
+						if NormalizePhoneLocal(state.ActiveLiveChatUser) == userJIDStr && state.ActiveAgentName != "" {
+							c.AgentName = state.ActiveAgentName
+						}
 					} else if uState.Step == 99 {
 						c.UserStatus = "queue"
 					}
@@ -1212,18 +1277,22 @@ func StartWebServer() {
 			return
 		}
 
-		jid := r.URL.Query().Get("jid")
-		if jid == "" {
+		rawJID := r.URL.Query().Get("jid")
+		if rawJID == "" {
 			http.Error(w, "JID é obrigatório", http.StatusBadRequest)
 			return
 		}
 
+		cleanJID := CleanJIDString(rawJID)
+		userPhone := NormalizePhoneLocal(cleanJID)
+		userPattern := "%" + userPhone + "%"
+
 		rows, err := webDB.Query(`
 			SELECT id, sender_name, sender_jid, message_text, message_type, is_from_me, timestamp, COALESCE(media_url, ''), COALESCE(reply_to_name, ''), COALESCE(reply_to_text, ''), COALESCE(wa_message_id, '') 
 			FROM chat_messages 
-			WHERE chat_jid = ? 
+			WHERE chat_jid = ? OR chat_jid = ? OR chat_jid LIKE ?
 			ORDER BY id ASC
-		`, jid)
+		`, cleanJID, rawJID, userPattern)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Erro ao buscar mensagens: %v", err), http.StatusInternalServerError)
 			return
@@ -1292,17 +1361,28 @@ func StartWebServer() {
 			return
 		}
 
-		// Remove todas as mensagens do banco
-		_, err := webDB.Exec("DELETE FROM chat_messages WHERE chat_jid = ?", jid)
+		cleanJID := CleanJIDString(jid)
+		userNum := NormalizePhoneLocal(cleanJID)
+		userPattern := "%" + userNum + "%"
+
+		// Remove todas as mensagens do banco correspondentes ao JID ou ao número de telefone
+		_, err := webDB.Exec("DELETE FROM chat_messages WHERE chat_jid = ? OR chat_jid = ? OR chat_jid LIKE ?", cleanJID, jid, userPattern)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Erro ao apagar chat: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		// Reseta o estado do bot do usuário
-		userJIDStr := NormalizePhoneLocal(jid)
+		// Reseta a sessão de live chat se o usuário estivesse em suporte ou na fila
 		state.Mu.Lock()
-		delete(state.Users, userJIDStr)
+		state.RemoveAgentForUser(userNum)
+		newQueue := []string{}
+		for _, q := range state.LiveChatQueue {
+			if NormalizePhoneLocal(q) != userNum {
+				newQueue = append(newQueue, q)
+			}
+		}
+		state.LiveChatQueue = newQueue
+		delete(state.Users, userNum)
 		state.Mu.Unlock()
 
 		w.Header().Set("Content-Type", "application/json")
@@ -1335,7 +1415,32 @@ func StartWebServer() {
 
 		userNumber := NormalizePhoneLocal(targetJID.User)
 
+		agentName := ""
+		isAdmin := false
+		if sess, ok := getUserSession(r); ok {
+			isAdmin = (sess.Role == "admin")
+			if sess.Name != "" {
+				agentName = sess.Name
+			} else if sess.Username != "" {
+				agentName = sess.Username
+			}
+		}
+
 		state.Mu.Lock()
+		assignedAgent := state.GetAgentForUser(userNumber)
+		// SE O ATENDIMENTO PERTENCE A OUTRO TÉCNICO E NÃO É ADMIN -> NÃO PERMITE FINALIZAR!
+		if !isAdmin && assignedAgent != "" && agentName != "" && assignedAgent != agentName {
+			state.Mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "error",
+				"message": fmt.Sprintf("🚨 Apenas o técnico *%s* ou um Administrador pode finalizar este atendimento!", assignedAgent),
+				"agent":   assignedAgent,
+			})
+			return
+		}
+
 		uState, exists := state.Users[userNumber]
 		if exists {
 			// Reseta o passo para voltar ao bot
@@ -1343,11 +1448,8 @@ func StartWebServer() {
 			uState.LastGreetingTime = time.Now().Add(-15 * time.Minute) // permite saudação imediata
 		}
 
-		// Se era o usuário ativo do live chat, libera
-		if state.ActiveLiveChatUser == targetJID.String() {
-			state.ActiveLiveChatUser = ""
-			state.ActiveAgentName = ""
-		}
+		// Libera a atribuição de técnico para este usuário
+		state.RemoveAgentForUser(userNumber)
 
 		// Também remove da fila se estivesse nela
 		for i, uFull := range state.LiveChatQueue {
@@ -1413,36 +1515,75 @@ func StartWebServer() {
 
 		// Coloca o usuário em chat ao vivo/pausa o bot automático
 		userNumber := NormalizePhoneLocal(targetJID.User)
+
+		// Obtém o nome do técnico logado para identificação no WhatsApp
+		agentName := ""
+		isAdmin := false
+		if sess, ok := getUserSession(r); ok {
+			isAdmin = (sess.Role == "admin")
+			if sess.Name != "" {
+				agentName = sess.Name
+			} else if sess.Username != "" {
+				agentName = sess.Username
+			}
+		}
+		if agentName == "" {
+			agentName = "Suporte"
+		}
+
 		state.Mu.Lock()
+		assignedAgent := state.GetAgentForUser(userNumber)
 		uState, exists := state.Users[userNumber]
+		isLiveChat := exists && uState.Step == 100
+
+		// SE O ATENDIMENTO JÁ ESTÁ EM LIVE CHAT COM OUTRO TÉCNICO E NÃO É ADMIN -> BLOQUEIA O ENVIO DE MENSAGENS!
+		if !isAdmin && isLiveChat && assignedAgent != "" && assignedAgent != agentName {
+			state.Mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "error",
+				"message": fmt.Sprintf("🚨 Apenas o técnico *%s* ou um Administrador pode responder esta conversa!", assignedAgent),
+				"agent":   assignedAgent,
+			})
+			return
+		}
+
 		if !exists {
 			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
 			state.Users[userNumber] = uState
 		}
 		uState.Step = 100
-
-		// Define como o usuário ativo do Chat ao Vivo se não houver outro ativo
-		if state.ActiveLiveChatUser == "" {
-			state.ActiveLiveChatUser = targetJID.String()
-		}
+		state.SetAgentForUser(userNumber, agentName)
 		state.Mu.Unlock()
+
+		// Envia para o WhatsApp do cliente formatado com o bloco de citação > e o nome do técnico
+		waText := fmt.Sprintf("> 👨‍💻 *%s:*\n%s", agentName, req.Text)
 
 		if req.ReplyToText != "" {
 			qJID := req.QuotedJID
 			if qJID == "" {
 				qJID = targetJID.String()
 			}
-			sendQuotedTextMessage(context.Background(), client, targetJID, req.Text, qJID, req.ReplyToText, req.QuotedID)
+			sendQuotedTextMessage(context.Background(), client, targetJID, waText, qJID, req.ReplyToText, req.QuotedID)
 		} else {
-			sendTextMessage(context.Background(), client, targetJID, req.Text)
+			sendTextMessage(context.Background(), client, targetJID, waText)
 		}
 
-		// Grava as informações da resposta citada na última mensagem enviada
-		if webDB != nil && req.ReplyToText != "" {
-			_, _ = webDB.Exec(
-				"UPDATE chat_messages SET reply_to_name = ?, reply_to_text = ? WHERE id = (SELECT MAX(id) FROM chat_messages WHERE chat_jid = ? AND is_from_me = 1)",
-				req.ReplyToName, req.ReplyToText, targetJID.String(),
-			)
+		// Atualiza a mensagem no banco para exibir o texto limpo no painel (sem a tag) e o nome do técnico
+		cleanChatJID := CleanJIDString(targetJID.String())
+		if webDB != nil {
+			if req.ReplyToText != "" {
+				_, _ = webDB.Exec(
+					"UPDATE chat_messages SET message_text = ?, sender_name = ?, reply_to_name = ?, reply_to_text = ? WHERE id = (SELECT MAX(id) FROM chat_messages WHERE (chat_jid = ? OR chat_jid = ?) AND is_from_me = 1)",
+					req.Text, agentName, req.ReplyToName, req.ReplyToText, cleanChatJID, targetJID.String(),
+				)
+			} else {
+				_, _ = webDB.Exec(
+					"UPDATE chat_messages SET message_text = ?, sender_name = ? WHERE id = (SELECT MAX(id) FROM chat_messages WHERE (chat_jid = ? OR chat_jid = ?) AND is_from_me = 1)",
+					req.Text, agentName, cleanChatJID, targetJID.String(),
+				)
+			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -1512,29 +1653,49 @@ func StartWebServer() {
 			mimeType = http.DetectContentType(fileBytes)
 		}
 
-		// Salva o arquivo no disco local em static/uploads/
-		uploadDir := filepath.Join(getWebDir(), "static", "uploads")
-		_ = os.MkdirAll(uploadDir, 0777)
-
-		fileName := fmt.Sprintf("media_sent_%d_%s", time.Now().UnixNano(), strings.ReplaceAll(header.Filename, " ", "_"))
-		filePath := filepath.Join(uploadDir, fileName)
-		if errWrite := os.WriteFile(filePath, fileBytes, 0644); errWrite != nil {
-			fmt.Printf("🚨 Erro ao salvar mídia do painel no disco: %v\n", errWrite)
-		}
-		webMediaURL := "/static/uploads/" + fileName
+		// Converte os bytes da mídia diretamente para Base64 Data URL (sem salvar no disco do servidor)
+		webMediaURL := fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(fileBytes))
 
 		// Coloca o usuário em chat ao vivo/pausa o bot automático
 		userNumber := NormalizePhoneLocal(targetJID.User)
+		agentName := ""
+		isAdmin := false
+		if sess, ok := getUserSession(r); ok {
+			isAdmin = (sess.Role == "admin")
+			if sess.Name != "" {
+				agentName = sess.Name
+			} else if sess.Username != "" {
+				agentName = sess.Username
+			}
+		}
+		if agentName == "" {
+			agentName = "Suporte"
+		}
+
 		state.Mu.Lock()
+		assignedAgent := state.GetAgentForUser(userNumber)
 		uState, exists := state.Users[userNumber]
+		isLiveChat := exists && uState.Step == 100
+
+		// SE O ATENDIMENTO JÁ ESTÁ EM LIVE CHAT COM OUTRO TÉCNICO E NÃO É ADMIN -> BLOQUEIA O ENVIO DE MÍDIAS!
+		if !isAdmin && isLiveChat && assignedAgent != "" && assignedAgent != agentName {
+			state.Mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "error",
+				"message": fmt.Sprintf("🚨 Apenas o técnico *%s* ou um Administrador pode enviar mídias nesta conversa!", assignedAgent),
+				"agent":   assignedAgent,
+			})
+			return
+		}
+
 		if !exists {
 			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
 			state.Users[userNumber] = uState
 		}
 		uState.Step = 100
-		if state.ActiveLiveChatUser == "" {
-			state.ActiveLiveChatUser = targetJID.String()
-		}
+		state.SetAgentForUser(userNumber, agentName)
 		state.Mu.Unlock()
 
 		// Prepara envio no whatsmeow
@@ -1714,7 +1875,7 @@ func StartWebServer() {
 			JID   string `json:"jid"`
 			Agent string `json:"agent"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err.Error() != "EOF" {
 			http.Error(w, "JSON inválido", http.StatusBadRequest)
 			return
 		}
@@ -1725,17 +1886,49 @@ func StartWebServer() {
 			return
 		}
 
+		// Identifica o técnico logado pela sessão ativa no painel web
+		agentName := req.Agent
+		isAdmin := false
+		if sess, ok := getUserSession(r); ok {
+			isAdmin = (sess.Role == "admin")
+			if sess.Name != "" {
+				agentName = sess.Name
+			} else if sess.Username != "" {
+				agentName = sess.Username
+			}
+		}
+		if agentName == "" {
+			agentName = "Suporte"
+		}
+
 		userNumber := NormalizePhoneLocal(targetJID.User)
 
 		state.Mu.Lock()
+		assignedAgent := state.GetAgentForUser(userNumber)
 		uState, exists := state.Users[userNumber]
+		isLiveChat := exists && uState.Step == 100
+
+		// Impede que outro operador assuma uma conversa que já possui atendimento ativo, a menos que seja ADMIN
+		if !isAdmin && isLiveChat && assignedAgent != "" && assignedAgent != agentName {
+			state.Mu.Unlock()
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "error",
+				"message": fmt.Sprintf("🚨 Esta conversa já está em atendimento pelo técnico: %s", assignedAgent),
+				"agent":   assignedAgent,
+			})
+			return
+		}
+
 		if !exists {
 			uState = &state.UserState{Step: -1, LastGreetingTime: time.Now().Add(-15 * time.Minute)}
 			state.Users[userNumber] = uState
 		}
 		uState.Step = 100
 
-		state.ActiveAgentName = req.Agent
+		state.ActiveAgentName = agentName
 		state.ActiveLiveChatUser = targetJID.String()
 
 		// Remove da fila de espera se estiver nela
@@ -1758,19 +1951,19 @@ func StartWebServer() {
 
 		if client != nil && client.IsConnected() {
 			// Envia a mensagem de suporte assumido para o usuário
-			msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": req.Agent})
+			msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": agentName})
 			sendTextMessage(context.Background(), client, targetJID, msgAssumido)
 
 			// Notifica o grupo/número de suporte
 			supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
 			sendTextMessage(context.Background(), client, supportJID, fmt.Sprintf(
 				"✅ O atendimento de *%s* foi assumido via Painel por *%s*.",
-				nomeUsuario, req.Agent,
+				nomeUsuario, agentName,
 			))
 		} else {
 			// Se o bot estiver desconectado, podemos pelo menos inserir a mensagem de sistema no banco para que o painel mostre
 			if webDB != nil {
-				msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": req.Agent})
+				msgAssumido := formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": agentName})
 				_, _ = webDB.Exec(
 					"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me) VALUES (?, ?, ?, ?, ?, 1)",
 					targetJID.String(), "GLPI-BOT (Bot)", "", msgAssumido, "text",

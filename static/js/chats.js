@@ -6,8 +6,86 @@
 let activeChatJID = null;
 let activeChatName = "";
 let activeChatStatus = null;
+let activeChatAgent = null;
 let agentsList = [];
 let chatsData = [];
+let currentUserInfo = null;
+
+async function fetchCurrentUserInfo() {
+    try {
+        const response = await fetch("/api/me");
+        if (response.ok) {
+            currentUserInfo = await response.json();
+            // Re-avalia o bloqueio caso a conversa esteja aberta
+            if (activeChatJID) {
+                updateChatInputLockState(activeChatStatus, activeChatAgent);
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao obter dados da sessao:", e);
+    }
+}
+fetchCurrentUserInfo();
+
+function updateChatInputLockState(status, agentName) {
+    const input = document.getElementById("chat-message-input");
+    const sendBtn = document.getElementById("btn-send-msg");
+    const recBtn = document.getElementById("btn-record-audio");
+    const fileBtn = document.querySelector("button[title*='Anexar']");
+    const closeBtn = document.getElementById("btn-close-chat") || document.querySelector("button[title*='Finalizar']");
+
+    const myName = (currentUserInfo && (currentUserInfo.name || currentUserInfo.username)) || "";
+    
+    const isLiveChat = (status === "live_chat");
+    const isMyChat = isLiveChat && Boolean(myName) && Boolean(agentName) && (agentName === myName);
+    const isAssignedToOther = isLiveChat && Boolean(agentName) && Boolean(myName) && (agentName !== myName);
+
+    // O botão Finalizar SÓ APARECE se a conversa estiver em Live Chat E o técnico responsável for EXATAMENTE o operador logado
+    const canClose = isLiveChat && (isMyChat || (!agentName && Boolean(myName)));
+
+    if (closeBtn) {
+        closeBtn.style.display = canClose ? "inline-flex" : "none";
+        closeBtn.disabled = !canClose;
+    }
+
+    if (isAssignedToOther) {
+        if (input) {
+            input.disabled = true;
+            input.placeholder = `🔒 Atendimento exclusivo do técnico: ${agentName}`;
+            input.classList.add("opacity-50", "cursor-not-allowed");
+        }
+        if (sendBtn) {
+            sendBtn.disabled = true;
+            sendBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+        if (recBtn) {
+            recBtn.disabled = true;
+            recBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+        if (fileBtn) {
+            fileBtn.disabled = true;
+            fileBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+    } else {
+        if (input) {
+            input.disabled = false;
+            input.placeholder = "Digite uma mensagem, legenda ou cole uma imagem (Ctrl+V)...";
+            input.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+        if (recBtn) {
+            recBtn.disabled = false;
+            recBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+        if (fileBtn) {
+            fileBtn.disabled = false;
+            fileBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+    }
+}
 
 // Formata JID para exibir o número do telefone de forma legível
 
@@ -33,18 +111,17 @@ function formatJIDToPhone(jid) {
 // Ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {
     loadChatsList();
-    loadAgentsList();
 
-    // Inicia polling periódico (atualiza mensagens a cada 3s e lista de chats a cada 6s)
+    // Inicia polling periódico em alta frequência para mensagens em tempo real
     setInterval(() => {
         if (activeChatJID) {
             refreshActiveMessages();
         }
-    }, 3000);
+    }, 1500);
 
     setInterval(() => {
         loadChatsList(true); // silent load
-    }, 6000);
+    }, 2000);
 });
 
 // Busca a lista de chats e exibe na barra lateral
@@ -83,7 +160,7 @@ function renderChatsList(filteredData = null) {
         let statusText = "Bot";
         let statusClass = "status-bot";
         if (chat.status === "live_chat") {
-            statusText = "Suporte";
+            statusText = chat.agent_name ? `Suporte (${chat.agent_name})` : "Suporte";
             statusClass = "status-live_chat";
         } else if (chat.status === "queue") {
             statusText = "Fila";
@@ -97,7 +174,7 @@ function renderChatsList(filteredData = null) {
 
         const card = document.createElement("div");
         card.className = `p-3 rounded-xl border cursor-pointer transition flex flex-col gap-1.5 relative group ${cardClass}`;
-        card.onclick = () => selectChat(chat.jid, chat.name, chat.status);
+        card.onclick = () => selectChat(chat.jid, chat.name, chat.status, chat.agent_name);
 
         // Limita o tamanho do texto da última mensagem
         let snippet = chat.last_message || "Nenhuma mensagem...";
@@ -152,10 +229,20 @@ function filterChats() {
 
 // Seleciona um chat da lista
 // Função selectChat manipula a rotina correspondente na interface do painel
-async function selectChat(jid, name, status) {
+async function selectChat(jid, name, status, agentName = null) {
+    if (!agentName) {
+        const found = chatsData.find(c => c.jid === jid);
+        if (found && found.agent_name) {
+            agentName = found.agent_name;
+        }
+    }
     activeChatJID = jid;
     activeChatName = name || jid;
     activeChatStatus = status;
+    activeChatAgent = agentName;
+
+    // Atualiza trava de envio de mensagens e visibilidade do botão Finalizar
+    updateChatInputLockState(status, agentName);
 
     // Esconde o placeholder
     document.getElementById("chat-placeholder").style.display = "none";
@@ -177,7 +264,7 @@ async function selectChat(jid, name, status) {
     statusDot.className = "w-1.5 h-1.5 rounded-full";
     if (status === "live_chat") {
         statusDot.classList.add("status-live_chat");
-        statusText.textContent = "Live Chat / Suporte";
+        statusText.textContent = agentName ? `Live Chat (${agentName})` : "Live Chat / Suporte";
         document.getElementById("assume-chat-banner").style.display = "none";
     } else if (status === "queue") {
         statusDot.classList.add("status-queue");
@@ -363,8 +450,12 @@ function stopAndSendAudioRecording() {
 }
 
 function replyToMessage(senderName, originalText, waMsgId = '', senderJid = '') {
+    let cleanName = senderName;
+    if (!cleanName || cleanName === "Contato" || cleanName.startsWith("17188") || (cleanName.length >= 10 && !isNaN(cleanName))) {
+        cleanName = activeChatName || formatJIDToPhone(activeChatJID);
+    }
     activeReplyQuote = {
-        name: senderName || activeChatName || "Contato",
+        name: cleanName,
         text: originalText || "",
         quoted_id: waMsgId || "",
         quoted_jid: senderJid || ""
@@ -426,9 +517,13 @@ function renderMessages(messages, forceScroll = false) {
         // Renderização de Mensagem Citada (WhatsApp Quote Box)
         let quoteHTML = "";
         if (msg.reply_to_text) {
+            let authorName = msg.reply_to_name || 'Contato';
+            if (!authorName || authorName === 'Contato' || authorName.startsWith("17188") || (authorName.length >= 10 && !isNaN(authorName))) {
+                authorName = activeChatName || formatJIDToPhone(activeChatJID);
+            }
             quoteHTML = `
                 <div class="whatsapp-quote-box">
-                    <div class="whatsapp-quote-author">${escapeHTML(msg.reply_to_name || 'Contato')}</div>
+                    <div class="whatsapp-quote-author">${escapeHTML(authorName)}</div>
                     <div class="whatsapp-quote-text truncate">${escapeHTML(msg.reply_to_text)}</div>
                 </div>
             `;
@@ -439,23 +534,27 @@ function renderMessages(messages, forceScroll = false) {
 
         if (msg.media_url) {
             const lowerUrl = msg.media_url.toLowerCase();
-            if (msg.type === "image" || lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp") || lowerUrl.endsWith(".gif")) {
+            const isBase64Img = lowerUrl.startsWith("data:image/");
+            const isBase64Audio = lowerUrl.startsWith("data:audio/");
+            const isBase64Doc = lowerUrl.startsWith("data:application/") || lowerUrl.startsWith("data:text/");
+
+            if (msg.type === "image" || isBase64Img || lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp") || lowerUrl.endsWith(".gif")) {
                 mediaHTML = `<div class="mb-2 overflow-hidden rounded-xl">
                     <img src="${msg.media_url}" alt="Imagem do WhatsApp" class="w-full max-h-80 object-cover rounded-xl border border-white/10 shadow-lg cursor-pointer hover:opacity-90 transition" onclick="window.open('${msg.media_url}', '_blank')" title="Clique para expandir em nova aba" />
                 </div>`;
-            } else if (msg.type === "audio" || lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm")) {
+            } else if (msg.type === "audio" || isBase64Audio || lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm")) {
                 mediaHTML = `<div class="mb-1 py-1">
                     <audio controls src="${msg.media_url}" class="max-w-[250px] h-9 accent-emerald-500 rounded-lg focus:outline-none"></audio>
                 </div>`;
-            } else if (msg.type === "document" || lowerUrl.endsWith(".pdf") || lowerUrl.endsWith(".doc") || lowerUrl.endsWith(".docx") || lowerUrl.endsWith(".txt") || lowerUrl.endsWith(".zip")) {
+            } else if (msg.type === "document" || isBase64Doc || lowerUrl.endsWith(".pdf") || lowerUrl.endsWith(".doc") || lowerUrl.endsWith(".docx") || lowerUrl.endsWith(".txt") || lowerUrl.endsWith(".zip")) {
                 mediaHTML = `<div class="mb-2">
-                    <a href="${msg.media_url}" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-amber-400 font-mono text-xs transition">
-                        📄 Abrir Documento Anexo
+                    <a href="${msg.media_url}" download="documento" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-amber-400 font-mono text-xs transition">
+                        📄 Baixar / Abrir Documento Anexo
                     </a>
                 </div>`;
             }
             if (textContent.startsWith("[Imagem]") || textContent.startsWith("[Áudio]") || textContent.startsWith("[Documento] audio_") || textContent.startsWith("[Documento] voice_")) {
-                if (lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm") || msg.type === "audio") {
+                if (msg.type === "audio" || isBase64Audio || lowerUrl.endsWith(".ogg") || lowerUrl.endsWith(".mp3") || lowerUrl.endsWith(".m4a") || lowerUrl.endsWith(".wav") || lowerUrl.endsWith(".webm")) {
                     textContent = "";
                 } else {
                     textContent = textContent.replace("[Imagem]", "").replace("[Áudio]", "").trim();
@@ -574,8 +673,9 @@ async function sendConsoleMessage() {
         }
 
         if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(errText || "Falha ao enviar mensagem");
+            const data = await response.json().catch(() => null);
+            const errMsg = data ? data.message : await response.text();
+            throw new Error(errMsg || "Falha ao enviar mensagem");
         }
 
         input.value = "";
@@ -639,10 +739,34 @@ function showToast(message, isSuccess = true) {
     }, 3000);
 }
 
-// Apaga uma conversa e limpa o histórico
-// Função deleteChat manipula a rotina correspondente na interface do painel
+// Limpa completamente o estado da janela de chat e reseta para a tela inicial
+function clearActiveChatUI() {
+    activeChatJID = null;
+    activeChatName = "";
+    activeChatStatus = null;
+    lastMessagesCount = 0;
+
+    const placeholder = document.getElementById("chat-placeholder");
+    const container = document.getElementById("chat-messages-container");
+    const headerName = document.getElementById("active-chat-name");
+    const headerJID = document.getElementById("active-chat-jid");
+    const avatarContainer = document.getElementById("active-chat-avatar");
+    const assumeBanner = document.getElementById("assume-chat-banner");
+
+    if (placeholder) placeholder.style.display = "flex";
+    if (container) container.innerHTML = "";
+    if (headerName) headerName.textContent = "";
+    if (headerJID) headerJID.textContent = "";
+    if (avatarContainer) avatarContainer.innerHTML = "👤";
+    if (assumeBanner) assumeBanner.style.display = "none";
+
+    clearSelectedMedia();
+    cancelReplyQuote();
+}
+
+// Apaga uma conversa específica
 async function deleteChat(jid) {
-    if (!confirm("Tem certeza que deseja apagar esta conversa e todo o seu histórico? Esta ação é irreversível e resetará o atendimento do bot para este contato.")) {
+    if (!confirm("Tem certeza que deseja apagar esta conversa e todo o histórico?")) {
         return;
     }
 
@@ -655,15 +779,16 @@ async function deleteChat(jid) {
 
         showToast("Conversa apagada com sucesso!");
 
-        // Se a conversa apagada for a atualmente ativa, limpa a janela de chat e mostra placeholder
-        if (activeChatJID === jid) {
-            activeChatJID = null;
-            activeChatName = "";
-            document.getElementById("chat-placeholder").style.display = "flex";
+        // Se a conversa apagada for a atualmente ativa ou tiver o mesmo número, reseta a interface
+        const deletedNum = formatJIDToPhone(jid);
+        const activeNum = activeChatJID ? formatJIDToPhone(activeChatJID) : "";
+
+        if (!activeChatJID || activeChatJID === jid || deletedNum === activeNum) {
+            clearActiveChatUI();
         }
 
         // Recarrega a lista de chats
-        loadChatsList();
+        await loadChatsList();
     } catch (error) {
         console.error(error);
         showToast("Falha ao apagar conversa.", false);
@@ -696,10 +821,15 @@ async function closeChat(jid) {
             method: "POST"
         });
 
-        if (!response.ok) throw new Error("Erro ao finalizar atendimento");
+        if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            throw new Error((data && data.message) || "Erro ao finalizar atendimento");
+        }
 
         showToast("Atendimento finalizado. Bot reativado!");
         activeChatStatus = "bot";
+        activeChatAgent = null;
+        updateChatInputLockState("bot", null);
         document.getElementById("assume-chat-banner").style.display = "flex";
 
         // Recarrega a lista de chats para atualizar o status visual
@@ -714,45 +844,13 @@ async function closeChat(jid) {
         }
     } catch (error) {
         console.error(error);
-        showToast("Falha ao finalizar atendimento.", false);
+        showToast(error.message || "Falha ao finalizar atendimento.", false);
     }
 }
 
-// Carrega a lista de atendentes/técnicos
-// Função loadAgentsList manipula a rotina correspondente na interface do painel
-async function loadAgentsList() {
-    try {
-        const response = await fetch("/api/agents");
-        if (!response.ok) throw new Error("Erro ao buscar atendentes");
-        agentsList = await response.json();
-
-        const select = document.getElementById("agent-select");
-        if (select) {
-            select.innerHTML = '<option value="">Selecione o Técnico...</option>';
-            agentsList.forEach(agent => {
-                const opt = document.createElement("option");
-                opt.value = agent;
-                opt.textContent = agent;
-                select.appendChild(opt);
-            });
-        }
-    } catch (error) {
-        console.error("Erro ao carregar atendentes:", error);
-    }
-}
-
-// Assume o chat ativo para o técnico selecionado
-// Função assumeActiveChat manipula a rotina correspondente na interface do painel
+// Assume o chat ativo para o técnico logado na sessão
 async function assumeActiveChat() {
     if (!activeChatJID) return;
-
-    const select = document.getElementById("agent-select");
-    const selectedAgent = select.value;
-
-    if (!selectedAgent) {
-        showToast("Selecione um técnico primeiro.", false);
-        return;
-    }
 
     try {
         const response = await fetch("/api/chats/assume", {
@@ -761,14 +859,17 @@ async function assumeActiveChat() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                jid: activeChatJID,
-                agent: selectedAgent
+                jid: activeChatJID
             })
         });
 
-        if (!response.ok) throw new Error("Erro ao assumir atendimento");
+        const data = await response.json().catch(() => ({}));
 
-        showToast(`Atendimento assumido por ${selectedAgent}!`);
+        if (!response.ok) {
+            throw new Error(data.message || "Erro ao assumir atendimento");
+        }
+
+        showToast("Atendimento assumido com sucesso!");
         document.getElementById("assume-chat-banner").style.display = "none";
 
         // Atualiza o status localmente para live_chat
@@ -777,14 +878,14 @@ async function assumeActiveChat() {
         const statusText = document.getElementById("active-chat-status-text");
         if (statusDot && statusText) {
             statusDot.className = "w-1.5 h-1.5 rounded-full status-live_chat";
-            statusText.textContent = "Live Chat / Suporte";
+            statusText.textContent = data.agent ? `Live Chat (${data.agent})` : "Live Chat / Suporte";
         }
 
-        // Recarrega a lista de chats e as mensagens
-        loadChatsList(true);
+        // Recarrega a lista de chats para atualizar as tags
+        await loadChatsList();
         refreshActiveMessages(true);
     } catch (error) {
-        console.error("Erro ao assumir chat:", error);
+        console.error(error);
         showToast("Falha ao assumir atendimento.", false);
     }
 }

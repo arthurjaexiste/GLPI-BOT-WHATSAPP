@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"bot-glpi/internal/config"
+	"bot-glpi/internal/state"
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
@@ -193,6 +194,24 @@ func sendQuotedTextMessage(ctx context.Context, client *whatsmeow.Client, jid ty
 	_, _ = sendMessage(ctx, client, jid, msg)
 }
 
+// CleanJIDString normaliza qualquer JID removendo sufixos de dispositivo AD (:1, :12) e padronizando para @s.whatsapp.net.
+func CleanJIDString(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	parsed, err := types.ParseJID(raw)
+	if err != nil {
+		user := strings.Split(raw, "@")[0]
+		user = strings.Split(user, ":")[0]
+		return user + "@s.whatsapp.net"
+	}
+	nonAD := parsed.ToNonAD()
+	if nonAD.Server == "c.us" || nonAD.Server == "" {
+		nonAD.Server = types.DefaultUserServer
+	}
+	return nonAD.String()
+}
+
 // sendMessage envia qualquer tipo de mensagem, simulando digitação para chats de usuário.
 
 // Função sendMessage executa a regra de negócio/rotina correspondente
@@ -233,9 +252,10 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 			}
 
 			if msgText != "" {
+				cleanChatJID := CleanJIDString(jid.String())
 				_, _ = webDB.Exec(
 					"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, wa_message_id) VALUES (?, ?, ?, ?, ?, 1, ?)",
-					jid.String(), "GLPI-BOT (Bot)", "", msgText, msgType, resp.ID,
+					cleanChatJID, "GLPI-BOT (Bot)", "", msgText, msgType, resp.ID,
 				)
 			}
 		}
@@ -377,6 +397,94 @@ func extrairConteudoMensagem(v *events.Message) (string, *waE2E.ImageMessage, *w
 	}
 
 	return rawText, imgMsg, docMsg, videoMsg, audioMsg
+}
+
+// extrairInfoCitada extrai informações de mensagem citada (resposta) enviada pelo usuário no WhatsApp.
+func extrairInfoCitada(v *events.Message) (string, string) {
+	msg := unwrapMessage(v.Message)
+	if msg == nil {
+		return "", ""
+	}
+
+	var ctxInfo *waE2E.ContextInfo
+	switch {
+	case msg.GetExtendedTextMessage() != nil:
+		ctxInfo = msg.GetExtendedTextMessage().GetContextInfo()
+	case msg.GetImageMessage() != nil:
+		ctxInfo = msg.GetImageMessage().GetContextInfo()
+	case msg.GetAudioMessage() != nil:
+		ctxInfo = msg.GetAudioMessage().GetContextInfo()
+	case msg.GetDocumentMessage() != nil:
+		ctxInfo = msg.GetDocumentMessage().GetContextInfo()
+	case msg.GetVideoMessage() != nil:
+		ctxInfo = msg.GetVideoMessage().GetContextInfo()
+	}
+
+	if ctxInfo == nil || ctxInfo.GetQuotedMessage() == nil {
+		return "", ""
+	}
+
+	quoted := unwrapMessage(ctxInfo.GetQuotedMessage())
+	if quoted == nil {
+		return "", ""
+	}
+
+	var quotedText string
+	switch {
+	case quoted.GetExtendedTextMessage() != nil:
+		quotedText = quoted.GetExtendedTextMessage().GetText()
+	case quoted.GetConversation() != "":
+		quotedText = quoted.GetConversation()
+	case quoted.GetImageMessage() != nil:
+		quotedText = "[Imagem]"
+		if quoted.GetImageMessage().GetCaption() != "" {
+			quotedText = "[Imagem] " + quoted.GetImageMessage().GetCaption()
+		}
+	case quoted.GetAudioMessage() != nil:
+		quotedText = "[Áudio]"
+	case quoted.GetDocumentMessage() != nil:
+		quotedText = "[Documento] " + quoted.GetDocumentMessage().GetFileName()
+	}
+
+	replyToName := "Contato"
+	participant := ctxInfo.GetParticipant()
+
+	state.Mu.Lock()
+	agenteAtual := state.ActiveAgentName
+	state.Mu.Unlock()
+
+	if agenteAtual == "" {
+		agenteAtual = "Suporte"
+	}
+
+	if participant != "" {
+		pNum := NormalizePhoneLocal(participant)
+		supportNum := getSupportNumber()
+
+		isBotOrSupport := phonesSufixMatch(pNum, supportNum, 8)
+		if GlobalClient != nil && GlobalClient.Store != nil && GlobalClient.Store.ID != nil {
+			botUserNum := NormalizePhoneLocal(GlobalClient.Store.ID.User)
+			if phonesSufixMatch(pNum, botUserNum, 8) {
+				isBotOrSupport = true
+			}
+		}
+
+		if isBotOrSupport {
+			replyToName = agenteAtual
+		} else {
+			state.Mu.Lock()
+			if n, ok := state.Names[pNum]; ok && n != "" {
+				replyToName = n
+			} else {
+				replyToName = pNum
+			}
+			state.Mu.Unlock()
+		}
+	} else {
+		replyToName = agenteAtual
+	}
+
+	return replyToName, quotedText
 }
 
 // ─── Horário de atendimento ───────────────────────────────────────────────────

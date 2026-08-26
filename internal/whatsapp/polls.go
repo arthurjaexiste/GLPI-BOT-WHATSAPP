@@ -125,8 +125,9 @@ func tratarVotoAtribuicaoAgente(ctx context.Context, client *whatsmeow.Client, v
 	for _, agent := range supportAgents {
 		if matchOptionHash(selectedHash, agent) {
 			state.Mu.Lock()
-			state.ActiveAgentName = agent
 			activeUserFull := state.ActiveLiveChatUser
+			uNum := NormalizePhoneLocal(activeUserFull)
+			state.SetAgentForUser(uNum, agent)
 			state.Mu.Unlock()
 
 			supportJID := types.NewJID(getSupportNumber(), types.DefaultUserServer)
