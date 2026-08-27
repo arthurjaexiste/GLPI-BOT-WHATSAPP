@@ -563,10 +563,12 @@ function filterSystemUsers() {
         renderSystemUsersTable(systemUsersList);
         return;
     }
-    const filtered = systemUsersList.filter(u => 
-        (u.name && u.name.toLowerCase().includes(query)) || 
-        (u.username && u.username.toLowerCase().includes(query))
-    );
+    const filtered = (systemUsersList || []).filter(u => {
+        const name = (u.name || '').toLowerCase();
+        const username = (u.username || '').toLowerCase();
+        const role = (u.role || '').toLowerCase();
+        return name.includes(query) || username.includes(query) || role.includes(query);
+    });
     renderSystemUsersTable(filtered);
 }
 
@@ -751,6 +753,10 @@ async function deleteSystemUser(username) {
 
 function openImportGLPIModal() {
     const modal = document.getElementById('modal-import-glpi');
+    const searchInput = document.getElementById('modal-glpi-search');
+    if (searchInput) {
+        searchInput.value = '';
+    }
     if (modal) {
         modal.classList.remove('hidden');
     }
@@ -820,19 +826,27 @@ function filterModalGLPIUsers() {
     if (!searchInput) return;
 
     const query = searchInput.value.toLowerCase().trim();
-    let filtered = allGLPIUsers;
+    let filtered = allGLPIUsers || [];
     if (query) {
-        filtered = allGLPIUsers.filter(u => 
-            (u.name && u.name.toLowerCase().includes(query)) || 
-            (u.username && u.username.toLowerCase().includes(query))
-        );
+        filtered = filtered.filter(u => {
+            const name = (u.name || '').toLowerCase();
+            const username = (u.username || '').toLowerCase();
+            const realname = (u.realname || '').toLowerCase();
+            const firstname = (u.firstname || '').toLowerCase();
+            return name.includes(query) || username.includes(query) || realname.includes(query) || firstname.includes(query);
+        });
     }
 
     if (counterEl) {
-        counterEl.innerText = `${filtered.length} usuários encontrados no GLPI`;
+        counterEl.innerText = `${filtered.length} usuário(s) encontrado(s)`;
     }
 
     renderModalGLPIUsers(filtered);
+}
+
+// Alias de garantia para compatibilidade
+function filterGLPIUsersModal() {
+    filterModalGLPIUsers();
 }
 
 let currentFilteredGLPIUsers = [];
