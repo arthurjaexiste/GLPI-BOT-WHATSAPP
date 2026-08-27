@@ -162,7 +162,24 @@ func buildMenuPoll(client *whatsmeow.Client, node FlowNode, options []string) *w
 // Função HandleMessage executa a regra de negócio/rotina correspondente
 func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 	v, ok := evt.(*events.Message)
-	if !ok || v.Info.IsFromMe || v.Info.IsGroup {
+	if !ok || v.Info.IsFromMe {
+		return
+	}
+
+	// SE A MENSAGEM VIER DE UM GRUPO DO WHATSAPP OU JID GRUPO (@g.us OU 120363...) -> SAI AUTOMATICAMENTE DO GRUPO!
+	if v.Info.IsGroup || v.Info.Chat.Server == "g.us" || strings.HasSuffix(v.Info.Chat.String(), "@g.us") || strings.HasPrefix(v.Info.Chat.User, "120363") {
+		groupJID := v.Info.Chat
+		fmt.Printf("⚠️ [GRUPO DETECTADO] Bot foi adicionado ou recebeu mensagem no grupo %s. Saindo automaticamente...\n", groupJID.String())
+		go func(gJID types.JID) {
+			ctxGroup, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+			err := client.LeaveGroup(ctxGroup, gJID)
+			if err != nil {
+				fmt.Printf("⚠️ [GRUPO] Erro ao tentar sair do grupo %s: %v\n", gJID.String(), err)
+			} else {
+				fmt.Printf("✅ [GRUPO] Bot saiu com sucesso do grupo %s!\n", gJID.String())
+			}
+		}(groupJID)
 		return
 	}
 

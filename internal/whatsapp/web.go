@@ -145,6 +145,8 @@ func initWebDB() {
 	// Padroniza e limpa JIDs antigos no banco de dados para evitar duplicidades
 	_, _ = webDB.Exec(`UPDATE chat_messages SET chat_jid = SUBSTR(chat_jid, 1, INSTR(chat_jid, ':') - 1) || '@s.whatsapp.net' WHERE chat_jid LIKE '%:%'`)
 	_, _ = webDB.Exec(`UPDATE chat_messages SET chat_jid = REPLACE(chat_jid, '@c.us', '@s.whatsapp.net') WHERE chat_jid LIKE '%@c.us'`)
+	// Elimina mensagens de grupos (@g.us) do banco para impedir que números/JIDs de grupos apareçam no painel web
+	_, _ = webDB.Exec(`DELETE FROM chat_messages WHERE chat_jid LIKE '%@g.us%' OR chat_jid LIKE '%g.us%' OR chat_jid LIKE '120363%'`)
 
 	var adminID int
 	var adminPass, adminRole string
@@ -1141,8 +1143,10 @@ func StartWebServer() {
 			INNER JOIN (
 				SELECT chat_jid, MAX(id) as max_id
 				FROM chat_messages
+				WHERE chat_jid NOT LIKE '%@g.us%' AND chat_jid NOT LIKE '%g.us%' AND chat_jid NOT LIKE '120363%'
 				GROUP BY chat_jid
 			) m ON c.id = m.max_id
+			WHERE c.chat_jid NOT LIKE '%@g.us%' AND c.chat_jid NOT LIKE '%g.us%' AND c.chat_jid NOT LIKE '120363%'
 			ORDER BY c.timestamp DESC
 		`
 		rows, err := webDB.Query(query)
