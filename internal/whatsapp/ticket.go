@@ -131,14 +131,13 @@ func processarBuscaNomeGLPI(ctx context.Context, client *whatsmeow.Client, v *ev
 
 	token, err := glpi.GetGLPISession()
 	if err != nil {
-		fmt.Printf("\n🚨 [ERRO GLPI] Falha na Sessão: %v\n\n", err)
+		fmt.Printf("\n[ERRO GLPI] Falha na Sessão: %v\n\n", err)
 		sendTextMessage(ctx, client, v.Info.Chat, "❌ Ops, ocorreu um erro de conexão com o painel de chamados.")
 		return
 	}
 
 	nomes, ids, errBusca := glpi.BuscarUsuariosPorNome(token, text)
 
-	// Segunda tentativa usando apenas o primeiro nome, se a busca completa falhar
 	if (errBusca != nil || len(nomes) == 0) && strings.Contains(text, " ") {
 		primeiraPalavra := strings.Split(text, " ")[0]
 		if nomeValido(primeiraPalavra) {
@@ -166,9 +165,6 @@ func processarBuscaNomeGLPI(ctx context.Context, client *whatsmeow.Client, v *ev
 	_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 }
 
-// processarNomeManual registra o nome digitado manualmente pelo usuário.
-
-// Função processarNomeManual executa a regra de negócio/rotina correspondente
 func processarNomeManual(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, text string) {
 	if !nomeValido(text) {
 		sendTextMessage(ctx, client, v.Info.Chat, "❌ *Nome inválido:* Por favor, digite o seu *Nome e Sobrenome* corretos (exemplo: Maria Souza) para podermos registrar o chamado.")
@@ -183,18 +179,12 @@ func processarNomeManual(ctx context.Context, client *whatsmeow.Client, v *event
 	uState.Step = 10
 	state.Mu.Unlock()
 
-	sendTextMessage(ctx, client, v.Info.Chat, fmt.Sprintf("Certo, %s! 😎", primeiroNome))
+	sendTextMessage(ctx, client, v.Info.Chat, fmt.Sprintf("Certo, %s! 👍", primeiroNome))
 	time.Sleep(500 * time.Millisecond)
 
 	SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
 }
 
-// ─── Coleta de informações do chamado ─────────────────────────────────────────
-
-// obterPromptDescricaoDinamico retorna o texto de prompt configurado para o nó
-// atual do fluxo, ou um texto padrão se não houver configuração.
-
-// Função obterPromptDescricaoDinamico executa a regra de negócio/rotina correspondente
 func obterPromptDescricaoDinamico(uState *state.UserState) string {
 	if uState.CurrentNodeID != "" {
 		if node, found := FindNodeByID(uState.CurrentNodeID); found && node.Type == NodeGLPITicket && node.Content != "" {
@@ -204,9 +194,6 @@ func obterPromptDescricaoDinamico(uState *state.UserState) string {
 	return "por favor, *descreva o problema detalhadamente*:"
 }
 
-// processarGravacaoTitulo valida e armazena o título do chamado.
-
-// Função processarGravacaoTitulo executa a regra de negócio/rotina correspondente
 func processarGravacaoTitulo(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, text string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage) {
 	if !temLetra(text) && imgMsg == nil && docMsg == nil {
 		sendTextMessage(ctx, client, v.Info.Chat, "⚠️ O título precisa ser um texto descritivo.")
@@ -221,10 +208,6 @@ func processarGravacaoTitulo(ctx context.Context, client *whatsmeow.Client, v *e
 	sendTextMessage(ctx, client, v.Info.Chat, "Ótimo! Agora, "+obterPromptDescricaoDinamico(uState))
 }
 
-// processarGravacaoDescricao valida e armazena a descrição do chamado, em seguida
-// pergunta sobre documentos e/ou fotos conforme a configuração do nó.
-
-// Função processarGravacaoDescricao executa a regra de negócio/rotina correspondente
 func processarGravacaoDescricao(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, text string, imgMsg *waE2E.ImageMessage, docMsg *waE2E.DocumentMessage) {
 	if !descricaoValida(text) && imgMsg == nil && docMsg == nil {
 		state.Mu.Lock()
@@ -279,12 +262,6 @@ func processarGravacaoDescricao(ctx context.Context, client *whatsmeow.Client, v
 	}
 }
 
-// ─── Acompanhamento de chamado existente ──────────────────────────────────────
-
-// processarBuscaChamadoInfo busca as informações de um chamado pelo ID e pergunta
-// ao usuário se deseja adicionar uma nova mensagem.
-
-// Função processarBuscaChamadoInfo executa a regra de negócio/rotina correspondente
 func processarBuscaChamadoInfo(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, text string) {
 	ticketID, err := strconv.Atoi(text)
 	if err != nil {

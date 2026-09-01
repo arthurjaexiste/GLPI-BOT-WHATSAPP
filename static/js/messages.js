@@ -1,11 +1,5 @@
-/**
- * SCRIPT: messages.js
- * Descrição: Lógica de controle de frontend para a interface administrativa do GLPI-BOT.
- */
-
 let currentConfig = {};
 
-// Função fetchConfig manipula a rotina correspondente na interface do painel
 async function fetchConfig() {
     try {
         const response = await fetch('/api/config');
@@ -21,7 +15,6 @@ async function fetchConfig() {
         document.getElementById('msg_suporte_assumido').value = currentConfig.msg_suporte_assumido || '';
         document.getElementById('msg_fim_atendimento').value = currentConfig.msg_fim_atendimento || '';
 
-        // Campos novos de Documentos e Mídias
         document.getElementById('msg_enquete_documentos').value = currentConfig.msg_enquete_documentos || '';
         document.getElementById('msg_enviar_documentos').value = currentConfig.msg_enviar_documentos || '';
         document.getElementById('msg_enquete_confirmar_documentos').value = currentConfig.msg_enquete_confirmar_documentos || '';
@@ -34,11 +27,10 @@ async function fetchConfig() {
         document.getElementById('msg_foto_adicionada').value = currentConfig.msg_foto_adicionada || '';
         document.getElementById('msg_proxima_foto').value = currentConfig.msg_proxima_foto || '';
     } catch (err) {
-        showToast('Erro ao obter as mensagens do sistema.', '❌');
+        showToast('Erro ao obter as mensagens do sistema.', false);
     }
 }
 
-// Função saveMessages manipula a rotina correspondente na interface do painel
 async function saveMessages() {
     currentConfig.msg_novo_usuario = document.getElementById('msg_novo_usuario').value;
     currentConfig.msg_usuario_existente = document.getElementById('msg_usuario_existente').value;
@@ -49,7 +41,6 @@ async function saveMessages() {
     currentConfig.msg_suporte_assumido = document.getElementById('msg_suporte_assumido').value;
     currentConfig.msg_fim_atendimento = document.getElementById('msg_fim_atendimento').value;
 
-    // Campos novos de Documentos e Mídias
     currentConfig.msg_enquete_documentos = document.getElementById('msg_enquete_documentos').value;
     currentConfig.msg_enviar_documentos = document.getElementById('msg_enviar_documentos').value;
     currentConfig.msg_enquete_confirmar_documentos = document.getElementById('msg_enquete_confirmar_documentos').value;
@@ -72,31 +63,24 @@ async function saveMessages() {
         });
 
         if (!response.ok) throw new Error('Erro ao salvar as mensagens');
-        showToast('Mensagens de sistema atualizadas com sucesso!', '✅');
+        showToast('Mensagens de sistema atualizadas com sucesso!', true);
     } catch (err) {
-        showToast('Erro ao salvar mensagens de sistema.', '❌');
+        showToast('Erro ao salvar mensagens de sistema.', false);
     }
 }
 
-// Exibe um toast temporário
-
-// Função showToast manipula a rotina correspondente na interface do painel
-function showToast(message, icon = '✅') {
+function showToast(message, isSuccess = true) {
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toast-icon');
     const toastMsg = document.getElementById('toast-message');
 
-    toastIcon.innerText = icon;
-    toastMsg.innerText = message;
+    if (toastIcon) toastIcon.innerText = '';
+    if (toastMsg) toastMsg.innerText = message;
 
-    if (icon === '✅') {
-        toast.className = toast.className.replace('border-red-500/30', 'border-emerald-500/30')
-            .replace('bg-red-950/80', 'bg-emerald-950/80')
-            .replace('text-red-300', 'text-emerald-300') + ' border-emerald-500/30 bg-emerald-950/80 text-emerald-300';
+    if (isSuccess) {
+        toast.className = "fixed bottom-4 right-4 px-4 py-2 rounded bg-slate-900 border border-slate-700 text-emerald-400 font-semibold transition duration-200 flex items-center gap-2 z-50 text-xs";
     } else {
-        toast.className = toast.className.replace('border-emerald-500/30', 'border-red-500/30')
-            .replace('bg-emerald-950/80', 'bg-red-950/80')
-            .replace('text-emerald-300', 'text-red-300') + ' border-red-500/30 bg-red-950/80 text-red-300';
+        toast.className = "fixed bottom-4 right-4 px-4 py-2 rounded bg-slate-900 border border-slate-700 text-rose-400 font-semibold transition duration-200 flex items-center gap-2 z-50 text-xs";
     }
 
     toast.classList.remove('translate-y-24', 'opacity-0');
@@ -106,4 +90,4 @@ function showToast(message, icon = '✅') {
     }, 3000);
 }
 
-window.addEventListener('DOMContentLoaded', fetchConfig);
+document.addEventListener('DOMContentLoaded', fetchConfig);

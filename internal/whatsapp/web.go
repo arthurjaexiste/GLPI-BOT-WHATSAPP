@@ -1439,7 +1439,7 @@ func StartWebServer() {
 			w.WriteHeader(http.StatusForbidden)
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
-				"message": fmt.Sprintf("🚨 Apenas o técnico *%s* ou um Administrador pode finalizar este atendimento!", assignedAgent),
+				"message": fmt.Sprintf("Apenas o técnico *%s* ou um Administrador pode finalizar este atendimento.", assignedAgent),
 				"agent":   assignedAgent,
 			})
 			return
@@ -1547,7 +1547,7 @@ func StartWebServer() {
 			w.WriteHeader(http.StatusForbidden)
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
-				"message": fmt.Sprintf("🚨 Apenas o técnico *%s* ou um Administrador pode responder esta conversa!", assignedAgent),
+				"message": fmt.Sprintf("Apenas o técnico *%s* ou um Administrador pode responder esta conversa.", assignedAgent),
 				"agent":   assignedAgent,
 			})
 			return
@@ -1688,7 +1688,7 @@ func StartWebServer() {
 			w.WriteHeader(http.StatusForbidden)
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
-				"message": fmt.Sprintf("🚨 Apenas o técnico *%s* ou um Administrador pode enviar mídias nesta conversa!", assignedAgent),
+				"message": fmt.Sprintf("Apenas o técnico *%s* ou um Administrador pode enviar mídias nesta conversa.", assignedAgent),
 				"agent":   assignedAgent,
 			})
 			return
@@ -1920,7 +1920,7 @@ func StartWebServer() {
 			w.WriteHeader(http.StatusConflict)
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
-				"message": fmt.Sprintf("🚨 Esta conversa já está em atendimento pelo técnico: %s", assignedAgent),
+				"message": fmt.Sprintf("Esta conversa já está em atendimento pelo técnico: %s.", assignedAgent),
 				"agent":   assignedAgent,
 			})
 			return

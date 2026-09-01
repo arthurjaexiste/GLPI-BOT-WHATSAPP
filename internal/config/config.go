@@ -1,8 +1,3 @@
-// ============================================================================
-// ARQUIVO: config.go
-// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
-// ============================================================================
-
 package config
 
 import (
@@ -13,21 +8,16 @@ import (
 	"sync"
 )
 
-// Config reúne todas as configurações do bot, persistidas em db/config.json.
-// Struct Config define a estrutura de dados e mapeamento correspondente
 type Config struct {
-	// Integração GLPI
 	GLPIApiURL    string `json:"glpi_api_url"`
 	GLPIAppToken  string `json:"glpi_app_token"`
 	GLPIUserToken string `json:"glpi_user_token"`
 
-	// Identificação
 	CompanyName         string `json:"company_name"`
 	TelefoneNotificacao string `json:"telefone_notificacao"`
 	DarkList            string `json:"dark_list"`
 	SupportAgents       string `json:"support_agents"`
 
-	// SMTP (alertas de desconexão)
 	SMTPHost     string `json:"smtp_host"`
 	SMTPPort     int    `json:"smtp_port"`
 	SMTPUsername string `json:"smtp_username"`
@@ -36,14 +26,12 @@ type Config struct {
 	SMTPReceiver string `json:"smtp_receiver"`
 	SMTPEnabled  bool   `json:"smtp_enabled"`
 
-	// Horário de atendimento
 	WorkingHoursStart   string `json:"working_hours_start"`
 	WorkingHoursEnd     string `json:"working_hours_end"`
 	WorkingDays         string `json:"working_days"`
 	WorkingHoursEnabled bool   `json:"working_hours_enabled"`
 	MsgAusencia         string `json:"msg_ausencia"`
 
-	// Mensagens configuráveis
 	MsgNovoUsuario                string `json:"msg_novo_usuario"`
 	MsgUsuarioExistente           string `json:"msg_usuario_existente"`
 	MsgMenuInicial                string `json:"msg_menu_inicial"`
@@ -71,19 +59,12 @@ var (
 	configPath   = "db/config.json"
 )
 
-// ─── Inicialização ────────────────────────────────────────────────────────────
-
-// InitConfig carrega a configuração do disco. Se o arquivo não existir ou for
-// inválido, faz a migração automática a partir de variáveis de ambiente / .env.
-
-// Função InitConfig executa a regra de negócio/rotina correspondente
 func InitConfig() {
 	mu.Lock()
 	defer mu.Unlock()
 
 	_ = os.MkdirAll("db", 0777)
 
-	// Tenta carregar o config.json já existente
 	if data, err := os.ReadFile(configPath); err == nil {
 		var cfg Config
 		if err := json.Unmarshal(data, &cfg); err == nil {
@@ -94,86 +75,68 @@ func InitConfig() {
 		}
 	}
 
-	// Fallback: migração a partir de variáveis de ambiente / arquivo .env
 	globalConfig = carregarConfigDoAmbiente()
 	preencherDefaultsMensagens(&globalConfig)
 	_ = saveConfigLocked()
 }
 
-// ─── API pública ──────────────────────────────────────────────────────────────
-
-// GetConfig retorna uma cópia thread-safe da configuração atual.
-
-// Função GetConfig executa a regra de negócio/rotina correspondente
 func GetConfig() Config {
 	mu.RLock()
 	defer mu.RUnlock()
 	return globalConfig
 }
 
-// SaveConfig persiste uma nova configuração e atualiza os valores em memória.
-
-// Função SaveConfig executa a regra de negócio/rotina correspondente
-func SaveConfig(cfg Config) error {
+func UpdateConfig(newCfg Config) error {
 	mu.Lock()
 	defer mu.Unlock()
-	globalConfig = cfg
-	preencherDefaultsMensagens(&globalConfig)
+
+	preencherDefaultsMensagens(&newCfg)
+	globalConfig = newCfg
 	return saveConfigLocked()
 }
 
-// ─── Persistência ─────────────────────────────────────────────────────────────
+func SaveConfig(cfg Config) error {
+	return UpdateConfig(cfg)
+}
 
-// saveConfigLocked grava globalConfig em disco. Deve ser chamada com mu travado.
-
-// Função saveConfigLocked executa a regra de negócio/rotina correspondente
 func saveConfigLocked() error {
 	data, err := json.MarshalIndent(globalConfig, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(configPath, data, 0666)
+	return os.WriteFile(configPath, data, 0644)
 }
 
-// ─── Migração do ambiente ─────────────────────────────────────────────────────
-
-// carregarConfigDoAmbiente constrói uma Config a partir de variáveis de ambiente
-// e de um arquivo .env opcional (usado apenas na primeira execução).
-
-// Função carregarConfigDoAmbiente executa a regra de negócio/rotina correspondente
 func carregarConfigDoAmbiente() Config {
-	envMap := parseEnvFile()
+	env := parseEnvFile()
 
-	get := func(key, fallback string) string {
-		if val, ok := envMap[key]; ok && val != "" {
+	get := func(key, defaultValue string) string {
+		if val, ok := env[key]; ok && val != "" {
 			return val
 		}
 		if val := os.Getenv(key); val != "" {
 			return val
 		}
-		return fallback
+		return defaultValue
 	}
 
-	port, _ := strconv.Atoi(get("SMTP_PORT", "587"))
-	if port == 0 {
-		port = 587
-	}
-
-	smtpEnabled := get("SMTP_ENABLED", "false")
-	whEnabled := get("WORKING_HOURS_ENABLED", "false")
+	smtpPortStr := get("SMTP_PORT", "587")
+	smtpPort, _ := strconv.Atoi(smtpPortStr)
+	smtpEnabled := strings.ToLower(get("SMTP_ENABLED", "false"))
+	whEnabled := strings.ToLower(get("WORKING_HOURS_ENABLED", "false"))
 
 	return Config{
 		GLPIApiURL:    get("GLPI_API_URL", ""),
 		GLPIAppToken:  get("GLPI_APP_TOKEN", ""),
 		GLPIUserToken: get("GLPI_USER_TOKEN", ""),
 
-		CompanyName:         get("COMPANY_NAME", ""),
+		CompanyName:         get("COMPANY_NAME", "Suporte TI"),
 		TelefoneNotificacao: get("TELEFONE_NOTIFICACAO", ""),
 		DarkList:            get("DARK_LIST", ""),
 		SupportAgents:       get("SUPPORT_AGENTS", ""),
 
 		SMTPHost:     get("SMTP_HOST", ""),
-		SMTPPort:     port,
+		SMTPPort:     smtpPort,
 		SMTPUsername: get("SMTP_USERNAME", ""),
 		SMTPPassword: get("SMTP_PASSWORD", ""),
 		SMTPSender:   get("SMTP_SENDER", ""),
@@ -188,10 +151,6 @@ func carregarConfigDoAmbiente() Config {
 	}
 }
 
-// parseEnvFile lê manualmente um arquivo .env, se existir, retornando suas
-// chaves e valores. Usado apenas na migração inicial.
-
-// Função parseEnvFile executa a regra de negócio/rotina correspondente
 func parseEnvFile() map[string]string {
 	env := make(map[string]string)
 
@@ -214,7 +173,6 @@ func parseEnvFile() map[string]string {
 		key := strings.TrimSpace(parts[0])
 		val := strings.TrimSpace(parts[1])
 
-		// Remove aspas simples ou duplas ao redor do valor
 		if len(val) >= 2 {
 			first, last := val[0], val[len(val)-1]
 			if (first == '"' && last == '"') || (first == '\'' && last == '\'') {
@@ -228,19 +186,13 @@ func parseEnvFile() map[string]string {
 	return env
 }
 
-// ─── Defaults de mensagens ────────────────────────────────────────────────────
-
-// preencherDefaultsMensagens garante que nenhum campo de mensagem fique vazio,
-// aplicando textos padrão caso o usuário não tenha configurado.
-
-// Função preencherDefaultsMensagens executa a regra de negócio/rotina correspondente
 func preencherDefaultsMensagens(cfg *Config) {
 	defaults := map[*string]string{
-		&cfg.MsgNovoUsuario: "{saudacao}! Sou o bot de chamados da {empresa} 😎\n\n" +
+		&cfg.MsgNovoUsuario: "{saudacao}! Sou o bot de atendimento da {empresa}. 👋\n\n" +
 			"💡 _Dica: Se escolher a opção errada, digite * a qualquer momento para voltar._\n\n" +
 			"Para começarmos, como você se chama? (Pode digitar seu nome completo)",
 
-		&cfg.MsgUsuarioExistente: "{saudacao}! Bem-vindo de volta ao suporte da {empresa}.\n\n" +
+		&cfg.MsgUsuarioExistente: "{saudacao}! Bem-vindo de volta ao suporte da {empresa}. 👋\n\n" +
 			"💡 _Dica: Se escolher a opção errada, digite * a qualquer momento para voltar._",
 
 		&cfg.MsgMenuInicial: "Como posso te ajudar hoje?",
@@ -250,7 +202,7 @@ func preencherDefaultsMensagens(cfg *Config) {
 		&cfg.MsgFilaSuporte: "⏳ Solicitação enviada! Aguarde um momento até que um técnico aceite o seu atendimento.",
 
 		&cfg.MsgFilaEspera: "⏳ Nossos técnicos estão em outro atendimento no momento.\n\n" +
-			"Você entrou na fila de espera (Sua posição: {posicao}).\n" +
+			"Você entrou na fila de espera (Sua posição: *{posicao}*).\n" +
 			"Assim que o técnico liberar, você será conectado automaticamente.\n\n" +
 			"Para sair da fila, digite *#cancelar*.",
 

@@ -1,200 +1,144 @@
-<!-- VIEW HTML: index.html - Página do Painel Administrativo do GLPI-BOT -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Status do Sistema - Bot GLPI</title>
+    <title>Painel de Controle - GLPI-BOT</title>
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=1.6">
+    <link rel="stylesheet" href="/static/css/style.css?v=4.0">
 </head>
 
-<body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
-    <!-- Ambient light glow effects (Monochrome/Gray theme) -->
-    <div
-        class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-zinc-500/[0.03] rounded-full blur-[150px] pointer-events-none">
-    </div>
-    <div
-        class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[130px] pointer-events-none">
-    </div>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased">
 
-    <!-- Header/Navbar -->
-    <header
-        class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <img src="/static/img/logo.png" alt="Logo"
-                class="w-10 h-10 rounded-xl object-contain shadow-lg border border-white/5">
+    <!-- Header Navbar -->
+    <header class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50 w-full px-4 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+            <img src="/static/img/logo.png" alt="Logo GLPI-BOT" class="w-7 h-7 object-contain">
             <div>
-                <h1
-                    class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
-                    GLPI-BOT</h1>
-                <p class="text-xs text-zinc-400">Painel de Controle Inteligente</p>
+                <h1 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">GLPI-BOT</h1>
+                <p class="text-[10px] text-zinc-400">Painel de Gerenciamento TI</p>
             </div>
         </div>
 
-        <!-- Navigation Links -->
-        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/5 rounded-xl">
-            <a href="/"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
-                📊 Status
+        <nav class="flex items-center gap-1 bg-zinc-950 p-1 border border-zinc-800 rounded">
+            <a href="/" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-100 bg-zinc-800 border border-zinc-700">
+                Status
             </a>
-            <a href="/flow"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                💬 Fluxo do Bot
+            <a href="/flow" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Fluxo do Bot
             </a>
-            <a href="/config"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                🔧 Configurações
+            <a href="/config" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Configurações
             </a>
-            <a href="/messages"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                ✉️ Mensagens
+            <a href="/messages" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Mensagens
             </a>
-            <a href="/chats"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                💬 Conversas
+            <a href="/chats" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Conversas
             </a>
-            <a href="/logs"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                📋 Logs
+            <a href="/logs" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Logs
             </a>
         </nav>
 
-        <!-- Action / Logout -->
-        <div class="flex items-center gap-3">
-            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-900/80 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-medium">
-                <span id="user-badge-role" class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300">...</span>
+        <div class="flex items-center gap-2.5">
+            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-950 border border-zinc-800 px-2.5 py-1 rounded text-xs">
+                <span id="user-badge-role" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-800 text-zinc-300">...</span>
                 <span id="user-badge-name" class="text-zinc-200 font-bold">...</span>
             </div>
-            <a href="/logout"
-                class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
-                🚪 Sair
+            <a href="/logout" class="px-3 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-900/60 rounded transition">
+                Sair
             </a>
         </div>
     </header>
 
-    <main class="flex-1 flex flex-col justify-center gap-8 p-6 w-full max-w-5xl mx-auto relative z-10">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-
-            <!-- Coluna 1: Status Conexão Card -->
-            <div class="glass-card rounded-2xl p-8 flex flex-col items-center relative overflow-hidden group">
-                <!-- Inner soft accent light -->
-                <div
-                    class="absolute -top-24 -left-24 w-48 h-48 bg-zinc-500/[0.04] rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/[0.08] transition-all duration-500">
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 flex flex-col gap-4">
+        
+        <!-- Grid de Diagnósticos e Conexão -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- Conexão WhatsApp / QR Code -->
+            <div class="lg:col-span-6 bg-zinc-900 border border-zinc-800 rounded p-4 flex flex-col gap-3">
+                <div class="border-b border-zinc-800 pb-2 flex items-center justify-between">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Sessão da Engine WhatsApp</h2>
+                    <div class="flex items-center gap-1.5">
+                        <span id="status-dot" class="inline-block w-2 h-2 rounded-full bg-zinc-500"></span>
+                        <span id="status-text" class="text-xs font-bold text-zinc-400">Verificando...</span>
+                    </div>
                 </div>
 
-                <h2 class="text-lg font-bold mb-1 flex items-center gap-2 text-zinc-200 z-10">
-                    📶 Conexão WhatsApp
-                </h2>
-                <p class="text-xs text-zinc-400 mb-6 text-center font-normal z-10">Status da conexão do bot com a rede
-                    do WhatsApp</p>
+                <div class="flex flex-col items-center justify-center min-h-[220px]" id="qrcode">
+                    <div class="animate-pulse text-xs text-zinc-400 font-medium">Carregando status do serviço...</div>
+                </div>
 
-                <!-- QR Code / Status Container -->
-                <div
-                    class="bg-black/30 border border-white/5 p-6 rounded-2xl w-full flex flex-col items-center justify-center min-h-[290px] shadow-inner z-10 relative">
-                    <!-- Div onde o JS vai injetar a imagem do QR Code -->
-                    <div id="qrcode" class="flex justify-center items-center rounded-xl overflow-hidden"></div>
-
-                    <!-- Div onde o JS vai injetar os textos de status -->
-                    <div id="qr-status" class="mt-4 text-center font-semibold text-xs tracking-wide">
-                        Verificando...
-                    </div>
+                <div id="qr-status" class="text-center text-xs font-medium text-zinc-400 pt-1 border-t border-zinc-800/80">
+                    Aguardando sinal do servidor...
                 </div>
             </div>
 
-            <!-- Coluna 2: Informações do Sistema -->
-            <div class="glass-card rounded-2xl p-8 flex flex-col relative overflow-hidden group">
-                <!-- Inner soft accent light -->
-                <div
-                    class="absolute -bottom-24 -right-24 w-48 h-48 bg-zinc-500/[0.04] rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/[0.08] transition-all duration-500">
-                </div>
+            <!-- Diagnóstico do Servidor -->
+            <div class="lg:col-span-6 bg-zinc-900 border border-zinc-800 rounded p-4 flex flex-col justify-between">
+                <div>
+                    <div class="border-b border-zinc-800 pb-2 mb-3">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Informações do Servidor</h2>
+                    </div>
 
-                <h2 class="text-lg font-bold mb-1 flex items-center gap-2 text-zinc-200 z-10">
-                    📊 Monitoramento & Diagnóstico
-                </h2>
-                <p class="text-xs text-zinc-400 mb-6 font-normal z-10">Métricas de uplink e informações sobre a execução
-                    da engine</p>
-
-                <div class="flex flex-col gap-4 z-10 flex-1 justify-center">
-                    <!-- Item 1: Status Geral -->
-                    <div class="flex items-center justify-between border-b border-white/5 pb-3">
-                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status Geral</span>
-                        <div id="status-badge" class="flex items-center gap-2">
-                            <span class="relative flex h-2 w-2">
-                                <span
-                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                                <span id="status-dot"
-                                    class="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
-                            </span>
-                            <span id="status-text" class="text-xs font-bold text-yellow-400">Verificando...</span>
+                    <div class="divide-y divide-zinc-800/60 text-xs">
+                        <div class="py-2 flex justify-between items-center">
+                            <span class="text-zinc-400 font-medium">Engine de Comunicação:</span>
+                            <span id="info-engine" class="font-bold text-zinc-100">Whatsmeow</span>
+                        </div>
+                        <div class="py-2 flex justify-between items-center">
+                            <span class="text-zinc-400 font-medium">Fuso Horário do Sistema:</span>
+                            <span id="info-timezone" class="font-mono text-zinc-300">America/Sao_Paulo</span>
+                        </div>
+                        <div class="py-2 flex justify-between items-center">
+                            <span class="text-zinc-400 font-medium">Tempo de Atividade (Uptime):</span>
+                            <span id="info-uptime" class="font-mono font-bold text-zinc-100">0s</span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Item 2: Fuso Horário -->
-                    <div class="flex items-center justify-between border-b border-white/5 pb-3">
-                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Fuso Horário</span>
-                        <span id="info-timezone" class="text-xs font-bold text-zinc-200">Carregando...</span>
-                    </div>
+                <div class="bg-zinc-950 border border-zinc-800 rounded p-3 text-[11px] text-zinc-400 mt-4">
+                    <span class="font-bold text-zinc-200">Status Operacional:</span> Bot ativo e monitorando a fila de requisições de suporte via WhatsApp.
+                </div>
+            </div>
+        </div>
 
-                    <!-- Item 3: Engine Core -->
-                    <div class="flex items-center justify-between border-b border-white/5 pb-3">
-                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Engine do Bot</span>
-                        <span id="info-engine" class="text-xs font-bold text-zinc-200">Carregando...</span>
-                    </div>
-
-                    <!-- Item 4: Tempo de Atividade -->
-                    <div class="flex items-center justify-between pt-1">
-                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Tempo de
-                            Uplink</span>
-                        <span id="info-uptime" class="text-xs font-bold text-zinc-200">Carregando...</span>
-                    </div>
+        <!-- Tabela Robusta de Chamados Recentes -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded p-4 flex flex-col gap-3">
+            <div class="border-b border-zinc-800 pb-2 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Últimos Chamados Registrados</h2>
+                    <p class="text-[11px] text-zinc-400">Histórico recente de tickets integrados ao GLPI</p>
                 </div>
             </div>
 
-        </div>
-
-        <!-- Coluna Única: Chamados Recentes -->
-        <div class="glass-card rounded-2xl p-8 flex flex-col relative overflow-hidden group w-full">
-            <!-- Inner soft accent light -->
-            <div
-                class="absolute -bottom-24 -left-24 w-48 h-48 bg-zinc-500/[0.02] rounded-full blur-3xl pointer-events-none group-hover:bg-zinc-500/[0.04] transition-all duration-500">
-            </div>
-
-            <h2 class="text-lg font-bold mb-1 flex items-center gap-2 text-zinc-200 z-10">
-                🎫 Chamados Recentes
-            </h2>
-            <p class="text-xs text-zinc-400 mb-6 font-normal z-10">Últimos chamados abertos pelo bot diretamente no GLPI
-            </p>
-
-            <div class="overflow-x-auto w-full z-10">
-
-                <!-- Grid de visualização de registros cadastrados -->
+            <div class="overflow-x-auto w-full">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
-                        <tr class="border-b border-white/10 text-zinc-400 font-semibold uppercase tracking-wider">
-                            <th class="pb-3 text-left">Chamado</th>
-                            <th class="pb-3 text-left">Solicitante</th>
-                            <th class="pb-3 text-left">Título</th>
-                            <th class="pb-3 text-right">Data/Hora</th>
+                        <tr class="bg-zinc-950 border-b border-zinc-800 text-zinc-400 font-semibold uppercase text-[10px] tracking-wider">
+                            <th class="py-2 px-3 text-left">ID Chamado</th>
+                            <th class="py-2 px-3 text-left">Requisitante (WhatsApp)</th>
+                            <th class="py-2 px-3 text-left">Título / Assunto</th>
+                            <th class="py-2 px-3 text-right">Data de Abertura</th>
                         </tr>
                     </thead>
-                    <tbody id="recent-tickets-body" class="divide-y divide-white/5 text-zinc-300">
+                    <tbody id="recent-tickets-body" class="divide-y divide-zinc-800/60 text-zinc-200">
                         <tr>
-                            <td colspan="4" class="py-4 text-center text-zinc-500 italic">Carregando chamados
-                                recentes...</td>
+                            <td colspan="4" class="py-4 text-center text-zinc-500 italic">Carregando histórico de chamados...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
+
     </main>
 
-    <!-- Importando os Scripts -->
-    <script src="/static/js/auth-check.js?v=1.6"></script>
-    <script src="/static/js/script.js?v=1.6"></script>
+    <script src="/static/js/auth-check.js?v=4.0"></script>
+    <script src="/static/js/script.js?v=4.0"></script>
 </body>
 
 </html>

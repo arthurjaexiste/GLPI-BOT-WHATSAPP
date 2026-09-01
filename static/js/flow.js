@@ -1,14 +1,7 @@
-/**
- * SCRIPT: flow.js
- * Descrição: Lógica de controle de frontend para a interface administrativa do GLPI-BOT.
- */
-
 let flowRoot = null;
-let activeEditPath = []; // Caminho de índices para localizar o nó na árvore
-let activeEditMode = "edit"; // "edit" ou "add"
+let activeEditPath = [];
+let activeEditMode = "edit";
 
-// Carrega o fluxo de conversa via API
-// Função fetchFlow manipula a rotina correspondente na interface do painel
 async function fetchFlow() {
     try {
         const response = await fetch('/api/flow');
@@ -17,99 +10,85 @@ async function fetchFlow() {
         renderTree();
     } catch (error) {
         console.error(error);
-        showToast('Erro ao obter o fluxo.', '❌');
+        showToast('Erro ao obter o fluxo.', false);
     }
 }
 
-// Renderiza a árvore recursivamente
-
-// Função renderTree manipula a rotina correspondente na interface do painel
 function renderTree() {
     const treeContainer = document.getElementById('flow-tree');
     treeContainer.innerHTML = '';
 
     if (!flowRoot) return;
 
-    // Renderizar a raiz (que é o Menu Inicial, não deletável)
     const rootEl = createNodeUI(flowRoot, [], true);
     treeContainer.appendChild(rootEl);
 }
 
-// Gera o HTML do nó
-
-// Função createNodeUI manipula a rotina correspondente na interface do painel
 function createNodeUI(node, path, isRoot = false) {
     const div = document.createElement('div');
-    div.className = `flex flex-col gap-3 rounded-2xl p-5 transition duration-200 ${isRoot ? 'bg-indigo-950/20 border border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-zinc-900/40 border border-white/5 ml-6 hover:border-white/10'}`;
+    div.className = `flex flex-col gap-2.5 rounded p-3 transition border ${isRoot ? 'bg-zinc-950 border-zinc-700' : 'bg-zinc-950 border-zinc-800 ml-4'}`;
 
-    // Emblemas de acordo com o tipo
     let badgeHTML = '';
     switch (node.type) {
         case 'menu':
-
-            // Constante backInfo trata a execução de callback ou fluxo assíncrono
             const backInfo = (isRoot || node.show_back_button !== false) ? ' (+Botão Voltar)' : ' (Sem Voltar)';
-            badgeHTML = `<span class="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded">📁 Menu${backInfo}</span>`;
+            badgeHTML = `<span class="text-[10px] font-bold bg-zinc-800 text-zinc-300 border border-zinc-700 px-1.5 py-0.5 rounded">Menu${backInfo}</span>`;
             break;
         case 'ticket':
             const attachmentTypes = [];
             if (node.ask_images !== false) attachmentTypes.push('Imagens');
             if (node.ask_docs !== false) attachmentTypes.push('Documentos');
             const attachmentsInfo = attachmentTypes.length > 0 ? ` (+Anexos: ${attachmentTypes.join('/')})` : ' (Sem Anexos)';
-            badgeHTML = `<span class="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">🎫 Chamado GLPI (ID: ${node.glpi_id || 0})${attachmentsInfo}</span>`;
+            badgeHTML = `<span class="text-[10px] font-bold bg-zinc-800 text-emerald-400 border border-zinc-700 px-1.5 py-0.5 rounded">Chamado GLPI (ID: ${node.glpi_id || 0})${attachmentsInfo}</span>`;
             break;
         case 'text':
-            badgeHTML = '<span class="text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded">💬 Resposta / FAQ</span>';
+            badgeHTML = '<span class="text-[10px] font-bold bg-zinc-800 text-cyan-400 border border-zinc-700 px-1.5 py-0.5 rounded">Resposta / FAQ</span>';
             break;
         case 'status':
-            badgeHTML = '<span class="text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded">🔍 Status Chamado</span>';
+            badgeHTML = '<span class="text-[10px] font-bold bg-zinc-800 text-purple-400 border border-zinc-700 px-1.5 py-0.5 rounded">Status Chamado</span>';
             break;
         case 'human':
-            badgeHTML = '<span class="text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">👤 Falar c/ Suporte</span>';
+            badgeHTML = '<span class="text-[10px] font-bold bg-zinc-800 text-amber-400 border border-zinc-700 px-1.5 py-0.5 rounded">Falar com Suporte</span>';
             break;
     }
 
-    // Ações de ordenação
     const pathStr = JSON.stringify(path);
     const parentPath = path.slice(0, -1);
     const childIdx = path[path.length - 1];
 
     const sortButtons = isRoot ? '' : `
-        <button onclick="moveNode(${JSON.stringify(parentPath)}, ${childIdx}, -1)" class="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white text-xs">▲</button>
-        <button onclick="moveNode(${JSON.stringify(parentPath)}, ${childIdx}, 1)" class="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white text-xs">▼</button>
+        <button onclick="moveNode(${JSON.stringify(parentPath)}, ${childIdx}, -1)" class="px-1.5 py-0.5 hover:bg-zinc-800 rounded text-zinc-400 hover:text-zinc-100 text-xs">▲</button>
+        <button onclick="moveNode(${JSON.stringify(parentPath)}, ${childIdx}, 1)" class="px-1.5 py-0.5 hover:bg-zinc-800 rounded text-zinc-400 hover:text-zinc-100 text-xs">▼</button>
     `;
 
-    // Botão de adicionar filho (só para Menu)
     const addChildButton = node.type === 'menu' ? `
-        <button onclick="openAddModal(${pathStr})" class="px-2.5 py-1 text-[11px] font-bold bg-violet-600/20 text-violet-300 hover:bg-violet-600/40 rounded border border-violet-500/20 transition duration-150">
+        <button onclick="openAddModal(${pathStr})" class="px-2 py-0.5 text-[11px] font-bold bg-zinc-800 text-zinc-200 hover:bg-zinc-700 rounded border border-zinc-700 transition">
             + Adicionar Opção
         </button>
     ` : '';
 
-    // Botão de excluir
     const deleteButton = isRoot ? '' : `
-        <button onclick="deleteNode(${JSON.stringify(parentPath)}, ${childIdx})" class="p-1 hover:bg-red-950/60 hover:text-red-400 rounded text-gray-500 text-xs ml-1">🗑️</button>
+        <button onclick="deleteNode(${JSON.stringify(parentPath)}, ${childIdx})" class="px-2 py-0.5 hover:bg-rose-950/60 text-rose-400 hover:text-rose-300 rounded text-xs border border-rose-900/60 font-semibold">Excluir</button>
     `;
 
     div.innerHTML = `
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <span class="text-sm font-semibold">${node.title}</span>
+        <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-zinc-200">${node.title}</span>
                 ${badgeHTML}
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
                 ${addChildButton}
                 ${sortButtons}
-                <button onclick="openEditModal(${pathStr})" class="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white text-xs">✏️</button>
+                <button onclick="openEditModal(${pathStr})" class="px-2 py-0.5 hover:bg-zinc-800 rounded text-zinc-300 hover:text-zinc-100 text-xs font-semibold border border-zinc-800">Editar</button>
                 ${deleteButton}
             </div>
         </div>
     `;
 
-    // Se for menu e tiver filhos, renderizar filhos recursivamente
     if (node.type === 'menu' && node.children && node.children.length > 0) {
         const childrenDiv = document.createElement('div');
-        childrenDiv.className = 'flex flex-col gap-2 border-l border-gray-800 ml-2 mt-1';
+        childrenDiv.className = 'flex flex-col gap-2 border-l border-zinc-800 ml-1.5 mt-1 pt-1';
 
         node.children.forEach((child, idx) => {
             const childEl = createNodeUI(child, [...path, idx]);
@@ -119,28 +98,22 @@ function createNodeUI(node, path, isRoot = false) {
         div.appendChild(childrenDiv);
     } else if (node.type === 'menu') {
         const emptyDiv = document.createElement('div');
-        emptyDiv.className = 'text-xs text-gray-500 italic ml-6 py-2 border-l border-gray-800 pl-4 border-dashed';
-        emptyDiv.innerText = 'Menu vazio. Adicione opções filhas.';
+        emptyDiv.className = 'text-[11px] text-zinc-500 italic ml-4 mt-0.5';
+        emptyDiv.innerText = '(Submenu sem opções ativas)';
         div.appendChild(emptyDiv);
     }
 
     return div;
 }
 
-// Localiza um nó na árvore pelo caminho de índices
-
-// Função funcNodeByPath manipula a rotina correspondente na interface do painel
 function funcNodeByPath(path) {
-    let cur = flowRoot;
+    let curr = flowRoot;
     for (let idx of path) {
-        cur = cur.children[idx];
+        curr = curr.children[idx];
     }
-    return cur;
+    return curr;
 }
 
-// Abre o modal de edição
-
-// Função openEditModal manipula a rotina correspondente na interface do painel
 function openEditModal(path) {
     activeEditPath = path;
     activeEditMode = "edit";
@@ -149,158 +122,126 @@ function openEditModal(path) {
     document.getElementById('modal-title').innerText = "Editar Opção";
     document.getElementById('node-title').value = node.title || '';
     document.getElementById('node-type').value = node.type || 'menu';
-    document.getElementById('node-glpi').value = node.glpi_id || 0;
+    document.getElementById('node-glpi').value = node.glpi_id || '';
     document.getElementById('node-content').value = node.content || '';
 
-    // Configura os checkboxes (padrão é true para nós existentes)
     document.getElementById('node-ask-images').checked = node.ask_images !== false;
     document.getElementById('node-ask-docs').checked = node.ask_docs !== false;
     document.getElementById('node-show-back').checked = node.show_back_button !== false;
 
-    // Raiz não pode ter tipo alterado (sempre menu)
-    document.getElementById('node-type').disabled = path.length === 0;
-
     toggleModalFields();
     document.getElementById('edit-modal').classList.remove('hidden');
 }
 
-// Abre o modal para adicionar
-
-// Função openAddModal manipula a rotina correspondente na interface do painel
-function openAddModal(path) {
-    activeEditPath = path;
+function openAddModal(parentPath) {
+    activeEditPath = parentPath;
     activeEditMode = "add";
 
-    document.getElementById('modal-title').innerText = "Adicionar Nova Opção";
+    document.getElementById('modal-title').innerText = "Nova Opção de Menu";
     document.getElementById('node-title').value = '';
-    document.getElementById('node-type').value = 'ticket';
-    document.getElementById('node-glpi').value = 0;
+    document.getElementById('node-type').value = 'menu';
+    document.getElementById('node-glpi').value = '';
     document.getElementById('node-content').value = '';
 
-    // Checkboxes marcados por padrão ao adicionar novo nó
     document.getElementById('node-ask-images').checked = true;
     document.getElementById('node-ask-docs').checked = true;
     document.getElementById('node-show-back').checked = true;
 
-    document.getElementById('node-type').disabled = false;
-
     toggleModalFields();
     document.getElementById('edit-modal').classList.remove('hidden');
 }
 
+function toggleModalFields() {
+    const type = document.getElementById('node-type').value;
+    const fGlpi = document.getElementById('field-glpi');
+    const fAttach = document.getElementById('field-attachments');
+    const fMenuOpts = document.getElementById('field-menu-options');
+    const fContent = document.getElementById('field-content');
+    const lblContent = document.getElementById('label-content');
 
-// Função closeModal manipula a rotina correspondente na interface do painel
+    fGlpi.classList.add('hidden');
+    fAttach.classList.add('hidden');
+    fMenuOpts.classList.add('hidden');
+    fContent.classList.add('hidden');
+
+    if (type === 'ticket') {
+        fGlpi.classList.remove('hidden');
+        fAttach.classList.remove('hidden');
+        fContent.classList.remove('hidden');
+        lblContent.innerText = "Prompt Específico do Problema (Instrução para o usuário)";
+    } else if (type === 'text') {
+        fContent.classList.remove('hidden');
+        lblContent.innerText = "Mensagem de Resposta Final / FAQ";
+    } else if (type === 'menu') {
+        fMenuOpts.classList.remove('hidden');
+    }
+}
+
 function closeModal() {
     document.getElementById('edit-modal').classList.add('hidden');
 }
 
-// Esconde ou mostra os campos de acordo com o tipo
-
-// Função toggleModalFields manipula a rotina correspondente na interface do painel
-function toggleModalFields() {
-    const type = document.getElementById('node-type').value;
-    const fieldGLPI = document.getElementById('field-glpi');
-    const fieldContent = document.getElementById('field-content');
-    const labelContent = document.getElementById('label-content');
-    const fieldAttachments = document.getElementById('field-attachments');
-    const fieldMenuOptions = document.getElementById('field-menu-options');
-
-    fieldGLPI.classList.add('hidden');
-    fieldContent.classList.add('hidden');
-    if (fieldAttachments) fieldAttachments.classList.add('hidden');
-    if (fieldMenuOptions) fieldMenuOptions.classList.add('hidden');
-
-    if (type === 'ticket') {
-        fieldGLPI.classList.remove('hidden');
-        fieldContent.classList.remove('hidden');
-        if (fieldAttachments) fieldAttachments.classList.remove('hidden');
-        labelContent.innerText = "Prompt de Descrição (Opcional)";
-        document.getElementById('node-content').placeholder = "Ex: por favor, descreva o problema detalhadamente:";
-    } else if (type === 'text') {
-        fieldContent.classList.remove('hidden');
-        labelContent.innerText = "Mensagem de Resposta (FAQ)";
-        document.getElementById('node-content').placeholder = "Escreva a resposta automática que o usuário receberá...";
-    } else if (type === 'menu') {
-        const isRoot = activeEditMode === "edit" && activeEditPath.length === 0;
-        if (!isRoot && fieldMenuOptions) {
-            fieldMenuOptions.classList.remove('hidden');
-        }
-    }
-}
-
-// Confirma as alterações no modal
-
-// Função confirmModal manipula a rotina correspondente na interface do painel
 function confirmModal() {
     const title = document.getElementById('node-title').value.trim();
-    const type = document.getElementById('node-type').value;
-    const glpi_id = parseInt(document.getElementById('node-glpi').value) || 0;
-    const content = document.getElementById('node-content').value.trim();
-
     if (!title) {
-        alert('O título da opção é obrigatório.');
+        alert('Informe o título da opção.');
         return;
     }
+
+    const type = document.getElementById('node-type').value;
+    const glpiId = parseInt(document.getElementById('node-glpi').value) || 0;
+    const content = document.getElementById('node-content').value.trim();
+
+    const askImages = document.getElementById('node-ask-images').checked;
+    const askDocs = document.getElementById('node-ask-docs').checked;
+    const showBack = document.getElementById('node-show-back').checked;
 
     if (activeEditMode === "edit") {
         const node = funcNodeByPath(activeEditPath);
         node.title = title;
         node.type = type;
-        node.glpi_id = glpi_id;
-        node.content = content;
 
         if (type === 'ticket') {
-            node.ask_images = document.getElementById('node-ask-images').checked;
-            node.ask_docs = document.getElementById('node-ask-docs').checked;
-        } else {
-            delete node.ask_images;
-            delete node.ask_docs;
+            node.glpi_id = glpiId;
+            node.content = content;
+            node.ask_images = askImages;
+            node.ask_docs = askDocs;
+        } else if (type === 'text') {
+            node.content = content;
+        } else if (type === 'menu') {
+            node.show_back_button = showBack;
+            if (!node.children) node.children = [];
         }
-
-        const isRoot = activeEditPath.length === 0;
-        if (type === 'menu' && !isRoot) {
-            node.show_back_button = document.getElementById('node-show-back').checked;
-        } else {
-            delete node.show_back_button;
-        }
-
-        // Limpar filhos se mudou de menu para outro tipo
-        if (type !== 'menu') delete node.children;
     } else if (activeEditMode === "add") {
-        const parent = funcNodeByPath(activeEditPath);
-        if (!parent.children) parent.children = [];
+        const parentNode = funcNodeByPath(activeEditPath);
+        if (!parentNode.children) parentNode.children = [];
 
-        // Gerar um ID único simples
-        const newID = "node_" + Math.random().toString(36).substr(2, 9);
-
+        const newId = 'n_' + Date.now();
         const newNode = {
-            id: newID,
-            title,
-            type,
-            glpi_id,
-            content
+            id: newId,
+            title: title,
+            type: type
         };
 
         if (type === 'ticket') {
-            newNode.ask_images = document.getElementById('node-ask-images').checked;
-            newNode.ask_docs = document.getElementById('node-ask-docs').checked;
-        }
-
-        if (type === 'menu') {
-            newNode.show_back_button = document.getElementById('node-show-back').checked;
+            newNode.glpi_id = glpiId;
+            newNode.content = content;
+            newNode.ask_images = askImages;
+            newNode.ask_docs = askDocs;
+        } else if (type === 'text') {
+            newNode.content = content;
+        } else if (type === 'menu') {
+            newNode.show_back_button = showBack;
             newNode.children = [];
         }
 
-        parent.children.push(newNode);
+        parentNode.children.push(newNode);
     }
 
     closeModal();
     renderTree();
 }
 
-// Exclui um nó
-
-// Função deleteNode manipula a rotina correspondente na interface do painel
 function deleteNode(parentPath, idx) {
     if (!confirm('Deseja realmente remover esta opção e todos os seus submenus?')) return;
     const parent = funcNodeByPath(parentPath);
@@ -308,9 +249,6 @@ function deleteNode(parentPath, idx) {
     renderTree();
 }
 
-// Move a posição do nó para cima ou para baixo
-
-// Função moveNode manipula a rotina correspondente na interface do painel
 function moveNode(parentPath, idx, direction) {
     const parent = funcNodeByPath(parentPath);
     const targetIdx = idx + direction;
@@ -324,8 +262,6 @@ function moveNode(parentPath, idx, direction) {
     renderTree();
 }
 
-// Salva a árvore na API
-// Função saveFlow manipula a rotina correspondente na interface do painel
 async function saveFlow() {
     try {
         const response = await fetch('/api/flow', {
@@ -337,32 +273,25 @@ async function saveFlow() {
         });
 
         if (!response.ok) throw new Error('Erro ao salvar fluxo');
-        showToast('Árvore de fluxo salva e aplicada com sucesso!', '✅');
+        showToast('Árvore de fluxo salva com sucesso!', true);
     } catch (err) {
         console.error(err);
-        showToast('Erro ao salvar o fluxo.', '❌');
+        showToast('Erro ao salvar o fluxo.', false);
     }
 }
 
-// Toast visual
-
-// Função showToast manipula a rotina correspondente na interface do painel
-function showToast(message, icon = '✅') {
+function showToast(message, isSuccess = true) {
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toast-icon');
     const toastMsg = document.getElementById('toast-message');
 
-    toastIcon.innerText = icon;
-    toastMsg.innerText = message;
+    if (toastIcon) toastIcon.innerText = '';
+    if (toastMsg) toastMsg.innerText = message;
 
-    if (icon === '✅') {
-        toast.className = toast.className.replace('border-red-500/30', 'border-emerald-500/30')
-            .replace('bg-red-950/80', 'bg-emerald-950/80')
-            .replace('text-red-300', 'text-emerald-300') + ' border-emerald-500/30 bg-emerald-950/80 text-emerald-300';
+    if (isSuccess) {
+        toast.className = "fixed bottom-4 right-4 px-4 py-2 rounded bg-zinc-900 border border-zinc-700 text-emerald-400 font-semibold transition duration-200 flex items-center gap-2 z-50 text-xs";
     } else {
-        toast.className = toast.className.replace('border-emerald-500/30', 'border-red-500/30')
-            .replace('bg-emerald-950/80', 'bg-red-950/80')
-            .replace('text-emerald-300', 'text-red-300') + ' border-red-500/30 bg-red-950/80 text-red-300';
+        toast.className = "fixed bottom-4 right-4 px-4 py-2 rounded bg-zinc-900 border border-zinc-700 text-rose-400 font-semibold transition duration-200 flex items-center gap-2 z-50 text-xs";
     }
 
     toast.classList.remove('translate-y-24', 'opacity-0');

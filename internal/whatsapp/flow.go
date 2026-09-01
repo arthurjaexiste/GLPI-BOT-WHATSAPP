@@ -24,22 +24,18 @@ const (
 )
 
 // FlowNode representa um nó do fluxo de conversa configurável pelo painel web.
-// Struct FlowNode define a estrutura de dados e mapeamento correspondente
 type FlowNode struct {
 	ID             string     `json:"id"`
 	Title          string     `json:"title"`
 	Type           NodeType   `json:"type"`
-	Content        string     `json:"content,omitempty"`          // Texto (NodeText) ou prompt customizado (NodeGLPITicket)
-	GLPIID         int        `json:"glpi_id,omitempty"`          // ID da categoria no GLPI
-	Children       []FlowNode `json:"children,omitempty"`         // Filhos do menu
-	AskImages      *bool      `json:"ask_images,omitempty"`       // Solicitar fotos/prints
-	AskDocs        *bool      `json:"ask_docs,omitempty"`         // Solicitar documentos/arquivos
-	ShowBackButton *bool      `json:"show_back_button,omitempty"` // Exibir opção "⬅️ Voltar"
+	Content        string     `json:"content,omitempty"`
+	GLPIID         int        `json:"glpi_id,omitempty"`
+	Children       []FlowNode `json:"children,omitempty"`
+	AskImages      *bool      `json:"ask_images,omitempty"`
+	AskDocs        *bool      `json:"ask_docs,omitempty"`
+	ShowBackButton *bool      `json:"show_back_button,omitempty"`
 }
 
-// GetAskImages retorna true (padrão) se o nó deve solicitar imagens.
-
-// Função GetAskImages executa a regra de negócio/rotina correspondente
 func (n FlowNode) GetAskImages() bool {
 	if n.AskImages == nil {
 		return true
@@ -47,9 +43,6 @@ func (n FlowNode) GetAskImages() bool {
 	return *n.AskImages
 }
 
-// GetAskDocs retorna true (padrão) se o nó deve solicitar documentos.
-
-// Função GetAskDocs executa a regra de negócio/rotina correspondente
 func (n FlowNode) GetAskDocs() bool {
 	if n.AskDocs == nil {
 		return true
@@ -57,9 +50,6 @@ func (n FlowNode) GetAskDocs() bool {
 	return *n.AskDocs
 }
 
-// GetShowBackButton retorna true (padrão) se o nó deve exibir o botão de voltar.
-
-// Função GetShowBackButton executa a regra de negócio/rotina correspondente
 func (n FlowNode) GetShowBackButton() bool {
 	if n.ShowBackButton == nil {
 		return true
@@ -67,9 +57,6 @@ func (n FlowNode) GetShowBackButton() bool {
 	return *n.ShowBackButton
 }
 
-// boolPtr é um helper para criar um *bool a partir de um valor literal.
-
-// Função boolPtr executa a regra de negócio/rotina correspondente
 func boolPtr(b bool) *bool { return &b }
 
 // ─── Estado do fluxo ─────────────────────────────────────────────────────────
@@ -82,61 +69,65 @@ var (
 
 // ─── Inicialização ────────────────────────────────────────────────────────────
 
-// InitFlow carrega o fluxo de conversa do disco. Cria o arquivo padrão se necessário.
-
-// Função InitFlow executa a regra de negócio/rotina correspondente
 func InitFlow() {
-	if err := loadFlow(); err != nil {
-		fmt.Println("⚠️ Erro ao carregar fluxo, criando arquivo padrão:", err)
-		createDefaultFlowJSON()
-		_ = loadFlow()
-	} else {
-		fmt.Println("✅ Fluxo de conversa dinâmico carregado com sucesso do JSON.")
+	flowMutex.Lock()
+	defer flowMutex.Unlock()
+
+	_ = os.MkdirAll("db", 0777)
+
+	if data, err := os.ReadFile(flowPath); err == nil {
+		var node FlowNode
+		if err := json.Unmarshal(data, &node); err == nil && node.ID != "" {
+			rootNode = node
+			return
+		}
+	}
+
+	createDefaultFlowJSON()
+	if data, err := os.ReadFile(flowPath); err == nil {
+		_ = json.Unmarshal(data, &rootNode)
 	}
 }
 
 // ─── API pública ──────────────────────────────────────────────────────────────
 
-// GetFlowConfig retorna uma cópia thread-safe do nó raiz do fluxo.
-
-// Função GetFlowConfig executa a regra de negócio/rotina correspondente
-func GetFlowConfig() FlowNode {
+func GetFlowTree() FlowNode {
 	flowMutex.RLock()
 	defer flowMutex.RUnlock()
 	return rootNode
 }
 
-// SaveFlowConfig persiste um novo fluxo no disco e atualiza o estado em memória.
+func GetFlowConfig() FlowNode {
+	return GetFlowTree()
+}
 
-// Função SaveFlowConfig executa a regra de negócio/rotina correspondente
-func SaveFlowConfig(root FlowNode) error {
+func UpdateFlowTree(newRoot FlowNode) error {
 	flowMutex.Lock()
 	defer flowMutex.Unlock()
 
-	data, err := json.MarshalIndent(root, "", "  ")
+	data, err := json.MarshalIndent(newRoot, "", "  ")
 	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(flowPath, data, 0644); err != nil {
-		return err
+		return fmt.Errorf("erro ao converter fluxo para JSON: %w", err)
 	}
 
-	rootNode = root
+	if err := os.WriteFile(flowPath, data, 0644); err != nil {
+		return fmt.Errorf("erro ao salvar fluxo no disco: %w", err)
+	}
+
+	rootNode = newRoot
 	return nil
 }
 
-// FindNodeByID busca um nó pelo ID de forma recursiva (thread-safe).
+func SaveFlowConfig(root FlowNode) error {
+	return UpdateFlowTree(root)
+}
 
-// Função FindNodeByID executa a regra de negócio/rotina correspondente
 func FindNodeByID(id string) (FlowNode, bool) {
 	flowMutex.RLock()
 	defer flowMutex.RUnlock()
 	return findNodeRecursive(rootNode, id)
 }
 
-// FindParentNodeByID busca o nó pai de um nó dado, permitindo a navegação "Voltar".
-
-// Função FindParentNodeByID executa a regra de negócio/rotina correspondente
 func FindParentNodeByID(childID string) (FlowNode, bool) {
 	flowMutex.RLock()
 	defer flowMutex.RUnlock()
@@ -145,41 +136,18 @@ func FindParentNodeByID(childID string) (FlowNode, bool) {
 
 // ─── Helpers privados ─────────────────────────────────────────────────────────
 
-// Função loadFlow executa a regra de negócio/rotina correspondente
-func loadFlow() error {
-	flowMutex.Lock()
-	defer flowMutex.Unlock()
-
-	_ = os.MkdirAll("db", 0777)
-
-	data, err := os.ReadFile(flowPath)
-	if err != nil {
-		return err
+func findNodeRecursive(current FlowNode, targetID string) (FlowNode, bool) {
+	if current.ID == targetID {
+		return current, true
 	}
-
-	var root FlowNode
-	if err := json.Unmarshal(data, &root); err != nil {
-		return err
-	}
-
-	rootNode = root
-	return nil
-}
-
-// Função findNodeRecursive executa a regra de negócio/rotina correspondente
-func findNodeRecursive(node FlowNode, id string) (FlowNode, bool) {
-	if node.ID == id {
-		return node, true
-	}
-	for _, child := range node.Children {
-		if found, ok := findNodeRecursive(child, id); ok {
+	for _, child := range current.Children {
+		if found, ok := findNodeRecursive(child, targetID); ok {
 			return found, true
 		}
 	}
 	return FlowNode{}, false
 }
 
-// Função findParentRecursive executa a regra de negócio/rotina correspondente
 func findParentRecursive(current FlowNode, childID string) (FlowNode, bool) {
 	for _, child := range current.Children {
 		if child.ID == childID {
@@ -192,9 +160,6 @@ func findParentRecursive(current FlowNode, childID string) (FlowNode, bool) {
 	return FlowNode{}, false
 }
 
-// createDefaultFlowJSON grava um fluxo padrão com as três opções básicas do bot.
-
-// Função createDefaultFlowJSON executa a regra de negócio/rotina correspondente
 func createDefaultFlowJSON() {
 	defaultRoot := FlowNode{
 		ID:             "root",

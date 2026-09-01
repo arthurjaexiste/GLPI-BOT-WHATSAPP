@@ -55,36 +55,32 @@ func matchOptionHash(selectedHash []byte, optionText string) bool {
 
 // HandlePollUpdate processa os votos recebidos em enquetes do WhatsApp.
 
-// Função HandlePollUpdate executa a regra de negócio/rotina correspondente
 func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string) {
-	fmt.Printf("ℹ️ [POLL] Recebido voto de enquete do remetente: %s\n", sender)
+	fmt.Printf("[POLL] Recebido voto de enquete do remetente: %s\n", sender)
 
 	vote, err := client.DecryptPollVote(ctx, v)
 	if err != nil {
-		fmt.Printf("🚨 [POLL] Erro ao descriptografar voto de enquete: %v\n", err)
+		fmt.Printf("[POLL] Erro ao descriptografar voto de enquete: %v\n", err)
 		return
 	}
 	if len(vote.SelectedOptions) == 0 {
-		fmt.Printf("⚠️ [POLL] Voto recebido, mas nenhuma opção selecionada.\n")
+		fmt.Printf("[POLL] Voto recebido, mas nenhuma opção selecionada.\n")
 		return
 	}
 
 	selectedHash := vote.SelectedOptions[0]
-	fmt.Printf("ℹ️ [POLL] Voto descriptografado com sucesso. Hash selecionado: %x\n", selectedHash)
+	fmt.Printf("[POLL] Voto descriptografado com sucesso. Hash selecionado: %x\n", selectedHash)
 
-	// Prioridade 1: enquete de assumir atendimento (enviada ao suporte)
 	if tratarVotoAtribuicaoAgente(ctx, client, v, selectedHash) {
 		return
 	}
 
-	// Prioridade 2: enquetes de fluxo do usuário
 	isSim := matchOptionHash(selectedHash, "Sim")
 	isNao := matchOptionHash(selectedHash, "Não")
 
 	state.Mu.Lock()
 	currentStep := uState.Step
 	if currentStep == -1 {
-		// Fallback: se o bot reiniciou ou a sessão expirou, mas o usuário respondeu à enquete do menu principal, recupera a navegação
 		uState.Step = 1000
 		uState.CurrentNodeID = "root"
 		currentStep = 1000
@@ -113,12 +109,6 @@ func HandlePollUpdate(ctx context.Context, client *whatsmeow.Client, v *events.M
 	}
 }
 
-// ─── Handlers por etapa do fluxo ─────────────────────────────────────────────
-
-// tratarVotoAtribuicaoAgente verifica se o voto é de um atendente assumindo o chat.
-// Retorna true se o voto foi processado como atribuição, false caso contrário.
-
-// Função tratarVotoAtribuicaoAgente executa a regra de negócio/rotina correspondente
 func tratarVotoAtribuicaoAgente(ctx context.Context, client *whatsmeow.Client, v *events.Message, selectedHash []byte) bool {
 	supportAgents := parsearAtendentes(config.GetConfig().SupportAgents)
 
@@ -136,11 +126,11 @@ func tratarVotoAtribuicaoAgente(ctx context.Context, client *whatsmeow.Client, v
 				userJID, _ := types.ParseJID(activeUserFull)
 				sendTextMessage(ctx, client, userJID, formatarMensagem(config.GetConfig().MsgSuporteAssumido, map[string]string{"agente": agent}))
 				sendTextMessage(ctx, client, supportJID, fmt.Sprintf(
-					"✅ Você assumiu o atendimento como *%s*.\n\nPara responder o usuário, comece a mensagem com (!).\nPara finalizar, digite *#encerrar*.",
+					"✅ Você assumiu o atendimento como *%s*.\n\nPara finalizar, digite *#encerrar*.",
 					agent,
 				))
 			} else {
-				sendTextMessage(ctx, client, supportJID, "⚠️ *Aviso do Sistema:* Não há nenhum atendimento pendente para assumir no momento.")
+				sendTextMessage(ctx, client, supportJID, "⚠️ *Aviso do Sistema:* Não há atendimento pendente para assumir no momento.")
 			}
 
 			return true
@@ -150,7 +140,6 @@ func tratarVotoAtribuicaoAgente(ctx context.Context, client *whatsmeow.Client, v
 	return false
 }
 
-// Função tratarVotoConfirmacaoIdentidade executa a regra de negócio/rotina correspondente
 func tratarVotoConfirmacaoIdentidade(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool) {
 	if isSim {
 		state.Mu.Lock()
@@ -158,7 +147,7 @@ func tratarVotoConfirmacaoIdentidade(ctx context.Context, client *whatsmeow.Clie
 		primeiroNome := strings.Split(nomeCompleto, " ")[0]
 		state.Mu.Unlock()
 
-		sendTextMessage(ctx, client, v.Info.Chat, fmt.Sprintf("Certo, %s! 😎", primeiroNome))
+		sendTextMessage(ctx, client, v.Info.Chat, fmt.Sprintf("Certo, %s! 👍", primeiroNome))
 		time.Sleep(500 * time.Millisecond)
 		SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
 	} else if isNao {
@@ -172,7 +161,6 @@ func tratarVotoConfirmacaoIdentidade(ctx context.Context, client *whatsmeow.Clie
 	}
 }
 
-// Função tratarVotoEnqueteDocumentos executa a regra de negócio/rotina correspondente
 func tratarVotoEnqueteDocumentos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
 		state.Mu.Lock()
@@ -194,7 +182,6 @@ func tratarVotoEnqueteDocumentos(ctx context.Context, client *whatsmeow.Client, 
 	}
 }
 
-// Função tratarVotoConfirmacaoDocumentos executa a regra de negócio/rotina correspondente
 func tratarVotoConfirmacaoDocumentos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
 		node, found := FindNodeByID(uState.CurrentNodeID)
@@ -216,7 +203,6 @@ func tratarVotoConfirmacaoDocumentos(ctx context.Context, client *whatsmeow.Clie
 	}
 }
 
-// Função tratarVotoEnqueteFotos executa a regra de negócio/rotina correspondente
 func tratarVotoEnqueteFotos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
 		state.Mu.Lock()
@@ -228,7 +214,6 @@ func tratarVotoEnqueteFotos(ctx context.Context, client *whatsmeow.Client, v *ev
 	}
 }
 
-// Função tratarVotoConfirmacaoFotos executa a regra de negócio/rotina correspondente
 func tratarVotoConfirmacaoFotos(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, isSim, isNao bool, cfg config.Config) {
 	if isSim {
 		FinalizarChamadoEAlertar(ctx, client, v, uState, sender)
@@ -240,7 +225,6 @@ func tratarVotoConfirmacaoFotos(ctx context.Context, client *whatsmeow.Client, v
 	}
 }
 
-// Função tratarVotoNovaMensagemChamado executa a regra de negócio/rotina correspondente
 func tratarVotoNovaMensagemChamado(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, isSim, isNao bool) {
 	if isSim {
 		state.Mu.Lock()
@@ -258,11 +242,6 @@ func tratarVotoNovaMensagemChamado(ctx context.Context, client *whatsmeow.Client
 	}
 }
 
-// ─── Enquete de seleção de nome ───────────────────────────────────────────────
-
-// tratarVotoNomeSistema processa a seleção do nome do usuário na lista do GLPI.
-
-// Função tratarVotoNomeSistema executa a regra de negócio/rotina correspondente
 func tratarVotoNomeSistema(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, selectedHash []byte) {
 	state.Mu.Lock()
 	opcoesSalvas := uState.PollOptions
@@ -301,17 +280,12 @@ func tratarVotoNomeSistema(ctx context.Context, client *whatsmeow.Client, v *eve
 	state.UserIDs[sender] = idSelecionado
 	state.Mu.Unlock()
 
-	sendTextMessage(ctx, client, v.Info.Chat, fmt.Sprintf("Certo, %s! 😎", primeiroNome))
+	sendTextMessage(ctx, client, v.Info.Chat, fmt.Sprintf("Certo, %s! 👍", primeiroNome))
 	time.Sleep(500 * time.Millisecond)
 
 	SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
 }
 
-// ─── Menu raiz e fluxo dinâmico ───────────────────────────────────────────────
-
-// SendRootFlowPoll envia a enquete do menu raiz (nível 0) do fluxo configurado.
-
-// Função SendRootFlowPoll executa a regra de negócio/rotina correspondente
 func SendRootFlowPoll(ctx context.Context, client *whatsmeow.Client, jid types.JID, uState *state.UserState) {
 	root := GetFlowConfig()
 	options := make([]string, 0, len(root.Children))
@@ -328,7 +302,6 @@ func SendRootFlowPoll(ctx context.Context, client *whatsmeow.Client, jid types.J
 	_, _ = sendMessage(ctx, client, jid, pollMsg)
 }
 
-// ReexibirMenuAtual re-envia a enquete do nó/menu em que o usuário se encontra no momento.
 func ReexibirMenuAtual(ctx context.Context, client *whatsmeow.Client, jid types.JID, uState *state.UserState) {
 	state.Mu.Lock()
 	nodeID := uState.CurrentNodeID
@@ -350,13 +323,10 @@ func ReexibirMenuAtual(ctx context.Context, client *whatsmeow.Client, jid types.
 		options = append(options, "⬅️ Voltar")
 	}
 
-	pollMsg := client.BuildPollCreation(fmt.Sprintf("Qual o problema com %s?", node.Title), options, 1)
+	pollMsg := client.BuildPollCreation(fmt.Sprintf("Qual a opção desejada para %s?", node.Title), options, 1)
 	_, _ = sendMessage(ctx, client, jid, pollMsg)
 }
 
-// tratarVotoFluxoDinamico processa o voto no menu de navegação do fluxo configurável.
-
-// Função tratarVotoFluxoDinamico executa a regra de negócio/rotina correspondente
 func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, selectedHash []byte) {
 	state.Mu.Lock()
 	currentNodeID := uState.CurrentNodeID
@@ -365,38 +335,30 @@ func tratarVotoFluxoDinamico(ctx context.Context, client *whatsmeow.Client, v *e
 	}
 	state.Mu.Unlock()
 
-	fmt.Printf("ℹ️ [FLUXO] Iniciando tratarVotoFluxoDinamico para %s. currentNodeID: %q\n", sender, currentNodeID)
+	fmt.Printf("[FLUXO] Processando voto de %s no nó %q\n", sender, currentNodeID)
 
-	// Botão "Voltar"
-	if matchOptionHash(selectedHash, "⬅️ Voltar") {
+	if matchOptionHash(selectedHash, "Voltar") || matchOptionHash(selectedHash, "Voltar ao Menu") || matchOptionHash(selectedHash, "⬅️ Voltar") {
 		tratarNavegacaoVoltar(ctx, client, v, uState, sender, currentNodeID)
 		return
 	}
 
 	currentNode, found := FindNodeByID(currentNodeID)
 	if !found {
-		fmt.Printf("🚨 [FLUXO] Nó corrente %q não encontrado para %s!\n", currentNodeID, sender)
+		fmt.Printf("[FLUXO] Nó %q não encontrado para %s\n", currentNodeID, sender)
 		SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
 		return
 	}
 
 	selectedChild, foundChild := encontrarFilhoSelecionado(currentNode, selectedHash, sender)
 	if !foundChild {
-		fmt.Printf("⚠️ [FLUXO] Nenhuma opção correspondente para o hash %x no nó %q para %s\n", selectedHash, currentNodeID, sender)
+		fmt.Printf("[FLUXO] Nenhuma opção correspondente para o hash no nó %q\n", currentNodeID)
 		return
 	}
-
-	fmt.Printf("✅ [FLUXO] Filho selecionado: ID=%s, Title=%q, Type=%s\n", selectedChild.ID, selectedChild.Title, selectedChild.Type)
 
 	executarAcaoNodo(ctx, client, v, uState, sender, selectedChild)
 }
 
-// tratarNavegacaoVoltar volta ao nó pai na hierarquia do fluxo.
-
-// Função tratarNavegacaoVoltar executa a regra de negócio/rotina correspondente
 func tratarNavegacaoVoltar(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender, currentNodeID string) {
-	fmt.Printf("ℹ️ [FLUXO] Usuário %s clicou em voltar a partir do nó %q\n", sender, currentNodeID)
-
 	parent, found := FindParentNodeByID(currentNodeID)
 	if !found || parent.ID == "" {
 		SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
@@ -413,31 +375,20 @@ func tratarNavegacaoVoltar(ctx context.Context, client *whatsmeow.Client, v *eve
 	_, _ = sendMessage(ctx, client, v.Info.Chat, buildMenuPoll(client, parent, options))
 }
 
-// encontrarFilhoSelecionado percorre os filhos do nó atual procurando a opção votada.
-
-// Função encontrarFilhoSelecionado executa a regra de negócio/rotina correspondente
 func encontrarFilhoSelecionado(currentNode FlowNode, selectedHash []byte, sender string) (FlowNode, bool) {
-	fmt.Printf("ℹ️ [FLUXO] Nó %q encontrado. Procurando entre %d filhos...\n", currentNode.ID, len(currentNode.Children))
-
 	for _, child := range currentNode.Children {
-		matched := matchOptionHash(selectedHash, child.Title)
-		fmt.Printf("   - Filho: ID=%s, Title=%q, Type=%s -> Matched: %t\n", child.ID, child.Title, child.Type, matched)
-		if matched {
+		if matchOptionHash(selectedHash, child.Title) {
 			return child, true
 		}
 	}
-
 	return FlowNode{}, false
 }
 
-// executarAcaoNodo executa a ação correspondente ao tipo do nó selecionado.
-
-// Função executarAcaoNodo executa a regra de negócio/rotina correspondente
 func executarAcaoNodo(ctx context.Context, client *whatsmeow.Client, v *events.Message, uState *state.UserState, sender string, node FlowNode) {
 	switch node.Type {
 	case NodeMenu:
 		if len(node.Children) == 0 {
-			sendTextMessage(ctx, client, v.Info.Chat, "⚠️ Esta opção de menu está vazia ou em construção no momento.")
+			sendTextMessage(ctx, client, v.Info.Chat, "⚠️ Esta opção de menu está vazia no momento.")
 			time.Sleep(1 * time.Second)
 			SendRootFlowPoll(ctx, client, v.Info.Chat, uState)
 			return
@@ -453,7 +404,7 @@ func executarAcaoNodo(ctx context.Context, client *whatsmeow.Client, v *events.M
 		uState.Step = 1000
 		state.Mu.Unlock()
 
-		pollMsg := client.BuildPollCreation(fmt.Sprintf("Qual o problema com %s?", node.Title), options, 1)
+		pollMsg := client.BuildPollCreation(fmt.Sprintf("Qual a opção desejada para %s?", node.Title), options, 1)
 		_, _ = sendMessage(ctx, client, v.Info.Chat, pollMsg)
 
 	case NodeText:
@@ -468,7 +419,7 @@ func executarAcaoNodo(ctx context.Context, client *whatsmeow.Client, v *events.M
 		state.Mu.Lock()
 		uState.Step = 50
 		state.Mu.Unlock()
-		sendTextMessage(ctx, client, v.Info.Chat, "Para buscar o status, por favor digite apenas o **número do chamado** (exemplo: 1234):")
+		sendTextMessage(ctx, client, v.Info.Chat, "🔎 Para buscar o status, por favor digite apenas o **número do chamado** (exemplo: 1234):")
 
 	case NodeGLPITicket:
 		state.Mu.Lock()
@@ -481,11 +432,6 @@ func executarAcaoNodo(ctx context.Context, client *whatsmeow.Client, v *events.M
 	}
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-// parsearAtendentes converte a string de atendentes separada por vírgula em uma slice.
-
-// Função parsearAtendentes executa a regra de negócio/rotina correspondente
 func parsearAtendentes(agentsStr string) []string {
 	var agents []string
 	for _, p := range strings.Split(agentsStr, ",") {

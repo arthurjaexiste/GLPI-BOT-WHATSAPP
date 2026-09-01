@@ -1,330 +1,242 @@
-<!-- VIEW HTML: messages.html - Página do Painel Administrativo do GLPI-BOT -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mensagens do Sistema - Bot GLPI</title>
+    <title>Mensagens - GLPI-BOT</title>
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=1.6">
-    <link rel="stylesheet" href="/static/css/messages.css?v=1.6">
+    <link rel="stylesheet" href="/static/css/style.css?v=4.0">
 </head>
 
-<body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
-    <!-- Ambient light glow effects (Monochrome/Gray theme) -->
-    <div
-        class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-zinc-500/[0.03] rounded-full blur-[150px] pointer-events-none">
-    </div>
-    <div
-        class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[130px] pointer-events-none">
-    </div>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased">
 
-    <!-- Header/Navbar -->
-    <header
-        class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <img src="/static/img/logo.png" alt="Logo"
-                class="w-10 h-10 rounded-xl object-contain shadow-lg border border-white/5">
+    <!-- Header Navbar -->
+    <header class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50 w-full px-4 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+            <img src="/static/img/logo.png" alt="Logo GLPI-BOT" class="w-7 h-7 object-contain">
             <div>
-                <h1
-                    class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
-                    GLPI-BOT</h1>
-                <p class="text-xs text-zinc-400">Painel de Controle Inteligente</p>
+                <h1 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">GLPI-BOT</h1>
+                <p class="text-[10px] text-zinc-400">Painel de Gerenciamento TI</p>
             </div>
         </div>
 
-        <!-- Navigation Links -->
-        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/5 rounded-xl">
-            <a href="/"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                📊 Status
+        <nav class="flex items-center gap-1 bg-zinc-950 p-1 border border-zinc-800 rounded">
+            <a href="/" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Status
             </a>
-            <a href="/flow"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                💬 Fluxo do Bot
+            <a href="/flow" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Fluxo do Bot
             </a>
-            <a href="/config"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                🔧 Configurações
+            <a href="/config" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Configurações
             </a>
-            <a href="/messages"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
-                ✉️ Mensagens
+            <a href="/messages" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-100 bg-zinc-800 border border-zinc-700">
+                Mensagens
             </a>
-            <a href="/chats"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                💬 Conversas
+            <a href="/chats" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Conversas
             </a>
-            <a href="/logs"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                📋 Logs
+            <a href="/logs" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Logs
             </a>
         </nav>
 
-        <!-- Action / Save and Logout -->
-        <div class="flex items-center gap-3">
-            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-900/80 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-medium">
-                <span id="user-badge-role" class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300">...</span>
+        <div class="flex items-center gap-2.5">
+            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-950 border border-zinc-800 px-2.5 py-1 rounded text-xs">
+                <span id="user-badge-role" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-800 text-zinc-300">...</span>
                 <span id="user-badge-name" class="text-zinc-200 font-bold">...</span>
             </div>
-            <button onclick="saveMessages()"
-                class="px-4 py-2.5 text-xs font-bold text-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-amber-400 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.25)] hover:shadow-[0_0_25px_rgba(245,158,11,0.4)] transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border border-amber-300/30">
-                💾 Salvar Mensagens
+            <button onclick="saveMessages()" class="px-4 py-1.5 text-xs font-bold text-zinc-950 bg-zinc-100 hover:bg-zinc-200 uppercase tracking-wider rounded transition cursor-pointer">
+                Salvar Mensagens
             </button>
-            <a href="/logout"
-                class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
-                🚪 Sair
+            <a href="/logout" class="px-3 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-900/60 rounded transition">
+                Sair
             </a>
         </div>
     </header>
 
-    <main class="flex-1 max-w-4xl w-full mx-auto p-6 flex flex-col gap-6 relative z-10">
-        <!-- Main Form Card -->
-        <div class="glass-card rounded-2xl p-8 flex flex-col gap-8">
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col gap-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded p-4 flex flex-col gap-6">
 
-            <!-- Section 1: Welcome -->
-            <div>
-                <h2
-                    class="text-md font-bold text-zinc-200 mb-4 flex items-center gap-2 border-b border-white/5 pb-3 uppercase tracking-wider">
-                    👋 Boas-Vindas e Cadastro
-                </h2>
-                <div class="flex flex-col gap-6">
-                    <div class="flex flex-col gap-2">
-                        <label
-                            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between">
-                            <span>Saudação / Novo Usuário</span>
-                            <span class="text-[10px] text-zinc-500 normal-case lowercase tracking-normal">Primeira
-                                mensagem enviada para contatos não cadastrados no GLPI</span>
-                        </label>
-                        <textarea id="msg_novo_usuario" rows="3"
-                            class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 resize-y"></textarea>
-                        <div class="flex items-center gap-2 flex-wrap mt-1">
-                            <span class="text-[10px] text-zinc-500">Variáveis utilizáveis:</span>
-                            <span class="badge" title="Retorna 'Bom dia', 'Boa tarde' ou 'Boa noite'">{saudacao}</span>
-                            <span class="badge" title="Retorna o Nome da Empresa configurado">{empresa}</span>
+            <!-- Section 1: Boas-Vindas -->
+            <div class="flex flex-col gap-3">
+                <div class="border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">
+                        Boas-Vindas e Identificação
+                    </h2>
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Saudação / Novo Usuário</label>
+                            <span class="text-[10px] text-zinc-500">Primeiro contato de número não cadastrado</span>
+                        </div>
+                        <textarea id="msg_novo_usuario" rows="2.5" class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 resize-y"></textarea>
+                        <div class="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
+                            <span>Variáveis utilizáveis:</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{saudacao}</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{empresa}</span>
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-2">
-                        <label
-                            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between">
-                            <span>Boas-Vindas / Usuário Existente</span>
-                            <span class="text-[10px] text-zinc-500 normal-case lowercase tracking-normal">Enviada ao
-                                iniciar chat com usuários já localizados na base</span>
-                        </label>
-                        <textarea id="msg_usuario_existente" rows="3"
-                            class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 resize-y"></textarea>
-                        <div class="flex items-center gap-2 flex-wrap mt-1">
-                            <span class="text-[10px] text-zinc-500">Variáveis utilizáveis:</span>
-                            <span class="badge">{saudacao}</span>
-                            <span class="badge">{empresa}</span>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Boas-Vindas / Usuário Existente</label>
+                            <span class="text-[10px] text-zinc-500">Mensagem para contatos já localizados na base</span>
+                        </div>
+                        <textarea id="msg_usuario_existente" rows="2.5" class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 resize-y"></textarea>
+                        <div class="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
+                            <span>Variáveis utilizáveis:</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{saudacao}</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{empresa}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section 2: Ticket flows -->
-            <div>
-                <h2
-                    class="text-md font-bold text-zinc-200 mb-4 flex items-center gap-2 border-b border-white/5 pb-3 uppercase tracking-wider">
-                    🎫 Enquetes e Chamados GLPI
-                </h2>
-                <div class="flex flex-col gap-6">
-                    <div class="flex flex-col gap-2">
-                        <label
-                            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between">
-                            <span>Pergunta do Menu Principal</span>
-                            <span class="text-[10px] text-zinc-500 normal-case lowercase tracking-normal">Texto
-                                explicativo da enquete inicial de opções do bot</span>
-                        </label>
-                        <input type="text" id="msg_menu_inicial"
-                            class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] text-zinc-500">Variáveis utilizáveis:</span>
-                            <span class="badge">{saudacao}</span>
-                            <span class="badge">{empresa}</span>
+            <!-- Section 2: Chamados GLPI -->
+            <div class="flex flex-col gap-3">
+                <div class="border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">
+                        Enquetes e Chamados GLPI
+                    </h2>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Pergunta do Menu Principal</label>
+                            <span class="text-[10px] text-zinc-500">Cabeçalho da enquete de raiz</span>
                         </div>
+                        <input type="text" id="msg_menu_inicial" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                     </div>
 
-                    <div class="flex flex-col gap-2">
-                        <label
-                            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between">
-                            <span>Chamado Criado com Sucesso</span>
-                            <span class="text-[10px] text-zinc-500 normal-case lowercase tracking-normal">Mensagem de
-                                confirmação enviada com o número do chamado aberto</span>
-                        </label>
-                        <textarea id="msg_ticket_criado" rows="3"
-                            class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 resize-y"></textarea>
-                        <div class="flex items-center gap-2 flex-wrap mt-1">
-                            <span class="text-[10px] text-zinc-500">Variáveis utilizáveis:</span>
-                            <span class="badge" title="ID do ticket criado">{ticket_id}</span>
-                            <span class="badge" title="Título do ticket">{ticket_title}</span>
-                            <span class="badge">{empresa}</span>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Chamado Criado com Sucesso</label>
+                            <span class="text-[10px] text-zinc-500">Confirmação de abertura do ticket</span>
+                        </div>
+                        <textarea id="msg_ticket_criado" rows="2.5" class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 resize-y"></textarea>
+                        <div class="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
+                            <span>Variáveis utilizáveis:</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{ticket_id}</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{ticket_title}</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{empresa}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section 3: Live support -->
-            <div>
-                <h2
-                    class="text-md font-bold text-zinc-200 mb-4 flex items-center gap-2 border-b border-white/5 pb-3 uppercase tracking-wider">
-                    👤 Chat Humano e Fila de Suporte
-                </h2>
-                <div class="flex flex-col gap-6">
-                    <div class="flex flex-col gap-2">
-                        <label
-                            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between">
-                            <span>Aguardando Técnico (Fila Inicial)</span>
-                            <span class="text-[10px] text-zinc-500 normal-case lowercase tracking-normal">Enviada ao
-                                solicitar chat humano</span>
-                        </label>
-                        <textarea id="msg_fila_suporte" rows="2"
-                            class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 resize-y"></textarea>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] text-zinc-500">Variáveis utilizáveis:</span>
-                            <span class="badge">{empresa}</span>
+            <!-- Section 3: Live Support -->
+            <div class="flex flex-col gap-3">
+                <div class="border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">
+                        Atendimento Humano e Fila
+                    </h2>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Aguardando Técnico (Fila Inicial)</label>
+                        <textarea id="msg_fila_suporte" rows="2" class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 resize-y"></textarea>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Entrada em Fila de Espera</label>
+                        <textarea id="msg_fila_espera" rows="2.5" class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 resize-y"></textarea>
+                        <div class="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
+                            <span>Variáveis utilizáveis:</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{posicao}</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{empresa}</span>
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-2">
-                        <label
-                            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between">
-                            <span>Entrada em Fila de Espera</span>
-                            <span class="text-[10px] text-zinc-500 normal-case lowercase tracking-normal">Enviada quando
-                                os atendentes estão com chat em andamento</span>
-                        </label>
-                        <textarea id="msg_fila_espera" rows="3"
-                            class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 resize-y"></textarea>
-                        <div class="flex items-center gap-2 flex-wrap mt-1">
-                            <span class="text-[10px] text-zinc-500">Variáveis utilizáveis:</span>
-                            <span class="badge" title="Posição na fila">{posicao}</span>
-                            <span class="badge">{empresa}</span>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Técnico Assumiu Atendimento</label>
+                        <textarea id="msg_suporte_assumido" rows="2.5" class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 resize-y"></textarea>
+                        <div class="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
+                            <span>Variáveis utilizáveis:</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{agente}</span>
+                            <span class="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 font-mono">{empresa}</span>
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-2">
-                        <label
-                            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between">
-                            <span>Técnico Assumiu Atendimento</span>
-                            <span class="text-[10px] text-zinc-500 normal-case lowercase tracking-normal">Mensagem
-                                enviada quando um técnico assume a conversa</span>
-                        </label>
-                        <textarea id="msg_suporte_assumido" rows="3"
-                            class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 resize-y"></textarea>
-                        <div class="flex items-center gap-2 flex-wrap mt-1">
-                            <span class="text-[10px] text-zinc-500">Variáveis utilizáveis:</span>
-                            <span class="badge" title="Nome do técnico">{agente}</span>
-                            <span class="badge">{empresa}</span>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-2">
-                        <label
-                            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between">
-                            <span>Encerramento do Chat Ao Vivo</span>
-                            <span class="text-[10px] text-zinc-500 normal-case lowercase tracking-normal">Mensagem de
-                                encerramento enviada após o técnico fechar o ticket</span>
-                        </label>
-                        <textarea id="msg_fim_atendimento" rows="3"
-                            class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 resize-y"></textarea>
-                        <div class="flex items-center gap-2 flex-wrap mt-1">
-                            <span class="text-[10px] text-zinc-500">Variáveis utilizáveis:</span>
-                            <span class="badge">{empresa}</span>
-                        </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Encerramento do Chat Ao Vivo</label>
+                        <textarea id="msg_fim_atendimento" rows="2.5" class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 resize-y"></textarea>
                     </div>
                 </div>
             </div>
 
             <!-- Section 4: Documentos e Mídias -->
-            <div>
-                <h2
-                    class="text-md font-bold text-zinc-200 mb-4 flex items-center gap-2 border-b border-white/5 pb-3 uppercase tracking-wider">
-                    📁 Envio de Documentos e Mídias
-                </h2>
-                <div class="flex flex-col gap-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Pergunta
-                                Enquete Documentos</label>
-                            <input type="text" id="msg_enquete_documentos"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+            <div class="flex flex-col gap-3">
+                <div class="border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">
+                        Envio de Documentos e Mídias
+                    </h2>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Enquete Documentos</label>
+                            <input type="text" id="msg_enquete_documentos" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Pergunta
-                                Enquete Fotos</label>
-                            <input type="text" id="msg_enquete_fotos"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Enquete Fotos</label>
+                            <input type="text" id="msg_enquete_fotos" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Pergunta Enquete
-                            Fotos (Após enviar Docs)</label>
-                        <input type="text" id="msg_enquete_fotos_pos_docs"
-                            class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Enquete Fotos (Pós-Docs)</label>
+                        <input type="text" id="msg_enquete_fotos_pos_docs" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Confirmação de
-                                Termino de Docs</label>
-                            <input type="text" id="msg_enquete_confirmar_documentos"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Confirmação Término Docs</label>
+                            <input type="text" id="msg_enquete_confirmar_documentos" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Confirmação de
-                                Termino de Fotos</label>
-                            <input type="text" id="msg_enquete_confirmar_fotos"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Confirmação Término Fotos</label>
+                            <input type="text" id="msg_enquete_confirmar_fotos" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Instrução para
-                                Enviar Documentos</label>
-                            <input type="text" id="msg_enviar_documentos"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Instrução Envio Docs</label>
+                            <input type="text" id="msg_enviar_documentos" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Instrução para
-                                Enviar Fotos</label>
-                            <input type="text" id="msg_enviar_fotos"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Instrução Envio Fotos</label>
+                            <input type="text" id="msg_enviar_fotos" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Documento
-                                Adicionado com Sucesso</label>
-                            <input type="text" id="msg_documento_adicionado"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Sucesso Doc Adicionado</label>
+                            <input type="text" id="msg_documento_adicionado" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Foto Adicionada
-                                com Sucesso</label>
-                            <input type="text" id="msg_foto_adicionada"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Sucesso Foto Adicionada</label>
+                            <input type="text" id="msg_foto_adicionada" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Pedir Próximo
-                                Documento</label>
-                            <input type="text" id="msg_proximo_documento"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Pedir Próximo Documento</label>
+                            <input type="text" id="msg_proximo_documento" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Pedir Próxima
-                                Foto</label>
-                            <input type="text" id="msg_proxima_foto"
-                                class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Pedir Próxima Foto</label>
+                            <input type="text" id="msg_proxima_foto" class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
                     </div>
                 </div>
@@ -334,14 +246,13 @@
     </main>
 
     <!-- Toast Notification -->
-    <div id="toast"
-        class="fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 backdrop-blur-md transform translate-y-24 opacity-0 transition duration-300 flex items-center gap-3 z-50">
-        <span id="toast-icon">✅</span>
-        <span id="toast-message">Mensagens salvas com sucesso!</span>
+    <div id="toast" class="fixed bottom-4 right-4 px-4 py-2 rounded bg-zinc-900 border border-zinc-700 text-zinc-100 transform translate-y-24 opacity-0 transition duration-200 flex items-center gap-2 z-50 text-xs font-semibold">
+        <span id="toast-icon"></span>
+        <span id="toast-message">Notificação</span>
     </div>
 
-    <script src="/static/js/auth-check.js?v=1.6"></script>
-    <script src="/static/js/messages.js?v=1.6"></script>
+    <script src="/static/js/auth-check.js?v=4.0"></script>
+    <script src="/static/js/messages.js?v=4.0"></script>
 </body>
 
 </html>

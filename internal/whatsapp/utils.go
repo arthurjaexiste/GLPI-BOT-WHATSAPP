@@ -261,11 +261,10 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 		}
 	}
 	if err != nil {
-		fmt.Printf("🚨 [ERRO WHATSAPP] Falha ao enviar mensagem para %s: %v\n", jid.String(), err)
+		fmt.Printf("[ERRO WHATSAPP] Falha ao enviar mensagem para %s: %v\n", jid.String(), err)
 		if strings.Contains(err.Error(), "463") {
 			fmt.Printf(
-				"💡 [DICA] O número %s pode estar bloqueado como 'contato frio'. "+
-					"Envie 'oi' deste celular para o bot para liberar.\n",
+				"[INFO] O número %s pode exigir interação inicial do usuário para liberação de envio.\n",
 				jid.String(),
 			)
 		}

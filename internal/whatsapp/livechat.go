@@ -53,7 +53,7 @@ func iniciarChatAoVivo(ctx context.Context, client *whatsmeow.Client, chatJID ty
 	nome := state.Names[sender]
 	state.Mu.Unlock()
 
-	fmt.Printf("👥 [LIVECHAT] Novo atendimento ao vivo iniciado para %s (%s)\n", nome, sender)
+	fmt.Printf("[LIVECHAT] Novo atendimento ao vivo iniciado para %s (%s)\n", nome, sender)
 	sendTextMessage(ctx, client, chatJID, formatarMensagem(config.GetConfig().MsgFilaSuporte, nil))
 	notificarSuporteNovoAtendimento(ctx, client, nome)
 }
@@ -76,9 +76,6 @@ func encerrarChatAoVivo(ctx context.Context, client *whatsmeow.Client, encerrado
 	promoverProximoDaFila(ctx, client, supportJID)
 }
 
-// finalizarAtendimentoAtual notifica o usuário e o suporte sobre o encerramento.
-
-// Função finalizarAtendimentoAtual executa a regra de negócio/rotina correspondente
 func finalizarAtendimentoAtual(ctx context.Context, client *whatsmeow.Client, currentUserFull string, supportJID types.JID, encerradoPeloSuporte bool) {
 	userJID, _ := types.ParseJID(currentUserFull)
 	userNumber := NormalizePhoneLocal(userJID.User)
@@ -91,7 +88,7 @@ func finalizarAtendimentoAtual(ctx context.Context, client *whatsmeow.Client, cu
 	}
 	state.Mu.Unlock()
 
-	fmt.Printf("👥 [LIVECHAT] Chat ao vivo encerrado para %s (%s) | Por suporte: %t\n", nome, userNumber, encerradoPeloSuporte)
+	fmt.Printf("[LIVECHAT] Chat ao vivo encerrado para %s (%s) | Por suporte: %t\n", nome, userNumber, encerradoPeloSuporte)
 	sendTextMessage(ctx, client, userJID, formatarMensagem(config.GetConfig().MsgFimAtendimento, nil))
 
 	if !encerradoPeloSuporte {
@@ -99,15 +96,12 @@ func finalizarAtendimentoAtual(ctx context.Context, client *whatsmeow.Client, cu
 	}
 }
 
-// promoverProximoDaFila puxa o próximo usuário da fila para atendimento direto.
-
-// Função promoverProximoDaFila executa a regra de negócio/rotina correspondente
 func promoverProximoDaFila(ctx context.Context, client *whatsmeow.Client, supportJID types.JID) {
 	state.Mu.Lock()
 
 	if len(state.LiveChatQueue) == 0 {
 		state.Mu.Unlock()
-		sendTextMessage(ctx, client, supportJID, "✅ Chat encerrado com sucesso. A fila de espera está vazia.")
+		sendTextMessage(ctx, client, supportJID, "✅ Atendimento encerrado com sucesso. A fila de espera está vazia.")
 		return
 	}
 
@@ -123,7 +117,7 @@ func promoverProximoDaFila(ctx context.Context, client *whatsmeow.Client, suppor
 	nomeProximo := state.Names[nextUserNumber]
 	state.Mu.Unlock()
 
-	fmt.Printf("👥 [LIVECHAT] Próximo da fila promovido para atendimento: %s (%s)\n", nomeProximo, nextUserNumber)
+	fmt.Printf("[LIVECHAT] Próximo da fila promovido para atendimento: %s (%s)\n", nomeProximo, nextUserNumber)
 
 	sendTextMessage(ctx, client, nextUserJID, "⏳ Chegou a sua vez! Aguarde um momento enquanto um técnico assume o seu atendimento.")
 	sendTextMessage(ctx, client, supportJID, fmt.Sprintf("🔔 *NOTIFICAÇÃO FILA:* *%s* saiu da fila de espera e aguarda atendimento.", nomeProximo))

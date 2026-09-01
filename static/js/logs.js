@@ -13,7 +13,6 @@ function escapeHTML(str) {
     );
 }
 
-// Analisa e colore as linhas de logs para simular um terminal com sintaxe destacada
 function formatLogLine(line) {
     const trimmed = line.trim();
     if (!trimmed) return "";
@@ -21,21 +20,20 @@ function formatLogLine(line) {
     let colorClass = "text-zinc-400";
     let escaped = escapeHTML(line);
 
-    // Verifica palavras-chave e define estilos de cor
-    if (escaped.includes("🚨") || escaped.toLowerCase().includes("erro") || escaped.toLowerCase().includes("error") || escaped.toLowerCase().includes("failed") || escaped.toLowerCase().includes("panic") || escaped.toLowerCase().includes("fatal")) {
+    if (escaped.toLowerCase().includes("erro") || escaped.toLowerCase().includes("error") || escaped.toLowerCase().includes("failed") || escaped.toLowerCase().includes("panic") || escaped.toLowerCase().includes("fatal")) {
         colorClass = "text-rose-400 font-semibold";
-    } else if (escaped.includes("✅") || escaped.toLowerCase().includes("sucesso") || escaped.toLowerCase().includes("success") || escaped.toLowerCase().includes("conectado") || escaped.toLowerCase().includes("connected")) {
+    } else if (escaped.toLowerCase().includes("sucesso") || escaped.toLowerCase().includes("success") || escaped.toLowerCase().includes("conectado") || escaped.toLowerCase().includes("connected")) {
         colorClass = "text-emerald-400 font-semibold";
-    } else if (escaped.includes("⚠️") || escaped.toLowerCase().includes("warning") || escaped.toLowerCase().includes("warn") || escaped.toLowerCase().includes("offline") || escaped.toLowerCase().includes("desconectado")) {
+    } else if (escaped.toLowerCase().includes("warning") || escaped.toLowerCase().includes("warn") || escaped.toLowerCase().includes("offline") || escaped.toLowerCase().includes("desconectado")) {
         colorClass = "text-amber-400 font-semibold";
     } else if (escaped.includes("[POLL]") || escaped.includes("[VOTO]")) {
         colorClass = "text-zinc-300";
     } else if (escaped.includes("[WEBHOOK]") || escaped.includes("[API]")) {
         colorClass = "text-zinc-200";
     } else if (escaped.includes("[TICKET]") || escaped.includes("[GLPI]")) {
-        colorClass = "text-white font-medium";
-    } else if (escaped.includes("🔄") || escaped.includes("iniciado") || escaped.includes("reiniciado") || escaped.includes("START")) {
-        colorClass = "text-zinc-100 font-semibold";
+        colorClass = "text-zinc-100 font-medium";
+    } else if (escaped.includes("iniciado") || escaped.includes("reiniciado") || escaped.includes("START")) {
+        colorClass = "text-zinc-200 font-semibold";
     }
 
     return `<div class="${colorClass} py-0.5">${escaped}</div>`;
@@ -56,9 +54,8 @@ async function fetchLogs() {
 
         const logsText = data.logs || "Nenhum log gravado até o momento.";
 
-        // Evita redesenhar se o log for idêntico
         if (logsText === lastLogContent) {
-            statusText.innerText = "Monitorando (sem novas linhas)";
+            if (statusText) statusText.innerText = "Monitorando (sem novas linhas)";
             return;
         }
         lastLogContent = logsText;
@@ -71,22 +68,21 @@ async function fetchLogs() {
 
         terminal.innerHTML = formattedHTML || "Nenhum log gravado até o momento.";
 
-        statusText.innerText = "Monitorando - Atualizado: " + new Date().toLocaleTimeString();
-        statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        if (statusText) statusText.innerText = "Monitorando - Atualizado: " + new Date().toLocaleTimeString();
+        if (statusPulse) statusPulse.className = "inline-block w-2 h-2 rounded-full bg-emerald-500";
 
-        // Rolar para o fim se selecionado
         const autoScrollCheck = document.getElementById('autoScrollCheck');
         if (autoScrollCheck && autoScrollCheck.checked) {
             terminal.scrollTop = terminal.scrollHeight;
         }
     } catch (err) {
-        if (statusText) statusText.innerText = "Erro ao buscar logs do bot";
-        if (statusPulse) statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping";
+        if (statusText) statusText.innerText = "Erro ao buscar logs";
+        if (statusPulse) statusPulse.className = "inline-block w-2 h-2 rounded-full bg-rose-500";
     }
 }
 
 function clearConsole() {
-    document.getElementById('terminal').innerHTML = '<div class="text-zinc-650 italic font-mono">// Tela limpa localmente. Aguardando novas linhas...</div>';
+    document.getElementById('terminal').innerHTML = '<div class="text-zinc-500 italic font-mono">// Console limpo. Aguardando registros...</div>';
     lastLogContent = "";
 }
 
@@ -104,15 +100,15 @@ function setupAutoRefresh() {
 
     if (interval > 0) {
         refreshInterval = setInterval(fetchLogs, interval);
-        if (statusPulse) statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-        if (statusText) statusText.innerText = "Monitorando...";
+        if (statusPulse) statusPulse.className = "inline-block w-2 h-2 rounded-full bg-emerald-500";
+        if (statusText) statusText.innerText = "Auto-atualização ativa";
     } else {
-        if (statusPulse) statusPulse.className = "inline-block w-2.5 h-2.5 rounded-full bg-zinc-600";
-        if (statusText) statusText.innerText = "Atualização automática desativada";
+        if (statusPulse) statusPulse.className = "inline-block w-2 h-2 rounded-full bg-zinc-600";
+        if (statusText) statusText.innerText = "Pausado";
     }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     fetchLogs();
     setupAutoRefresh();
 });

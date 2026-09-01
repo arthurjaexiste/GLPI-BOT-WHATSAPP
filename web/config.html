@@ -4,185 +4,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurações do Sistema - Bot GLPI</title>
+    <title>Configurações - GLPI-BOT</title>
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=18.0">
+    <link rel="stylesheet" href="/static/css/style.css?v=4.0">
 </head>
 
-<body class="bg-[#0a0a0c] text-white/92 min-h-screen flex flex-col relative overflow-x-hidden font-sans">
-    <!-- Header / Navbar -->
-    <header class="bg-[#121215]/80 backdrop-blur-md sticky top-0 z-50 w-full px-8 py-3.5 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-white/[0.06]">
-        <!-- Brand Cluster -->
-        <div class="flex items-center gap-3">
-            <img src="/static/img/logo.png" alt="Logo" class="w-8 h-8 rounded-lg object-contain bg-white/5 ring-1 ring-white/10">
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Header Navbar -->
+    <header class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50 w-full px-4 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+            <img src="/static/img/logo.png" alt="Logo GLPI-BOT" class="w-7 h-7 object-contain">
             <div>
-                <h1 class="text-sm font-semibold text-white/90 tracking-tight leading-none">GLPI-BOT</h1>
-                <span class="text-[11px] text-neutral-500 font-normal">Control Plane v18.0</span>
+                <h1 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">GLPI-BOT</h1>
+                <p class="text-[10px] text-zinc-400">Painel de Gerenciamento TI</p>
             </div>
         </div>
 
-        <!-- Navigation Links -->
-        <nav class="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl ring-1 ring-white/[0.06]">
-            <a href="/" class="px-3 py-1.5 text-xs font-normal text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">📊 Status</a>
-            <a href="/flow" class="px-3 py-1.5 text-xs font-normal text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">💬 Fluxo do Bot</a>
-            <a href="/config" class="px-3 py-1.5 text-xs font-medium text-white bg-white/10 rounded-lg transition-colors">🔧 Configurações</a>
-            <a href="/messages" class="px-3 py-1.5 text-xs font-normal text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">✉️ Mensagens</a>
-            <a href="/chats" class="px-3 py-1.5 text-xs font-normal text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">💬 Conversas</a>
-            <a href="/logs" class="px-3 py-1.5 text-xs font-normal text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">📋 Logs</a>
+        <nav class="flex items-center gap-1 bg-zinc-950 p-1 border border-zinc-800 rounded">
+            <a href="/" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Status
+            </a>
+            <a href="/flow" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Fluxo do Bot
+            </a>
+            <a href="/config" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-100 bg-zinc-800 border border-zinc-700">
+                Configurações
+            </a>
+            <a href="/messages" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Mensagens
+            </a>
+            <a href="/chats" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Conversas
+            </a>
+            <a href="/logs" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Logs
+            </a>
         </nav>
 
-        <!-- User Profile & Primary Save Action -->
-        <div class="flex items-center gap-3">
-            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-white/[0.03] px-3 py-1.5 rounded-lg text-xs font-normal ring-1 ring-white/[0.06]">
-                <span id="user-badge-role" class="px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider bg-white/10 text-neutral-300">...</span>
-                <span id="user-badge-name" class="text-neutral-200 font-medium">...</span>
+        <div class="flex items-center gap-2.5">
+            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-950 border border-zinc-800 px-2.5 py-1 rounded text-xs">
+                <span id="user-badge-role" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-800 text-zinc-300">...</span>
+                <span id="user-badge-name" class="text-zinc-200 font-bold">...</span>
             </div>
             <button id="btn-header-save" onclick="saveConfig()" disabled
-                class="px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-2 opacity-40 pointer-events-none bg-white/[0.03] text-neutral-500 ring-1 ring-white/[0.06]">
-                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                class="px-3 py-1.5 text-xs font-bold rounded transition flex items-center gap-1.5 opacity-50 bg-zinc-800 text-zinc-400 border border-zinc-700">
                 <span>Salvo</span>
             </button>
-            <a href="/logout" class="p-2 text-neutral-400 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-colors" title="Sair do Painel">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            <a href="/logout" class="px-3 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-900/60 rounded transition">
+                Sair
             </a>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 flex max-w-7xl w-full mx-auto p-8 flex-col md:flex-row gap-8 relative z-10">
-        <!-- Sidebar Navigation -->
-        <nav class="md:w-60 w-full flex flex-row md:flex-col gap-1 shrink-0 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 scrollbar-none">
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 flex flex-col md:flex-row gap-4">
+        
+        <!-- Tab Navigation Sidebar Left -->
+        <nav class="md:w-56 w-full flex flex-row md:flex-col gap-1 shrink-0 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
             <button type="button" onclick="showTab('identidade')" id="tab-identidade"
-                class="tab-btn px-3.5 py-2.5 text-left text-xs font-medium rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-white bg-white/10 ring-1 ring-white/[0.08] active cursor-pointer">
-                <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5 5 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                class="tab-btn px-3 py-2 text-left text-xs font-semibold rounded transition flex items-center gap-2 text-zinc-100 bg-zinc-800 border border-zinc-700 active cursor-pointer">
                 <span>Identidade & Suporte</span>
             </button>
             <button type="button" onclick="showTab('glpi')" id="tab-glpi"
-                class="tab-btn px-3.5 py-2.5 text-left text-xs font-normal rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-neutral-400 hover:text-white hover:bg-white/5 cursor-pointer">
-                <svg class="w-4 h-4 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                class="tab-btn px-3 py-2 text-left text-xs font-semibold rounded transition flex items-center gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 cursor-pointer">
                 <span>Conexão GLPI API</span>
             </button>
             <button type="button" onclick="showTab('smtp')" id="tab-smtp"
-                class="tab-btn px-3.5 py-2.5 text-left text-xs font-normal rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-neutral-400 hover:text-white hover:bg-white/5 cursor-pointer">
-                <svg class="w-4 h-4 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                <span>Alerta de E-mail (SMTP)</span>
+                class="tab-btn px-3 py-2 text-left text-xs font-semibold rounded transition flex items-center gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 cursor-pointer">
+                <span>Alerta E-mail (SMTP)</span>
             </button>
             <button type="button" onclick="showTab('expediente')" id="tab-expediente"
-                class="tab-btn px-3.5 py-2.5 text-left text-xs font-normal rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-neutral-400 hover:text-white hover:bg-white/5 cursor-pointer">
-                <svg class="w-4 h-4 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                class="tab-btn px-3 py-2 text-left text-xs font-semibold rounded transition flex items-center gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 cursor-pointer">
                 <span>Horário & Ausência</span>
             </button>
             <button type="button" onclick="showTab('seguranca')" id="tab-seguranca"
-                class="tab-btn px-3.5 py-2.5 text-left text-xs font-normal rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-neutral-400 hover:text-white hover:bg-white/5 cursor-pointer">
-                <svg class="w-4 h-4 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                <span>Bloqueios & Senha</span>
+                class="tab-btn px-3 py-2 text-left text-xs font-semibold rounded transition flex items-center gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 cursor-pointer">
+                <span>Bloqueios & Agentes</span>
             </button>
             <button type="button" onclick="showTab('usuarios')" id="tab-usuarios"
-                class="tab-btn px-3.5 py-2.5 text-left text-xs font-normal rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-neutral-400 hover:text-white hover:bg-white/5 cursor-pointer">
-                <svg class="w-4 h-4 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                class="tab-btn px-3 py-2 text-left text-xs font-semibold rounded transition flex items-center gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 cursor-pointer">
                 <span>Gestão de Usuários</span>
             </button>
             <button type="button" onclick="showTab('sistema')" id="tab-sistema"
-                class="tab-btn px-3.5 py-2.5 text-left text-xs font-normal rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-neutral-400 hover:text-white hover:bg-white/5 cursor-pointer">
-                <svg class="w-4 h-4 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                class="tab-btn px-3 py-2 text-left text-xs font-semibold rounded transition flex items-center gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 cursor-pointer">
                 <span>Manutenção do Bot</span>
             </button>
         </nav>
 
-        <!-- Right Content Card -->
-        <div class="flex-1 bg-[#121215] rounded-2xl p-8 flex flex-col gap-8 relative ring-1 ring-white/[0.06] shadow-2xl shadow-black/40 min-w-0">
+        <!-- Main Settings Panel Container -->
+        <div class="flex-1 bg-zinc-900 border border-zinc-800 rounded p-4 flex flex-col gap-6 min-w-0">
+            
             <!-- Panel 1: Identidade -->
-            <div id="panel-identidade" class="settings-panel flex flex-col gap-8">
-                <div class="pb-4 flex items-center justify-between border-b border-white/[0.05]">
-                    <div>
-                        <h2 class="text-lg font-semibold text-white/90 tracking-tight">Identidade & Suporte</h2>
-                        <p class="text-sm text-neutral-400 font-normal leading-relaxed">Defina a identidade de atendimento e os técnicos administradores no WhatsApp.</p>
-                    </div>
+            <div id="panel-identidade" class="settings-panel flex flex-col gap-4">
+                <div class="border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Identidade & Suporte</h2>
+                    <p class="text-[11px] text-zinc-400">Parâmetros de saudação e números de contato técnico</p>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <!-- Form Controls -->
-                    <div class="lg:col-span-7 flex flex-col gap-6">
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-medium text-neutral-500">Nome da Empresa</label>
-                            <input type="text" id="company_name" oninput="updateLivePreview()" placeholder="Insira o nome da empresa" class="bg-white/5 ring-1 ring-white/10 transition-all focus:ring-white/20 rounded-lg">
-                            <span class="text-xs text-neutral-500 font-normal">Exibido na mensagem de saudação do bot.</span>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <div class="lg:col-span-7 flex flex-col gap-3">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">Nome da Empresa / Instituição</label>
+                            <input type="text" id="company_name" oninput="updateLivePreview()" placeholder="Sua Empresa"
+                                class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-medium text-neutral-500">WhatsApp do Administrador / Técnico</label>
-                            <input type="text" id="telefone_notificacao" oninput="updateLivePreview()" placeholder="Ex: 5511999999999" class="bg-white/5 ring-1 ring-white/10 transition-all focus:ring-white/20 rounded-lg">
-                            <span class="text-xs text-neutral-500 font-normal">Receberá alertas em caso de encaminhamento para suporte humano.</span>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">WhatsApp do Administrador Técnico</label>
+                            <input type="text" id="telefone_notificacao" oninput="updateLivePreview()" placeholder="Ex: 5511999999999"
+                                class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                         </div>
                     </div>
 
-                    <!-- Live Bot Context Preview Card -->
-                    <div class="lg:col-span-5 flex flex-col gap-4 bg-white/[0.02] p-6 rounded-xl ring-1 ring-white/[0.05]">
-                        <div class="flex items-center justify-between pb-3 border-b border-white/[0.05]">
-                            <span class="text-xs font-medium text-neutral-400 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                Visualização Prévia
-                            </span>
-                            <span class="text-[11px] text-neutral-500">WhatsApp</span>
+                    <!-- Live Preview Box -->
+                    <div class="lg:col-span-5 flex flex-col gap-3 bg-zinc-950 p-3 rounded border border-zinc-800">
+                        <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                            <span class="text-[11px] font-bold text-zinc-400 uppercase">Preview de Saudação</span>
+                            <span class="text-[10px] text-zinc-500 font-mono">WhatsApp</span>
                         </div>
 
-                        <div class="flex flex-col gap-2 bg-emerald-950/20 p-4 rounded-lg ring-1 ring-emerald-500/20">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span id="preview-company-name" class="font-medium text-xs text-white/90">GLPI Bot</span>
-                                <span class="text-[10px] text-neutral-500 ml-auto">Agora</span>
+                        <div class="bg-zinc-900 p-2.5 rounded border border-zinc-800 text-xs">
+                            <div class="flex items-center justify-between mb-1">
+                                <span id="preview-company-name" class="font-bold text-zinc-200">GLPI Bot</span>
+                                <span class="text-[10px] text-zinc-500">10:00</span>
                             </div>
-                            <p class="text-xs text-neutral-300 leading-relaxed font-sans">
-                                Olá! Sou o assistente virtual da <strong id="preview-company-bold" class="text-amber-400 font-medium">Sua Empresa</strong>. Como posso te ajudar hoje?
+                            <p class="text-zinc-300 leading-normal text-[11px]">
+                                Olá! Sou o assistente de suporte da <strong id="preview-company-bold" class="text-zinc-100 font-bold">Sua Empresa</strong>. Como posso ajudar?
                             </p>
                         </div>
 
-                        <div class="flex flex-col gap-2 mt-auto pt-4 border-t border-white/[0.05] text-xs text-neutral-400">
+                        <div class="flex flex-col gap-1 border-t border-zinc-800 pt-2 text-[11px] text-zinc-400">
                             <div class="flex justify-between items-center">
-                                <span class="text-neutral-500">Técnico Alerta:</span>
-                                <span id="preview-admin-phone" class="text-neutral-300 font-medium">Não configurado</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-neutral-500">Status GLPI:</span>
-                                <span class="text-emerald-400 font-medium">Conectado</span>
+                                <span>Alerta Técnico:</span>
+                                <span id="preview-admin-phone" class="text-zinc-200 font-semibold font-mono">Não configurado</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Panel 2: GLPI -->
-            <div id="panel-glpi" class="settings-panel hidden flex flex-col gap-8">
-                <div class="pb-4 flex items-center justify-between border-b border-white/[0.05]">
-                    <div>
-                        <h2 class="text-lg font-semibold text-white/90 tracking-tight">Conexão GLPI API</h2>
-                        <p class="text-sm text-neutral-400 font-normal leading-relaxed">Insira os dados da API do seu GLPI para sincronizar chamados e usuários.</p>
-                    </div>
+            <!-- Panel 2: GLPI API -->
+            <div id="panel-glpi" class="settings-panel hidden flex flex-col gap-4">
+                <div class="border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Conexão GLPI API</h2>
+                    <p class="text-[11px] text-zinc-400">Credenciais para abertura e sincronização de chamados no GLPI</p>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <div class="lg:col-span-12 flex flex-col gap-6">
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-medium text-neutral-500">URL da API REST do GLPI</label>
-                            <input type="text" id="glpi_api_url" placeholder="https://seu-glpi.com/apirest.php" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="flex flex-col gap-1.5">
-                                <label class="text-xs font-medium text-neutral-500">App-Token do GLPI</label>
-                                <div class="relative flex items-center w-full">
-                                    <input type="password" id="glpi_app_token" placeholder="App-Token" class="input-with-eye bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
-                                    <button type="button" onclick="toggleVisibility(this, 'glpi_app_token')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition-colors cursor-pointer p-1">
-                                        <svg class="w-4 h-4 text-neutral-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                    </button>
-                                </div>
+                
+                <div class="flex flex-col gap-3">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">URL da API REST do GLPI</label>
+                        <input type="text" id="glpi_api_url" placeholder="https://seu-glpi.com/apirest.php"
+                            class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">App-Token do GLPI</label>
+                            <div class="relative flex items-center w-full">
+                                <input type="password" id="glpi_app_token" placeholder="App-Token"
+                                    class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100 w-full pr-8">
+                                <button type="button" onclick="toggleVisibility(this, 'glpi_app_token')" class="absolute right-2.5 text-zinc-400 hover:text-zinc-100 p-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                </button>
                             </div>
-                            <div class="flex flex-col gap-1.5">
-                                <label class="text-xs font-medium text-neutral-500">User-Token (Técnico Padrão)</label>
-                                <div class="relative flex items-center w-full">
-                                    <input type="password" id="glpi_user_token" placeholder="User-Token" class="input-with-eye bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
-                                    <button type="button" onclick="toggleVisibility(this, 'glpi_user_token')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition-colors cursor-pointer p-1">
-                                        <svg class="w-4 h-4 text-neutral-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                    </button>
-                                </div>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-semibold text-zinc-400 uppercase">User-Token (Técnico Padrão)</label>
+                            <div class="relative flex items-center w-full">
+                                <input type="password" id="glpi_user_token" placeholder="User-Token"
+                                    class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100 w-full pr-8">
+                                <button type="button" onclick="toggleVisibility(this, 'glpi_user_token')" class="absolute right-2.5 text-zinc-400 hover:text-zinc-100 p-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -190,244 +182,240 @@
             </div>
 
             <!-- Panel 3: SMTP -->
-            <div id="panel-smtp" class="settings-panel hidden flex flex-col gap-8">
-                <div class="pb-4 flex items-center justify-between border-b border-white/[0.05]">
+            <div id="panel-smtp" class="settings-panel hidden flex flex-col gap-4">
+                <div class="border-b border-zinc-800 pb-2 flex items-center justify-between">
                     <div>
-                        <h2 class="text-lg font-semibold text-white/90 tracking-tight">Alerta de E-mail (SMTP)</h2>
-                        <p class="text-sm text-neutral-400 font-normal leading-relaxed">Configuração do servidor de e-mail para envio de alertas do bot.</p>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Alerta E-mail (SMTP)</h2>
+                        <p class="text-[11px] text-zinc-400">Parâmetros do servidor SMTP para alertas de chamados</p>
                     </div>
                     <div id="smtp-status-badge">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-white/[0.05] text-neutral-400 ring-1 ring-white/[0.05]">Desativado</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-800 text-zinc-400 border border-zinc-700">Desativado</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 bg-white/[0.02] p-4 rounded-md ring-1 ring-white/[0.05]">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="smtp_enabled" class="sr-only peer">
-                        <div class="w-9 h-5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-neutral-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
-                    </label>
-                    <span class="text-xs font-medium text-neutral-200">Ativar Notificações por E-mail</span>
+
+                <div class="flex items-center gap-2.5 bg-zinc-950 p-2.5 rounded border border-zinc-800">
+                    <input type="checkbox" id="smtp_enabled" class="rounded border-zinc-700 bg-zinc-900 text-zinc-100">
+                    <label for="smtp_enabled" class="text-xs font-semibold text-zinc-200 cursor-pointer select-none">Ativar Notificações por E-mail</label>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">Servidor SMTP Host</label>
-                        <input type="text" id="smtp_host" placeholder="smtp.gmail.com" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Servidor SMTP Host</label>
+                        <input type="text" id="smtp_host" placeholder="smtp.gmail.com"
+                            class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">Porta SMTP</label>
-                        <input type="number" id="smtp_port" placeholder="587" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Porta SMTP</label>
+                        <input type="number" id="smtp_port" placeholder="587"
+                            class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">Usuário SMTP</label>
-                        <input type="text" id="smtp_username" placeholder="seu-email@gmail.com" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Usuário SMTP</label>
+                        <input type="text" id="smtp_username" placeholder="seu-email@gmail.com"
+                            class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">Senha SMTP / App Password</label>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Senha SMTP / App Password</label>
                         <div class="relative flex items-center w-full">
-                            <input type="password" id="smtp_password" placeholder="Senha de App" class="input-with-eye bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
-                            <button type="button" onclick="toggleVisibility(this, 'smtp_password')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition-colors cursor-pointer p-1">
-                                <svg class="w-4 h-4 text-neutral-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            <input type="password" id="smtp_password" placeholder="Senha de App"
+                                class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100 w-full pr-8">
+                            <button type="button" onclick="toggleVisibility(this, 'smtp_password')" class="absolute right-2.5 text-zinc-400 hover:text-zinc-100 p-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </button>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">E-mail Remetente</label>
-                        <input type="text" id="smtp_sender" placeholder="bot@empresa.com" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">E-mail Remetente</label>
+                        <input type="text" id="smtp_sender" placeholder="bot@empresa.com"
+                            class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">E-mail Destinatário de Alertas</label>
-                        <input type="text" id="smtp_receiver" placeholder="admin@empresa.com" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">E-mail Destinatário de Alertas</label>
+                        <input type="text" id="smtp_receiver" placeholder="admin@empresa.com"
+                            class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                     </div>
                 </div>
             </div>
 
             <!-- Panel 4: Expediente -->
-            <div id="panel-expediente" class="settings-panel hidden flex flex-col gap-8">
-                <div class="pb-4 flex items-center justify-between border-b border-white/[0.05]">
+            <div id="panel-expediente" class="settings-panel hidden flex flex-col gap-4">
+                <div class="border-b border-zinc-800 pb-2 flex items-center justify-between">
                     <div>
-                        <h2 class="text-lg font-semibold text-white/90 tracking-tight">Horário de Atendimento & Ausência</h2>
-                        <p class="text-sm text-neutral-400 font-normal leading-relaxed">Configure os horários em que o bot responderá automaticamente no WhatsApp.</p>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Horário de Atendimento & Ausência</h2>
+                        <p class="text-[11px] text-zinc-400">Definição dos horários de expediente e resposta de ausência</p>
                     </div>
                     <div id="expediente-status-badge">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-white/[0.05] text-neutral-400 ring-1 ring-white/[0.05]">Desativado</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-800 text-zinc-400 border border-zinc-700">Desativado</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 bg-white/[0.02] p-4 rounded-md ring-1 ring-white/[0.05]">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="working_hours_enabled" class="sr-only peer">
-                        <div class="w-9 h-5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-neutral-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
-                    </label>
-                    <span class="text-xs font-medium text-neutral-200">Ativar Controle de Horário de Atendimento</span>
+
+                <div class="flex items-center gap-2.5 bg-zinc-950 p-2.5 rounded border border-zinc-800">
+                    <input type="checkbox" id="working_hours_enabled" class="rounded border-zinc-700 bg-zinc-900 text-zinc-100">
+                    <label for="working_hours_enabled" class="text-xs font-semibold text-zinc-200 cursor-pointer select-none">Ativar Controle de Horário de Atendimento</label>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">Horário de Início</label>
-                        <input type="time" id="working_hours_start" value="08:00" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200 [color-scheme:dark]">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Horário de Início</label>
+                        <input type="time" id="working_hours_start" value="08:00"
+                            class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">Horário de Término</label>
-                        <input type="time" id="working_hours_end" value="18:00" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200 [color-scheme:dark]">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Horário de Término</label>
+                        <input type="time" id="working_hours_end" value="18:00"
+                            class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                     </div>
-                    <div class="flex flex-col gap-1.5 md:col-span-2">
-                        <label class="text-xs font-medium text-neutral-500">Mensagem de Ausência (Fora do Expediente)</label>
-                        <textarea id="msg_ausencia" rows="3" placeholder="Nosso atendimento funciona de Segunda a Sexta..." class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200 resize-none"></textarea>
+                    <div class="flex flex-col gap-1 md:col-span-2">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Mensagem de Ausência (Fora do Expediente)</label>
+                        <textarea id="msg_ausencia" rows="3" placeholder="Nosso atendimento funciona de Segunda a Sexta..."
+                            class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 resize-none"></textarea>
                     </div>
                 </div>
             </div>
 
             <!-- Panel 5: Seguranca -->
-            <div id="panel-seguranca" class="settings-panel hidden flex flex-col gap-8">
-                <div class="pb-4 flex items-center justify-between border-b border-white/[0.05]">
-                    <div>
-                        <h2 class="text-lg font-semibold text-white/90 tracking-tight">Bloqueios & Suporte</h2>
-                        <p class="text-sm text-neutral-400 font-normal leading-relaxed">Números bloqueados de interagir com o bot e números dos agentes de suporte.</p>
-                    </div>
+            <div id="panel-seguranca" class="settings-panel hidden flex flex-col gap-4">
+                <div class="border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Bloqueios & Agentes</h2>
+                    <p class="text-[11px] text-zinc-400">Lista negra de números e contatos autorizados para suporte</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">Lista Negra de Telefones (Dark List)</label>
-                        <textarea id="dark_list" rows="4" placeholder="5511999999999&#10;5511888888888" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200 font-mono text-xs resize-none"></textarea>
-                        <span class="text-xs text-neutral-500 font-normal">Um número de WhatsApp por linha.</span>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Lista Negra de Telefones (Dark List)</label>
+                        <textarea id="dark_list" rows="4" placeholder="5511999999999&#10;5511888888888"
+                            class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 font-mono resize-none"></textarea>
+                        <span class="text-[10px] text-zinc-500">Um número por linha (com DDD e país).</span>
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-neutral-500">Agentes de Suporte (Atendimento Humano)</label>
-                        <textarea id="support_agents" rows="4" placeholder="5511977777777" class="bg-white/[0.03] text-white/90 rounded-md transition-all duration-200 font-mono text-xs resize-none"></textarea>
-                        <span class="text-xs text-neutral-500 font-normal">Números dos técnicos autorizados a receber alertas.</span>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[11px] font-semibold text-zinc-400 uppercase">Agentes de Suporte (Atendimento Humano)</label>
+                        <textarea id="support_agents" rows="4" placeholder="5511977777777"
+                            class="bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-100 font-mono resize-none"></textarea>
+                        <span class="text-[10px] text-zinc-500">Números autorizados a receber alertas de atendimento.</span>
                     </div>
                 </div>
             </div>
 
             <!-- Panel 6: Sistema -->
-            <div id="panel-sistema" class="settings-panel hidden flex flex-col gap-8">
-                <div class="pb-4 flex items-center justify-between border-b border-white/[0.05]">
-                    <div>
-                        <h2 class="text-lg font-semibold text-white/90 tracking-tight">Manutenção do Bot</h2>
-                        <p class="text-sm text-neutral-400 font-normal leading-relaxed">Ações de manutenção e reinicialização dos serviços.</p>
-                    </div>
+            <div id="panel-sistema" class="settings-panel hidden flex flex-col gap-4">
+                <div class="border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Manutenção do Bot</h2>
+                    <p class="text-[11px] text-zinc-400">Reinicialização dos serviços de comunicação</p>
                 </div>
-                <div class="flex flex-wrap gap-4">
-                    <button type="button" onclick="restartBot()" class="px-4 py-2.5 bg-white/[0.05] hover:bg-white/10 text-neutral-200 text-xs font-medium rounded-md transition-colors flex items-center gap-2 cursor-pointer ring-1 ring-white/[0.08]">
-                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        <span>Reiniciar Serviços do Bot</span>
+                <div>
+                    <button type="button" onclick="restartBot()" class="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs font-semibold rounded border border-zinc-700 transition cursor-pointer">
+                        Reiniciar Serviços do Bot
                     </button>
                 </div>
             </div>
 
             <!-- Panel 7: Usuarios -->
-            <div id="panel-usuarios" class="settings-panel hidden flex flex-col gap-8">
-                <div class="pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.05]">
+            <div id="panel-usuarios" class="settings-panel hidden flex flex-col gap-4">
+                <div class="border-b border-zinc-800 pb-2 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div>
-                        <h2 class="text-lg font-semibold text-white/90 tracking-tight">Gestão de Usuários do Sistema</h2>
-                        <p class="text-sm text-neutral-400 font-normal leading-relaxed">Usuários cadastrados no sistema com permissão de uso do bot e acesso ao painel.</p>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-200">Gestão de Usuários do Sistema</h2>
+                        <p class="text-[11px] text-zinc-400">Operadores e administradores cadastrados no painel</p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <button type="button" onclick="openImportGLPIModal()"
-                            class="px-3.5 py-2 text-xs font-medium text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-md transition-colors flex items-center gap-2 ring-1 ring-amber-500/20 whitespace-nowrap cursor-pointer">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            <span>Importar Usuário do GLPI</span>
-                        </button>
-                    </div>
+                    <button type="button" onclick="openImportGLPIModal()"
+                        class="px-3 py-1.5 text-xs font-bold text-zinc-950 bg-zinc-100 hover:bg-zinc-200 rounded transition cursor-pointer">
+                        Importar Usuário do GLPI
+                    </button>
                 </div>
 
-                <!-- Barra de Busca -->
-                <div class="flex items-center gap-3 bg-white/[0.03] rounded-md px-3.5 h-10 ring-1 ring-white/[0.05] focus-within:ring-amber-500/40 transition-all w-full">
-                    <svg class="w-4 h-4 text-neutral-400 shrink-0 cursor-pointer hover:text-amber-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="document.getElementById('system-user-search').focus()">
+                <div class="flex items-center gap-2 bg-zinc-950 rounded px-2.5 py-1 border border-zinc-800 w-full">
+                    <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="document.getElementById('system-user-search').focus()">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input type="text" id="system-user-search" oninput="filterSystemUsers()" placeholder="Buscar usuário por nome ou login..."
-                        class="w-full bg-transparent border-none text-xs text-white/90 placeholder-neutral-500 focus:outline-none p-0">
+                        class="w-full bg-transparent border-none text-xs text-zinc-100 focus:outline-none p-0">
                 </div>
 
-                <!-- Tabela de Usuários -->
                 <div class="overflow-x-auto w-full">
                     <table class="w-full text-left text-xs border-collapse">
                         <thead>
-                            <tr class="border-b border-white/[0.05] text-neutral-500 font-medium">
-                                <th class="pb-3 text-left font-medium">Nome no Sistema</th>
-                                <th class="pb-3 text-left font-medium">Login GLPI</th>
-                                <th class="pb-3 text-left font-medium">Acesso ao Bot</th>
-                                <th class="pb-3 text-left font-medium">Classe (Role)</th>
-                                <th class="pb-3 text-right font-medium">Ações</th>
+                            <tr class="border-b border-zinc-800 bg-zinc-950 text-zinc-400 font-semibold uppercase text-[10px] tracking-wider">
+                                <th class="py-2 px-3 text-left">Nome no Sistema</th>
+                                <th class="py-2 px-3 text-left">Login GLPI</th>
+                                <th class="py-2 px-3 text-left">Acesso ao Bot</th>
+                                <th class="py-2 px-3 text-left">Função (Role)</th>
+                                <th class="py-2 px-3 text-right">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="users-table-body" class="divide-y divide-white/[0.03] text-neutral-300 font-normal">
+                        <tbody id="users-table-body" class="divide-y divide-zinc-800/60 text-zinc-300">
                             <tr>
-                                <td colspan="5" class="py-6 text-center text-neutral-500 italic">Carregando usuários do sistema...</td>
+                                <td colspan="5" class="py-4 text-center text-zinc-500 italic">Carregando usuários...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+
         </div>
     </main>
 
-    <!-- Modal de Importação de Usuário do GLPI -->
-    <div id="modal-import-glpi" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#121212] rounded-xl max-w-lg w-full p-6 flex flex-col gap-6 ring-1 ring-white/[0.08] shadow-2xl relative">
-            <div class="flex items-center justify-between border-b border-white/[0.05] pb-4">
-                <h3 class="text-base font-semibold text-white/90 tracking-tight flex items-center gap-2">
-                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    <span>Importar Usuário do GLPI</span>
-                </h3>
-                <button type="button" onclick="closeImportGLPIModal()" class="text-neutral-500 hover:text-white transition-colors cursor-pointer text-lg p-1">✕</button>
+    <!-- Modal Importação GLPI -->
+    <div id="modal-import-glpi" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded max-w-md w-full p-5 flex flex-col gap-4 shadow-none">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <h3 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">Importar Usuário do GLPI</h3>
+                <button type="button" onclick="closeImportGLPIModal()" class="text-zinc-400 hover:text-zinc-100 text-sm font-bold p-1">✕</button>
             </div>
             
-            <div class="flex items-center gap-3 bg-white/[0.03] rounded-md px-3.5 h-10 ring-1 ring-white/[0.05] focus-within:ring-amber-500/40 transition-all">
-                <svg class="w-4 h-4 text-neutral-400 shrink-0 cursor-pointer hover:text-amber-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="document.getElementById('modal-glpi-search').focus()"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input type="text" id="modal-glpi-search" oninput="filterModalGLPIUsers()" placeholder="Buscar usuário no GLPI por nome ou login..." class="w-full bg-transparent border-none text-xs text-white/90 placeholder-neutral-500 focus:outline-none p-0">
-                <span id="modal-glpi-counter" class="text-[10px] text-neutral-500 whitespace-nowrap hidden sm:inline"></span>
+            <div class="flex items-center gap-2 bg-zinc-950 rounded px-2.5 py-1 border border-zinc-800">
+                <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="document.getElementById('modal-glpi-search').focus()"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" id="modal-glpi-search" oninput="filterModalGLPIUsers()" placeholder="Buscar usuário no GLPI..." class="w-full bg-transparent border-none text-xs text-zinc-100 focus:outline-none p-0">
+                <span id="modal-glpi-counter" class="text-[10px] text-zinc-500 font-mono"></span>
             </div>
 
-            <div class="max-h-60 overflow-y-auto divide-y divide-white/[0.03] border border-white/[0.05] rounded-md" id="modal-glpi-user-list">
-                <div class="p-4 text-center text-xs text-neutral-500 italic">Carregando usuários do GLPI...</div>
+            <div class="max-h-56 overflow-y-auto divide-y divide-zinc-800/60 border border-zinc-800 rounded bg-zinc-950" id="modal-glpi-user-list">
+                <div class="p-4 text-center text-xs text-zinc-500 italic">Carregando usuários do GLPI...</div>
             </div>
 
-            <div class="flex justify-end gap-3 pt-2">
-                <button type="button" onclick="closeImportGLPIModal()" class="px-4 py-2 text-xs font-medium text-neutral-400 hover:text-white transition-colors cursor-pointer">Cancelar</button>
+            <div class="flex justify-end pt-2 border-t border-zinc-800">
+                <button type="button" onclick="closeImportGLPIModal()" class="px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:text-zinc-100 bg-zinc-800 rounded">Cancelar</button>
             </div>
         </div>
     </div>
 
     <!-- Modal Definir Senha -->
-    <div id="modal-set-password" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#121212] rounded-xl max-w-md w-full p-6 flex flex-col gap-6 ring-1 ring-white/[0.08] shadow-2xl relative">
-            <div class="flex items-center justify-between border-b border-white/[0.05] pb-4">
-                <h3 class="text-base font-semibold text-white/90 tracking-tight flex items-center gap-2">
-                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                    <span>Definir Senha do Usuário</span>
-                </h3>
-                <button type="button" onclick="closeSetPasswordModal()" class="text-neutral-500 hover:text-white transition-colors cursor-pointer text-lg p-1">✕</button>
+    <div id="modal-set-password" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded max-w-sm w-full p-5 flex flex-col gap-4 shadow-none">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <h3 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">Definir Senha de Acesso</h3>
+                <button type="button" onclick="closeSetPasswordModal()" class="text-zinc-400 hover:text-zinc-100 text-sm font-bold p-1">✕</button>
             </div>
 
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-3">
                 <input type="hidden" id="modal-password-user-id">
                 <input type="hidden" id="modal-password-username">
 
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs font-medium text-neutral-500">Nova Senha de Acesso</label>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[11px] font-semibold text-zinc-400 uppercase">Nova Senha de Acesso</label>
                     <div class="relative flex items-center w-full">
-                        <input type="password" id="modal-new-password" placeholder="Digite a nova senha..." class="input-with-eye bg-white/[0.03] text-white/90 rounded-md transition-all duration-200">
-                        <button type="button" onclick="toggleVisibility(this, 'modal-new-password')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition-colors cursor-pointer p-1">
-                            <svg class="w-4 h-4 text-neutral-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        <input type="password" id="modal-new-password" placeholder="Digite a nova senha..."
+                            class="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-100 w-full pr-8">
+                        <button type="button" onclick="toggleVisibility(this, 'modal-new-password')" class="absolute right-2.5 text-zinc-400 hover:text-zinc-100 p-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 pt-2">
-                <button type="button" onclick="closeSetPasswordModal()" class="px-4 py-2 text-xs font-medium text-neutral-400 hover:text-white transition-colors cursor-pointer">Cancelar</button>
-                <button type="button" onclick="saveUserPasswordFromModal()" class="px-4 py-2 text-xs font-medium text-black bg-amber-400 hover:bg-amber-300 rounded-md transition-colors cursor-pointer">Salvar Senha</button>
+            <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800">
+                <button type="button" onclick="closeSetPasswordModal()" class="px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:text-zinc-100 bg-zinc-800 rounded">Cancelar</button>
+                <button type="button" onclick="saveUserPasswordFromModal()" class="px-3.5 py-1.5 text-xs font-bold text-zinc-950 bg-zinc-100 hover:bg-zinc-200 rounded">Salvar Senha</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast de Notificação -->
-    <div id="toast" class="fixed bottom-6 right-6 px-4 py-3 rounded-md shadow-2xl backdrop-blur-md transform transition-all duration-300 translate-y-24 opacity-0 flex items-center gap-3 z-50 ring-1 ring-white/10 text-xs font-medium">
-        <span id="toast-icon">✅</span>
-        <span id="toast-message">Configurações salvas com sucesso!</span>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 px-4 py-2 rounded bg-zinc-900 border border-zinc-700 text-zinc-100 transform translate-y-24 opacity-0 transition duration-200 flex items-center gap-2 z-50 text-xs font-semibold">
+        <span id="toast-icon"></span>
+        <span id="toast-message">Notificação</span>
     </div>
 
-    <script src="/static/js/auth-check.js?v=18.0"></script>
-    <script src="/static/js/config.js?v=18.0"></script>
+    <script src="/static/js/auth-check.js?v=4.0"></script>
+    <script src="/static/js/config.js?v=4.0"></script>
 </body>
 
 </html>

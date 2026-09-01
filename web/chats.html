@@ -1,253 +1,203 @@
-<!-- VIEW HTML: chats.html - Página do Painel Administrativo do GLPI-BOT -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Visualizador de Conversas em tempo real do GLPI-BOT. Gerencie chats, acompanhe atendimentos ao vivo e interaja com os usuários.">
-    <title>Conversas em Tempo Real - Bot GLPI</title>
+    <title>Conversas - GLPI-BOT</title>
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=8.0">
-    <link rel="stylesheet" href="/static/css/chats.css?v=8.0">
+    <link rel="stylesheet" href="/static/css/style.css?v=3.1">
 </head>
 
-<body class="text-white min-h-screen flex flex-col relative overflow-x-hidden">
-    <!-- Ambient light glow effects (Monochrome/Gray theme) -->
-    <div
-        class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-zinc-500/[0.03] rounded-full blur-[150px] pointer-events-none">
-    </div>
-    <div
-        class="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[130px] pointer-events-none">
-    </div>
+<body class="bg-zinc-950 text-zinc-100 h-screen flex flex-col overflow-hidden antialiased">
 
-    <!-- Header/Navbar -->
-    <header
-        class="bg-zinc-950/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 w-full px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <img src="/static/img/logo.png" alt="Logo"
-                class="w-10 h-10 rounded-xl object-contain shadow-lg border border-white/5">
+    <!-- Header Navbar Sticky (Pinned Top) -->
+    <header class="bg-zinc-900 border-b border-zinc-800 shrink-0 w-full px-4 py-2 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+            <img src="/static/img/logo.png" alt="Logo GLPI-BOT" class="w-7 h-7 object-contain">
             <div>
-                <h1
-                    class="text-lg font-bold bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
-                    GLPI-BOT</h1>
-                <p class="text-xs text-zinc-400">Painel de Controle Inteligente</p>
+                <h1 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">GLPI-BOT</h1>
+                <p class="text-[10px] text-zinc-400">Painel de Gerenciamento TI</p>
             </div>
         </div>
 
-        <!-- Navigation Links -->
-        <nav class="flex items-center gap-2 bg-black/40 p-1 border border-white/5 rounded-xl">
-            <a href="/"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                📊 Status
+        <nav class="flex items-center gap-1 bg-zinc-950 p-1 border border-zinc-800 rounded">
+            <a href="/" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Status
             </a>
-            <a href="/flow"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                💬 Fluxo do Bot
+            <a href="/flow" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Fluxo do Bot
             </a>
-            <a href="/config"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                🔧 Configurações
+            <a href="/config" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Configurações
             </a>
-            <a href="/messages"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                ✉️ Mensagens
+            <a href="/messages" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Mensagens
             </a>
-            <a href="/chats"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-white bg-white/10 border border-white/5">
-                💬 Conversas
+            <a href="/chats" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-100 bg-zinc-800 border border-zinc-700">
+                Conversas
             </a>
-            <a href="/logs"
-                class="px-4 py-2 text-xs font-semibold rounded-lg transition duration-200 text-zinc-400 hover:text-white hover:bg-white/5">
-                📋 Logs
+            <a href="/logs" class="px-3 py-1.5 text-xs font-semibold rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition">
+                Logs
             </a>
         </nav>
 
-        <!-- Action / Logout -->
-        <div class="flex items-center gap-3">
-            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-900/80 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-medium">
-                <span id="user-badge-role" class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300">...</span>
+        <div class="flex items-center gap-2.5">
+            <div id="user-badge-header" class="hidden md:flex items-center gap-2 bg-zinc-950 border border-zinc-800 px-2.5 py-1 rounded text-xs">
+                <span id="user-badge-role" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-800 text-zinc-300">...</span>
                 <span id="user-badge-name" class="text-zinc-200 font-bold">...</span>
             </div>
-            <a href="/logout"
-                class="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-950/20 hover:bg-rose-900/40 border border-rose-900/30 hover:border-rose-500/50 rounded-xl transition duration-200">
-                🚪 Sair
+            <a href="/logout" class="px-3 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-900/60 rounded transition">
+                Sair
             </a>
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-6xl mx-auto p-6 flex gap-6 relative z-10">
-        <div class="w-full grid grid-cols-1 md:grid-cols-3 gap-6 chat-container">
-
-            <!-- Left Side: Chat List (1/3 width) -->
-            <div class="glass-card rounded-2xl flex flex-col overflow-hidden h-full">
-                <!-- Search and Title -->
-                <div class="p-4 border-b border-white/5 flex flex-col gap-3">
-                    <h2
-                        class="text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center justify-between">
-                        <span>Conversas Recentes</span>
-                        <button onclick="loadChatsList()"
-                            class="text-xs text-zinc-400 hover:text-white transition">🔄</button>
-                    </h2>
-                    <input type="text" id="chat-search-input" placeholder="Buscar contato..." oninput="filterChats()"
-                        class="w-full text-xs p-2 bg-black/40 border border-white/5 rounded-xl">
+    <!-- Main Workspace Fixed Viewport (No Page Scroll) -->
+    <main class="flex-1 min-h-0 w-full px-4 py-3 flex flex-col md:flex-row gap-3 overflow-hidden">
+        
+        <!-- Coluna Esquerda: Lista de Conversas (Scroll Próprio Interno) -->
+        <aside class="w-full md:w-80 lg:w-96 bg-zinc-900 border border-zinc-800 rounded flex flex-col shrink-0 h-full overflow-hidden">
+            <div class="p-3 border-b border-zinc-800 bg-zinc-950 flex flex-col gap-2 shrink-0">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-zinc-200">Fila de Conversas</span>
+                    <span class="text-[10px] text-zinc-500 font-mono uppercase">Ao Vivo</span>
                 </div>
-
-                <!-- Chat Cards List container -->
-                <div id="chats-list-container" class="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
-                    <div class="text-center py-8 text-zinc-500 text-xs italic">Nenhuma conversa carregada.</div>
+                <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1">
+                    <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" id="chat-search-input" onkeyup="filterChats()" placeholder="Buscar contato ou mensagem..."
+                        class="w-full bg-transparent border-none text-xs text-zinc-100 focus:outline-none p-0">
                 </div>
             </div>
 
-            <!-- Right Side: Chat Window (2/3 width) -->
-            <div id="chat-window-container"
-                class="glass-card rounded-2xl flex flex-col overflow-hidden h-full md:col-span-2 relative">
-                <!-- Select Chat Placeholder -->
-                <div id="chat-placeholder"
-                    class="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 z-20 gap-4">
-                    <div
-                        class="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center bg-zinc-950/50 text-3xl">
-                        💬</div>
-                    <div class="text-center">
-                        <h3 class="text-sm font-bold text-zinc-300">Nenhuma conversa selecionada</h3>
-                        <p class="text-xs text-zinc-500 mt-1">Selecione um contato na lista à esquerda para interagir
-                        </p>
-                    </div>
-                </div>
+            <div id="chats-list-container" class="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-1 divide-y divide-zinc-800/50">
+                <div class="p-4 text-center text-xs text-zinc-500 italic">Carregando conversas...</div>
+            </div>
+        </aside>
 
-                <!-- Active Chat Header -->
-                <div class="p-4 border-b border-white/5 flex items-center justify-between bg-zinc-950/20">
-                    <div class="flex items-center gap-3">
-                        <div id="active-chat-avatar"
-                            class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-zinc-300">
-                            👤</div>
-                        <div>
-                            <h3 id="active-chat-name" class="text-sm font-bold text-zinc-200">Nome do Contato</h3>
-                            <span id="active-chat-status-badge"
-                                class="inline-flex items-center gap-1.5 mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-zinc-900 border border-white/5">
-                                <span id="active-chat-status-dot" class="w-1.5 h-1.5 rounded-full status-bot"></span>
-                                <span id="active-chat-status-text">BOT</span>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span id="active-chat-jid" class="text-[10px] text-zinc-500 font-mono">jid@s.whatsapp.net</span>
-                        <button id="btn-close-chat" onclick="closeActiveChat()" style="display: none;"
-                            class="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-400 hover:text-emerald-300 rounded-xl text-xs font-semibold transition duration-150 flex items-center gap-1.5 shadow-md"
-                            title="Finalizar atendimento e reativar o Bot">
-                            ✔️ Finalizar
-                        </button>
-                        <button onclick="deleteActiveChat()"
-                            class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-500/50 text-rose-400 hover:text-rose-300 rounded-xl text-xs font-semibold transition duration-150 flex items-center gap-1.5 shadow-md"
-                            title="Apagar conversa e histórico">
-                            🗑️ Apagar
-                        </button>
-                    </div>
+        <!-- Coluna Direita: Console do Chat Ativo (Scroll Próprio Exclusivo para as Mensagens) -->
+        <section id="chat-window-container" class="flex-1 bg-zinc-900 border border-zinc-800 rounded flex flex-col min-w-0 h-full overflow-hidden">
+            
+            <!-- Estado Inicial: Selecionar Conversa -->
+            <div id="chat-placeholder" class="flex-1 flex flex-col items-center justify-center p-6 text-center bg-zinc-950">
+                <div class="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-3">
+                    <svg class="w-6 h-6 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
                 </div>
+                <h3 class="text-xs font-bold text-zinc-200 uppercase tracking-wider">Console de Atendimento ao Vivo</h3>
+                <p class="text-[11px] text-zinc-400 mt-1">Selecione uma conversa na barra lateral para visualizar o histórico e responder o cliente.</p>
+            </div>
 
-                <!-- Banner de Atribuição de Técnico -->
-                <div id="assume-chat-banner"
-                    class="bg-zinc-900/90 border-b border-white/5 p-3 flex flex-col sm:flex-row items-center justify-between gap-3 z-10"
-                    style="display: none;">
-                    <div class="flex items-center gap-2 text-xs text-zinc-300">
-                        <span class="text-lg">🛎️</span>
-                        <div>
-                            <span class="font-bold text-zinc-200">Conversa sob controle do Bot / Fila</span>
-                            <p class="text-[10px] text-zinc-500">Clique para assumir este atendimento diretamente com o seu usuário logado</p>
-                        </div>
+            <!-- Cabeçalho Fixo do Chat Selecionado (Pinned Top) -->
+            <div id="active-chat-header" class="hidden p-3 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div id="active-chat-avatar" class="w-8 h-8 rounded bg-zinc-800 text-zinc-200 font-bold text-xs flex items-center justify-center uppercase shrink-0 border border-zinc-700">
+                        C
                     </div>
-                    <button onclick="assumeActiveChat()"
-                        class="px-4 py-2 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl transition duration-200 shadow-md whitespace-nowrap">
-                        Assumir Atendimento
-                    </button>
-                </div>
-
-                <!-- Message History Box -->
-                <div id="chat-messages-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-1.5 bg-black/10">
-                    <!-- Messages will be dynamically rendered here -->
-                </div>
-
-                <!-- Banner de Resposta Citada (WhatsApp Quote Preview) -->
-                <div id="reply-quote-preview" class="hidden px-4 py-2 bg-zinc-900 border-t border-white/5 flex items-center justify-between gap-3 text-xs border-l-4 border-amber-400">
                     <div class="flex flex-col min-w-0">
-                        <span id="reply-quote-name" class="font-bold text-amber-400 text-[11px]"></span>
-                        <span id="reply-quote-text" class="text-zinc-300 text-[11px] truncate"></span>
-                    </div>
-                    <button type="button" onclick="cancelReplyQuote()" class="text-zinc-400 hover:text-white p-1 transition cursor-pointer text-sm font-bold" title="Cancelar resposta">✕</button>
-                </div>
-
-                <!-- Input Box Container -->
-                <div class="p-4 border-t border-white/5 bg-zinc-950/20 flex flex-col gap-2">
-                    <!-- File Attachment Preview Bar (hidden by default) -->
-                    <div id="media-attachment-preview" class="hidden p-2.5 bg-zinc-900 border border-white/10 rounded-xl flex items-center justify-between gap-3 text-xs">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <img id="media-preview-img" src="" class="w-10 h-10 rounded-lg object-cover border border-white/10 hidden" />
-                            <div id="media-preview-icon" class="w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-lg shrink-0">📄</div>
-                            <div class="flex flex-col min-w-0">
-                                <span id="media-preview-filename" class="font-bold text-zinc-200 truncate text-[11px]">foto.png</span>
-                                <span id="media-preview-size" class="text-[10px] text-zinc-400">1.2 MB</span>
+                        <div class="flex items-center gap-2">
+                            <h3 id="active-chat-name" class="text-xs font-bold text-zinc-100 truncate">Nome do Contato</h3>
+                            <div id="active-chat-status-badge" class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded text-[10px] font-bold text-zinc-300">
+                                <span id="active-chat-status-dot" class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+                                <span id="active-chat-status-text">Bot</span>
                             </div>
                         </div>
-                        <button type="button" onclick="clearSelectedMedia()" class="text-zinc-400 hover:text-white p-1 transition cursor-pointer font-bold text-sm" title="Remover anexo">✕</button>
+                        <span id="active-chat-jid" class="text-[10px] text-zinc-400 font-mono">5511999999999</span>
                     </div>
+                </div>
 
-                    <!-- Bar de Gravação de Áudio (hidden por padrão) -->
-                    <div id="audio-recording-bar" class="hidden p-2.5 bg-rose-950/60 border border-rose-500/30 rounded-xl flex items-center justify-between gap-3 text-xs text-rose-300">
-                        <div class="flex items-center gap-3">
-                            <span class="w-3 h-3 rounded-full bg-rose-500 animate-ping"></span>
-                            <span class="font-bold font-mono text-sm" id="recording-timer">00:00</span>
-                            <span class="text-[11px] text-rose-200">Gravando áudio de voz...</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="cancelAudioRecording()" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-zinc-300 text-xs transition cursor-pointer">Cancelar</button>
-                            <button type="button" onclick="stopAndSendAudioRecording()" class="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow-md cursor-pointer">Enviar 🎙️</button>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <!-- File Input (Hidden) -->
-                        <input type="file" id="chat-file-input" accept="image/*,audio/*,.pdf,.doc,.docx,.txt,.zip" class="hidden" onchange="handleFileSelected(event)">
-
-                        <!-- Attachment Button -->
-                        <button type="button" onclick="document.getElementById('chat-file-input').click()" 
-                            class="p-2.5 text-zinc-400 hover:text-white bg-black/40 hover:bg-white/10 border border-white/5 rounded-xl transition duration-200 cursor-pointer text-base shrink-0" title="Anexar Imagem ou Arquivo (ou cole com Ctrl+V)">
-                            📷
-                        </button>
-
-                        <!-- Audio Record Button -->
-                        <button type="button" id="btn-record-audio" onclick="toggleAudioRecording()" 
-                            class="p-2.5 text-zinc-400 hover:text-rose-400 bg-black/40 hover:bg-white/10 border border-white/5 rounded-xl transition duration-200 cursor-pointer text-base shrink-0" title="Gravar Áudio de Voz">
-                            🎙️
-                        </button>
-
-                        <input type="text" id="chat-message-input" placeholder="Digite uma mensagem, legenda ou cole uma imagem (Ctrl+V)..."
-                            onkeydown="handleInputKey(event)"
-                            class="flex-1 text-xs p-3 bg-black/40 border border-white/5 rounded-xl">
-                            
-                        <button id="btn-send-msg" onclick="sendConsoleMessage()"
-                            class="px-4 sm:px-5 py-3 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl transition duration-200 shadow-md shrink-0">
-                            Enviar
-                        </button>
-                    </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button id="btn-close-chat" onclick="closeLiveChat()" class="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-semibold rounded transition cursor-pointer">
+                        Finalizar Atendimento
+                    </button>
+                    <button onclick="deleteActiveChat()" class="px-2.5 py-1.5 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold rounded transition cursor-pointer">
+                        Apagar Chat
+                    </button>
                 </div>
             </div>
 
-        </div>
+            <!-- Banner para Assumir Chat -->
+            <div id="assume-chat-banner" class="hidden bg-zinc-950 border-b border-zinc-800 px-4 py-2 flex items-center justify-between gap-3 shrink-0 text-xs">
+                <span class="text-zinc-400">Esta conversa está sob controle do robô automatizado.</span>
+                <button onclick="assumeLiveChat()" class="px-3 py-1 bg-zinc-100 text-zinc-950 hover:bg-zinc-200 font-bold rounded text-xs transition cursor-pointer">
+                    Assumir Atendimento Humano
+                </button>
+            </div>
+
+            <!-- Container Exclusivo de Scroll para Histórico de Mensagens -->
+            <div id="chat-messages-container" class="hidden flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-2.5 bg-zinc-950">
+            </div>
+
+            <!-- Barra de Citação / Anexos / Gravador (Pinned Bottom) -->
+            <div id="reply-quote-preview" class="hidden bg-zinc-950 border-t border-zinc-800 px-3 py-1.5 flex items-center justify-between gap-2 text-xs shrink-0">
+                <div class="flex items-center gap-2 truncate">
+                    <span class="font-bold text-zinc-400">Respondendo a:</span>
+                    <span id="reply-quote-name" class="font-semibold text-zinc-200">...</span>
+                    <span id="reply-quote-text" class="text-zinc-400 truncate">...</span>
+                </div>
+                <button onclick="cancelReplyQuote()" class="text-zinc-400 hover:text-zinc-100 font-bold p-1">✕</button>
+            </div>
+
+            <div id="media-attachment-preview" class="hidden bg-zinc-950 border-t border-zinc-800 px-3 py-2 flex items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-3">
+                    <img id="media-preview-img" src="" alt="Preview" class="w-10 h-10 object-cover rounded border border-zinc-800 hidden">
+                    <div id="media-preview-icon" class="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center text-zinc-300 font-bold text-xs">
+                        FILE
+                    </div>
+                    <div class="flex flex-col text-xs">
+                        <span id="media-preview-filename" class="font-semibold text-zinc-200 truncate max-w-xs">arquivo.pdf</span>
+                        <span id="media-preview-size" class="text-[10px] text-zinc-400">0 KB</span>
+                    </div>
+                </div>
+                <button onclick="clearSelectedMedia()" class="text-zinc-400 hover:text-zinc-100 font-bold p-1">✕</button>
+            </div>
+
+            <div id="audio-recording-bar" class="hidden bg-zinc-950 border-t border-zinc-800 px-4 py-2 flex items-center justify-between gap-3 shrink-0 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span class="text-zinc-200">Gravando áudio...</span>
+                    <span id="recording-timer" class="font-mono font-bold text-zinc-100">00:00</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="cancelAudioRecording()" class="px-2.5 py-1 text-zinc-400 hover:text-zinc-100 font-semibold">Cancelar</button>
+                    <button onclick="sendAudioRecording()" class="px-3 py-1 bg-zinc-100 text-zinc-950 hover:bg-zinc-200 font-bold rounded text-xs">Enviar Áudio</button>
+                </div>
+            </div>
+
+            <!-- Campo Fixo de Entrada de Mensagens (Pinned Bottom) -->
+            <div id="chat-input-container" class="hidden p-3 border-t border-zinc-800 bg-zinc-900 flex items-center gap-2 shrink-0">
+                <input type="file" id="chat-file-input" onchange="handleFileSelected(this)" class="hidden">
+                <button type="button" onclick="document.getElementById('chat-file-input').click()" class="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 rounded text-xs font-semibold transition cursor-pointer">
+                    Anexo
+                </button>
+                <button type="button" id="btn-record-audio" onclick="toggleAudioRecording()" class="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 rounded text-xs font-semibold transition cursor-pointer">
+                    Áudio
+                </button>
+
+                <input type="text" id="chat-message-input" onkeypress="handleInputKey(event)" placeholder="Digite a mensagem para o cliente..."
+                    class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-100 focus:border-zinc-700 focus:outline-none">
+
+                <button type="button" id="btn-send-msg" onclick="sendConsoleMessage()" class="px-4 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded transition cursor-pointer">
+                    Enviar
+                </button>
+            </div>
+
+        </section>
+
     </main>
 
     <!-- Toast Notification -->
-    <div id="toast"
-        class="fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 backdrop-blur-md transform translate-y-24 opacity-0 transition duration-300 flex items-center gap-3 z-50">
-        <span id="toast-icon">✅</span>
-        <span id="toast-message">Mensagem enviada com sucesso!</span>
+    <div id="toast" class="fixed bottom-4 right-4 px-4 py-2 rounded bg-zinc-900 border border-zinc-700 text-zinc-100 transform translate-y-24 opacity-0 transition duration-200 flex items-center gap-2 z-50 text-xs font-semibold">
+        <span id="toast-icon"></span>
+        <span id="toast-message">Notificação</span>
     </div>
 
-    <!-- Script loading -->
-    <script src="/static/js/auth-check.js?v=8.0"></script>
-    <script src="/static/js/chats.js?v=8.0"></script>
+    <script src="/static/js/auth-check.js?v=3.1"></script>
+    <script src="/static/js/chats.js?v=3.1"></script>
 </body>
 
 </html>

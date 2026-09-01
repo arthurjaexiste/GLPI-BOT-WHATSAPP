@@ -1,4 +1,3 @@
-// Verificação global de autenticação e nivel de permissão (RBAC) no Painel Web
 async function checkAuthAndRole() {
     try {
         const res = await fetch('/api/me');
@@ -10,7 +9,6 @@ async function checkAuthAndRole() {
         }
         const user = await res.json();
         
-        // Atualiza a badge do usuário no Navbar
         const badgeName = document.getElementById('user-badge-name');
         const badgeRole = document.getElementById('user-badge-role');
         const badgeContainer = document.getElementById('user-badge-header');
@@ -19,22 +17,20 @@ async function checkAuthAndRole() {
         if (badgeName) badgeName.innerText = user.name || user.username;
         if (badgeRole) {
             if (user.role === 'admin') {
-                badgeRole.innerText = '⭐ Admin';
-                badgeRole.className = 'px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 border border-amber-500/30 text-amber-300';
+                badgeRole.innerText = 'Admin';
+                badgeRole.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-200 border border-slate-700';
             } else {
-                badgeRole.innerText = '👤 Operador';
-                badgeRole.className = 'px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 border border-emerald-500/30 text-emerald-300';
+                badgeRole.innerText = 'Operador';
+                badgeRole.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-300 border border-slate-700';
             }
         }
 
-        // Se o perfil for operador, remove os links de rotas restritas aos administradores
         if (user.role === 'operator') {
             const adminSelectors = ['a[href="/flow"]', 'a[href="/config"]', 'a[href="/messages"]', 'a[href="/logs"]'];
             adminSelectors.forEach(sel => {
                 document.querySelectorAll(sel).forEach(el => el.remove());
             });
 
-            // Se o operador tentar acessar via URL direta uma página restrita, redireciona para a home
             const currentPath = window.location.pathname;
             if (['/config', '/flow', '/messages', '/logs'].includes(currentPath)) {
                 window.location.href = '/chats';

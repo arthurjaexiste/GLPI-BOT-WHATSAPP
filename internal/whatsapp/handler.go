@@ -1,8 +1,3 @@
-// ============================================================================
-// ARQUIVO: handler.go
-// Descrição: Implementação Go (backend) para o ecossistema GLPI-BOT.
-// ============================================================================
-
 package whatsapp
 
 import (
@@ -24,7 +19,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// Struct UserSession guarda as informações do usuário autenticado no painel
 type UserSession struct {
 	UserID   int       `json:"user_id"`
 	Username string    `json:"username"`
@@ -33,8 +27,6 @@ type UserSession struct {
 	Expiry   time.Time `json:"expiry"`
 }
 
-// ─── Estado global compartilhado ─────────────────────────────────────────────
-
 var (
 	CurrentQR       string
 	IsConnected     bool
@@ -42,7 +34,6 @@ var (
 	GlobalClient    *whatsmeow.Client
 	GlobalContainer *sqlstore.Container
 
-	// Banco de dados e sessões do painel web
 	webDB      *sql.DB
 	sessions   = make(map[string]UserSession)
 	sessionsMu sync.Mutex
@@ -166,18 +157,17 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 		return
 	}
 
-	// SE A MENSAGEM VIER DE UM GRUPO DO WHATSAPP OU JID GRUPO (@g.us OU 120363...) -> SAI AUTOMATICAMENTE DO GRUPO!
 	if v.Info.IsGroup || v.Info.Chat.Server == "g.us" || strings.HasSuffix(v.Info.Chat.String(), "@g.us") || strings.HasPrefix(v.Info.Chat.User, "120363") {
 		groupJID := v.Info.Chat
-		fmt.Printf("⚠️ [GRUPO DETECTADO] Bot foi adicionado ou recebeu mensagem no grupo %s. Saindo automaticamente...\n", groupJID.String())
+		fmt.Printf("[GRUPO DETECTADO] Saindo do grupo %s\n", groupJID.String())
 		go func(gJID types.JID) {
 			ctxGroup, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 			defer cancel()
 			err := client.LeaveGroup(ctxGroup, gJID)
 			if err != nil {
-				fmt.Printf("⚠️ [GRUPO] Erro ao tentar sair do grupo %s: %v\n", gJID.String(), err)
+				fmt.Printf("[GRUPO] Erro ao sair do grupo %s: %v\n", gJID.String(), err)
 			} else {
-				fmt.Printf("✅ [GRUPO] Bot saiu com sucesso do grupo %s!\n", gJID.String())
+				fmt.Printf("[GRUPO] Bot saiu do grupo %s\n", gJID.String())
 			}
 		}(groupJID)
 		return

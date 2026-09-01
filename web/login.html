@@ -1,73 +1,51 @@
-<!-- VIEW HTML: login.html - Página do Painel Administrativo do GLPI-BOT -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Bot GLPI</title>
+    <title>Autenticação do Sistema - GLPI-BOT</title>
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=1.6">
+    <link rel="stylesheet" href="/static/css/style.css?v=4.0">
 </head>
 
-<body class="text-white min-h-screen flex items-center justify-center p-6 relative overflow-hidden select-none">
-    <!-- Interactive Canvas background -->
-    <canvas id="interactive-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex items-center justify-center p-4 antialiased">
 
-    <!-- Ambient light glow effects (Monochrome/Gray theme) -->
-    <div id="glow-spotlight"
-        class="absolute w-[450px] h-[450px] bg-white/[0.02] rounded-full blur-[110px] pointer-events-none z-0 transition-all duration-300 ease-out"
-        style="top: 20%; left: 40%;"></div>
-    <div
-        class="absolute bottom-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-white/[0.01] rounded-full blur-[100px] pointer-events-none z-0">
-    </div>
-
-    <div class="glass-card p-10 rounded-3xl w-full max-w-md flex flex-col gap-8 relative z-10 select-text">
-        <div class="text-center">
-            <div class="relative inline-block mb-4">
-                <div class="absolute inset-0 bg-white/[0.02] rounded-full blur-xl animate-pulse"></div>
-                <img src="/static/img/logo.png" alt="Logo"
-                    class="w-36 h-36 mx-auto object-contain relative z-10 drop-shadow-[0_4px_20px_rgba(255,255,255,0.08)]">
+    <!-- Caixa de Login Centralizada - Dark Mode -->
+    <div class="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded p-6 flex flex-col gap-5">
+        
+        <div class="flex items-center gap-3 border-b border-zinc-800 pb-4">
+            <img src="/static/img/logo.png" alt="Logo GLPI-BOT" class="w-8 h-8 object-contain">
+            <div>
+                <h1 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">GLPI-BOT</h1>
+                <p class="text-xs text-zinc-400">Painel de Gerenciamento TI</p>
             </div>
-            <h1
-                class="text-2xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-                Acesso GLPI-BOT</h1>
-            <p class="text-xs text-zinc-400 mt-1.5">Insira suas credenciais para gerenciar o bot</p>
         </div>
 
-        {{if .Error}}
-        <div
-            class="bg-rose-500/10 border border-rose-500/25 text-rose-300 px-4 py-3.5 rounded-xl text-xs flex items-center gap-2.5 animate-bounce">
-            <span class="text-sm">⚠️</span>
-            <span class="font-medium">{{.Error}}</span>
-        </div>
-        {{end}}
-
-
-        <!-- Formulário de entrada de dados administrativos -->
-        <form action="/login" method="POST" class="flex flex-col gap-5">
-            <div class="flex flex-col gap-2">
-                <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Usuário</label>
-                <input name="username" type="text" placeholder="Ex: admin" required
-                    class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+        <form action="/login" method="POST" class="flex flex-col gap-4">
+            <div class="flex flex-col gap-1">
+                <label for="username" class="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Usuário</label>
+                <input type="text" id="username" name="username" required placeholder="Digite seu login" autocomplete="username"
+                    class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none">
             </div>
-            <div class="flex flex-col gap-2">
-                <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Senha</label>
-                <input name="password" type="password" placeholder="Sua senha" required
-                    class="focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20">
+
+            <div class="flex flex-col gap-1">
+                <label for="password" class="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Senha</label>
+                <input type="password" id="password" name="password" required placeholder="Digite sua senha" autocomplete="current-password"
+                    class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none">
             </div>
-            <button
-                class="mt-3 bg-white hover:bg-zinc-200 text-black border border-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-                type="submit">
-                Entrar no Painel
+
+            <button type="submit" class="w-full mt-2 py-2 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded transition cursor-pointer">
+                Entrar
             </button>
         </form>
+
+        <div class="border-t border-zinc-800 pt-3 text-center">
+            <span class="text-[11px] text-zinc-500">Sistema Interno de Suporte ao Usuário</span>
+        </div>
     </div>
 
-    <!-- Interactive Canvas & Spotlight Logic -->
-    <script src="/static/js/login.js?v=1.6"></script>
 </body>
 
 </html>

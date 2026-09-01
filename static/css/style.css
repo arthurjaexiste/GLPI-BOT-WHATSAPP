@@ -1,233 +1,134 @@
-/* Design System Global - GLPI-BOT (Humanized & Modern SaaS Architecture) */
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+/* Dark Mode SaaS Design System - Premium Dark Theme (Zinc 950 / Zinc 900) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --bg-primary: #0a0a0c;
-    --bg-card: #121215;
-    --text-primary: rgba(255, 255, 255, 0.92);
-    --text-secondary: #a1a1aa;
-    --text-label: #71717a;
+  --bg-body: #09090b;
+  --bg-surface: #18181b;
+  --bg-inner: #09090b;
+  --border-color: #27272a;
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
 }
 
-body {
-    font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: #0a0a0c !important;
-    background: #0a0a0c !important;
-    color: var(--text-primary);
-    min-height: 100vh;
-    letter-spacing: -0.011em;
-    -webkit-font-smoothing: antialiased;
+* {
+  box-sizing: border-box;
 }
 
-/* 1. LEI DAS CURVAS PROPORCIONAIS */
-.glass-card {
-    background: #121215 !important;
-    border-radius: 1rem !important; /* 16px rounded-2xl */
-    border: none !important;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+html, body {
+  background-color: #09090b;
+  color: #f4f4f5;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* 2. PROFUNDIDADE SEM DEGRADÊ CAFONA (Wash & Light Rings) */
-input,
-textarea,
-select {
-    color-scheme: dark !important;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="time"],
-textarea,
-select {
-    background: rgba(255, 255, 255, 0.04) !important;
-    border: none !important;
-    border-radius: 0.5rem !important; /* 8px rounded-lg */
-    padding: 10px 14px !important;
-    color: rgba(255, 255, 255, 0.9) !important;
-    font-size: 0.8125rem !important;
-    font-weight: 400 !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
-    transition: all 0.2s ease !important;
-    width: 100%;
-}
-
-input[type="password"],
-input.input-with-eye,
-input[type="text"].input-with-eye,
-input[type="password"].input-with-eye,
-.input-with-eye {
-    background: rgba(255, 255, 255, 0.04) !important;
-    border: none !important;
-    border-radius: 0.5rem !important;
-    padding-left: 14px !important;
-    padding-right: 48px !important;
-    color: rgba(255, 255, 255, 0.9) !important;
-    font-size: 0.8125rem !important;
-    font-weight: 400 !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
-    transition: all 0.2s ease !important;
-    width: 100%;
-}
-
-input:hover,
-textarea:hover,
-select:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-    background: rgba(255, 255, 255, 0.08) !important;
-    outline: none !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), 0 0 12px rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Custom Scrollbars */
+/* Custom Dark Scrollbars */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.4);
+  background: #09090b;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+  background: #27272a;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+  background: #3f3f46;
 }
 
-/* Navigation Links */
-.nav-link {
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
+/* Form Elements */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="time"],
+select,
+textarea {
+  background-color: #09090b;
+  color: #f4f4f5;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  transition: border-color 0.15s ease;
 }
 
-.nav-link:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.05);
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #52525b;
 }
 
-.nav-link.active {
-    color: #ffffff !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.02);
+input::placeholder,
+textarea::placeholder {
+  color: #71717a;
 }
 
-/* Badges for Variables */
-.badge {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: #e4e4e7 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 0.25rem 0.6rem;
-    border-radius: 8px;
-    font-family: monospace;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-block;
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid transparent;
 }
 
-.badge:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
-    color: #ffffff !important;
-    transform: translateY(-1px);
+.status-bot {
+  background-color: #27272a;
+  color: #d4d4d8;
+  border-color: #3f3f46;
 }
 
-/* Status QR Code container styles */
-.qr-container {
-    transition: all 0.3s ease;
+.status-live_chat {
+  background-color: #022c22;
+  color: #6ee7b7;
+  border-color: #065f46;
 }
 
-#qrcode img {
-    width: 220px;
-    height: 220px;
-    object-fit: contain;
-    border-radius: 0.75rem;
-    border: 6px solid #ffffff;
-    background: #ffffff;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+.status-queue {
+  background-color: #451a03;
+  color: #fcd34d;
+  border-color: #78350f;
 }
 
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
 
-main,
-.glass-card {
-    animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.status-dot.status-bot {
+  background-color: #a1a1aa;
 }
 
-/* Custom QR Code transition and shine animations */
-@keyframes qrPop {
-    0% {
-        transform: scale(0.9) rotate(-3deg);
-        opacity: 0;
-        filter: blur(8px);
-    }
-
-    70% {
-        transform: scale(1.03) rotate(1deg);
-        filter: blur(0px);
-    }
-
-    100% {
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
-    }
+.status-dot.status-live_chat {
+  background-color: #10b981;
 }
 
-@keyframes shineEffect {
-    0% {
-        left: -100%;
-    }
-
-    100% {
-        left: 200%;
-    }
+.status-dot.status-queue {
+  background-color: #f59e0b;
 }
 
-.qr-animate {
-    animation: qrPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+/* Checkbox & Radio */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #f4f4f5;
 }
 
-.qr-container-wrapper {
-    position: relative;
-    overflow: hidden;
-    border-radius: 0.75rem;
-}
-
-.qr-container-wrapper::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -100%;
-    width: 30%;
-    height: 200%;
-    background: linear-gradient(to right,
-            rgba(255, 255, 255, 0) 0%,
-            rgba(255, 255, 255, 0.2) 50%,
-            rgba(255, 255, 255, 0) 100%);
-    transform: rotate(25deg);
-    animation: shineEffect 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
-    pointer-events: none;
+/* Terminal Monospace */
+.terminal-font {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
 }

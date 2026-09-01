@@ -43,16 +43,16 @@ function markConfigDirty() {
     const btn = document.getElementById('btn-header-save');
     if (!btn) return;
     btn.disabled = false;
-    btn.className = "px-4 py-2 text-xs font-medium text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg ring-1 ring-amber-500/20 transition-all flex items-center gap-2 cursor-pointer";
-    btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg><span>Salvar Configurações</span>`;
+    btn.className = "px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded transition cursor-pointer";
+    btn.innerHTML = `<span>Salvar Configurações</span>`;
 }
 
 function markConfigClean() {
     const btn = document.getElementById('btn-header-save');
     if (!btn) return;
     btn.disabled = true;
-    btn.className = "px-4 py-2 text-xs font-medium rounded-lg transition-all flex items-center gap-2 opacity-40 pointer-events-none bg-white/[0.03] text-neutral-500 ring-1 ring-white/[0.05]";
-    btn.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Salvo</span>`;
+    btn.className = "px-3 py-1.5 text-xs font-bold rounded transition flex items-center gap-1.5 opacity-50 bg-slate-800 text-slate-400 border border-slate-700 pointer-events-none";
+    btn.innerHTML = `<span>Salvo</span>`;
 }
 
 // Event Delegation Global para captura de qualquer alteração nos formulários
@@ -297,24 +297,22 @@ async function copyToClipboard(id) {
 // Exibe um toast temporário
 
 // Função showToast manipula a rotina correspondente na interface do painel
-function showToast(message, icon = '✅') {
+function showToast(message, isSuccess = true) {
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toast-icon');
     const toastMsg = document.getElementById('toast-message');
 
-    toastIcon.innerText = icon;
-    toastMsg.innerText = message;
+    if (toastIcon) toastIcon.innerText = '';
+    if (toastMsg) toastMsg.innerText = message;
 
-    // Reset layout classes to avoid duplicate accumulation
-    const baseClasses = "fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-2xl backdrop-blur-md transform transition duration-300 flex items-center gap-3 z-50";
+    const baseClasses = "fixed bottom-4 right-4 px-4 py-2 rounded bg-zinc-900 border text-xs font-semibold flex items-center gap-2 z-50 transition duration-200";
 
-    if (icon === '✅') {
-        toast.className = baseClasses + " bg-emerald-950/80 border border-emerald-500/30 text-emerald-300";
+    if (isSuccess) {
+        toast.className = baseClasses + " border-zinc-700 text-emerald-400";
     } else {
-        toast.className = baseClasses + " bg-red-950/80 border border-red-500/30 text-red-300";
+        toast.className = baseClasses + " border-zinc-700 text-rose-400";
     }
 
-    // Force transition by removing classes in a new microtask
     setTimeout(() => {
         toast.classList.remove('translate-y-24', 'opacity-0');
     }, 10);
@@ -511,17 +509,16 @@ function showTab(tabName) {
     // Reseta o estilo de todas as abas
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(t => {
-        t.className = "tab-btn px-3.5 py-2.5 text-left text-xs font-normal rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-neutral-400 hover:text-white hover:bg-white/5 cursor-pointer";
+        t.className = "tab-btn px-3 py-2 text-left text-xs font-semibold rounded transition flex items-center gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 cursor-pointer";
         const svg = t.querySelector('svg');
-        if (svg) svg.className = "w-4 h-4 text-neutral-400 shrink-0";
+        if (svg) svg.className = "w-4 h-4 text-zinc-400 shrink-0";
     });
 
-    // Aplica estilo ativo na aba selecionada
     const activeTab = document.getElementById('tab-' + tabName);
     if (activeTab) {
-        activeTab.className = "tab-btn px-3.5 py-2.5 text-left text-xs font-medium rounded-lg transition-colors flex items-center gap-3 whitespace-nowrap text-white bg-white/10 ring-1 ring-white/[0.08] active cursor-pointer";
+        activeTab.className = "tab-btn px-3 py-2 text-left text-xs font-semibold rounded transition flex items-center gap-2 text-zinc-100 bg-zinc-800 border border-zinc-700 active cursor-pointer";
         const svg = activeTab.querySelector('svg');
-        if (svg) svg.className = "w-4 h-4 text-amber-400 shrink-0";
+        if (svg) svg.className = "w-4 h-4 text-zinc-100 shrink-0";
     }
 
     if (tabName === 'usuarios') {
