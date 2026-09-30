@@ -32,7 +32,7 @@ version: '3.8'
 
 services:
   glpi-bot:
-    image: ghcr.io/arthurjaexiste/glpi-bot:latest
+    image: glpi-bot:latest
     container_name: glpi-bot
     restart: unless-stopped
     ports:
