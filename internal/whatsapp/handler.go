@@ -2,13 +2,13 @@ package whatsapp
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
+	"bot-glpi/internal/database"
 	"bot-glpi/internal/state"
 
 	"go.mau.fi/whatsmeow"
@@ -19,25 +19,36 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-type UserSession struct {
-	UserID   int       `json:"user_id"`
-	Username string    `json:"username"`
-	Name     string    `json:"name"`
-	Role     string    `json:"role"`
-	Expiry   time.Time `json:"expiry"`
-}
-
 var (
 	CurrentQR       string
 	IsConnected     bool
 	ClientMu        sync.Mutex
 	GlobalClient    *whatsmeow.Client
 	GlobalContainer *sqlstore.Container
-
-	webDB      *sql.DB
-	sessions   = make(map[string]UserSession)
-	sessionsMu sync.Mutex
 )
+
+// TriggerManualQRFlow desconecta o cliente atual e reinicia o fluxo para gerar um novo QR Code
+func TriggerManualQRFlow() {
+	IsConnected = false
+	CurrentQR = ""
+
+	ClientMu.Lock()
+	client := GlobalClient
+	ClientMu.Unlock()
+
+	if client != nil {
+		client.Disconnect()
+		_ = client.Store.Delete(context.Background())
+	}
+
+	go func() {
+		fmt.Println("🔄 Inicializando novo canal de QR Code para re-pareamento manual...")
+		err := StartWhatsApp(context.Background())
+		if err != nil {
+			fmt.Println("🚨 Erro ao iniciar novo canal de QR Code:", err)
+		}
+	}()
+}
 
 // ─── Gerenciamento de estado do usuário ───────────────────────────────────────
 
@@ -201,7 +212,7 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 	logReceivedMessage(sender, userName, userStep, activeUserFull, text, imgMsg, docMsg, pollUpdate)
 
 	// Salva a mensagem recebida no banco para visualização no painel
-	if webDB != nil {
+	if database.DB != nil {
 		senderName := userName
 		if senderName == "" {
 			senderName = v.Info.PushName
@@ -261,7 +272,7 @@ func HandleMessage(client *whatsmeow.Client, evt interface{}) {
 
 		replyToName, replyToText := extrairInfoCitada(v)
 		cleanChatJID := CleanJIDString(chatJID.String())
-		_, _ = webDB.Exec(
+		_, _ = database.DB.Exec(
 			"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, media_url, reply_to_name, reply_to_text, wa_message_id) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)",
 			cleanChatJID, senderName, v.Info.Sender.String(), msgText, msgType, mediaURL, replyToName, replyToText, v.Info.ID,
 		)

@@ -23,7 +23,7 @@ Sistema de automação de atendimento via WhatsApp integrado à API REST do GLPI
    ```
 
 3. Acesse o painel web administrativo no navegador:
-   `http://localhost:33090` (Credenciais iniciais: `admin` / `admin123`)
+   `http://localhost:33090` (No primeiro acesso, a tela de configuração inicial será exibida para criar a sua conta de Administrador)
 
 ### Execução via Docker Compose
 
@@ -45,17 +45,22 @@ services:
 docker compose up -d
 ```
 
-## Variáveis de Configuração (.env)
+## Configurações pelo Painel Web
 
-| Variável | Descrição | Valor Padrão |
-| :--- | :--- | :--- |
-| `GLPI_API_URL` | URL base da API REST do GLPI | `http://localhost/glpi/apirest.php` |
-| `GLPI_APP_TOKEN` | Token da aplicação configurado no GLPI | - |
-| `GLPI_USER_TOKEN` | Token do usuário de serviço no GLPI | - |
-| `COMPANY_NAME` | Nome da empresa para exibição no bot | `Suporte TI` |
-| `TELEFONE_NOTIFICACAO` | Telefone do grupo/suporte para alertas | - |
-| `SUPPORT_AGENTS` | Lista de nomes de atendentes separados por vírgula | - |
-| `WORKING_HOURS_START` | Horário de início do expediente (HH:MM) | `08:00` |
-| `WORKING_HOURS_END` | Horário de término do expediente (HH:MM) | `18:00` |
-| `WORKING_DAYS` | Dias de expediente (1=Segunda a 5=Sexta) | `1,2,3,4,5` |
-| `SMTP_ENABLED` | Habilita o envio de alertas de desconexão por e-mail | `false` |
+Todas as configurações do sistema são realizadas diretamente pela interface web administrativa (`http://localhost:33090`), sendo salvas e persistidas no diretório `db/` (`db/config.json`). Não é necessário criar nem utilizar arquivos `.env`.
+
+Após criar o seu usuário Administrador no primeiro acesso e efetuar o login, acesse as abas do painel:
+
+1. **Status**:
+   - Clique em **Conectar** e escaneie o QR Code com o WhatsApp de atendimento.
+
+2. **Configurações**:
+   - **Identidade & Suporte**: Nome da empresa e telefone de notificação técnica.
+   - **Conexão GLPI API**: URL da API REST (`https://seu-glpi/apirest.php`), **App-Token** e **User-Token**.
+   - **Horário & Ausência**: Definição de horários de expediente, dias da semana e mensagem automática de ausência.
+   - **Alerta E-mail (SMTP)**: Servidor e credenciais para alertas caso o bot desconecte.
+   - **Gestão de Usuários**: Criação e controle de acesso para administradores e operadores.
+
+3. **Mensagens & Fluxo**:
+   - Personalize textos, variáveis dinâmicas e a árvore de navegação com enquetes interativas.
+

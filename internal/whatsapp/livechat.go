@@ -21,10 +21,8 @@ import (
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-// obterAtendentesSuporte retorna a lista de atendentes configurados no painel.
-
-// Função obterAtendentesSuporte executa a regra de negócio/rotina correspondente
-func obterAtendentesSuporte() []string {
+// ObterAtendentesSuporte retorna a lista de atendentes configurados no painel.
+func ObterAtendentesSuporte() []string {
 	agentsStr := config.GetConfig().SupportAgents
 	var agents []string
 
@@ -35,6 +33,10 @@ func obterAtendentesSuporte() []string {
 	}
 
 	return agents
+}
+
+func obterAtendentesSuporte() []string {
+	return ObterAtendentesSuporte()
 }
 
 // ─── Operações de chat ao vivo ────────────────────────────────────────────────

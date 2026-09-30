@@ -15,6 +15,7 @@ import (
 	"unicode"
 
 	"bot-glpi/internal/config"
+	"bot-glpi/internal/database"
 	"bot-glpi/internal/glpi"
 	"bot-glpi/internal/state"
 
@@ -583,13 +584,11 @@ func montarDescricaoHTML(descricao string, imagens [][]byte) string {
 }
 
 // salvarHistoricoTicket persiste o ticket no banco de dados do painel web, se disponível.
-
-// Função salvarHistoricoTicket executa a regra de negócio/rotina correspondente
 func salvarHistoricoTicket(ticketID int, titulo, solicitante string) {
-	if webDB == nil {
+	if database.DB == nil {
 		return
 	}
-	_, err := webDB.Exec(
+	_, err := database.DB.Exec(
 		"INSERT INTO tickets_history (ticket_id, title, requester) VALUES (?, ?, ?)",
 		strconv.Itoa(ticketID), titulo, solicitante,
 	)

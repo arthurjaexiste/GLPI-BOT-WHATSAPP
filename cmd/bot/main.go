@@ -8,7 +8,9 @@ import (
 	"syscall"
 
 	"bot-glpi/internal/config"
+	"bot-glpi/internal/database"
 	"bot-glpi/internal/state"
+	"bot-glpi/internal/web"
 	"bot-glpi/internal/whatsapp"
 
 	"go.mau.fi/whatsmeow/store/sqlstore"
@@ -55,12 +57,13 @@ func main() {
 		fmt.Println("Serviço iniciado com sucesso.")
 	}
 
+	database.InitDB()
 	config.InitConfig()
 	state.LoadState()
 	state.StartPersister()
 	whatsapp.InitFlow()
 
-	go whatsapp.StartWebServer()
+	go web.StartWebServer()
 
 	os.MkdirAll("db", 0777)
 	container, err := sqlstore.New(context.Background(), "sqlite", "file:db/session.db?_pragma=foreign_keys(1)", nil)

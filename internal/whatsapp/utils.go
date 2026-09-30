@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"bot-glpi/internal/config"
+	"bot-glpi/internal/database"
 	"bot-glpi/internal/state"
 
 	"go.mau.fi/whatsmeow"
@@ -55,13 +56,15 @@ func getSaudacao() string {
 	}
 }
 
-// getSupportNumber retorna o número de suporte configurado, sem formatação.
-
-// Função getSupportNumber executa a regra de negócio/rotina correspondente
-func getSupportNumber() string {
+// GetSupportNumber retorna o número de suporte configurado, sem formatação.
+func GetSupportNumber() string {
 	num := config.GetConfig().TelefoneNotificacao
 	num = strings.NewReplacer("+", "", "-", "", " ", "").Replace(num)
 	return strings.TrimSpace(num)
+}
+
+func getSupportNumber() string {
+	return GetSupportNumber()
 }
 
 // isBlacklisted verifica se um número está na lista de bloqueados (DarkList).
@@ -153,15 +156,17 @@ func normalizarJID(ctx context.Context, client *whatsmeow.Client, jid types.JID)
 	return jid
 }
 
-// sendTextMessage envia uma mensagem de texto simples para um JID.
-
-// Função sendTextMessage executa a regra de negócio/rotina correspondente
-func sendTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string) {
-	_, _ = sendMessage(ctx, client, jid, &waE2E.Message{Conversation: proto.String(text)})
+// SendTextMessage envia uma mensagem de texto simples para um JID.
+func SendTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string) {
+	_, _ = SendMessage(ctx, client, jid, &waE2E.Message{Conversation: proto.String(text)})
 }
 
-// sendQuotedTextMessage envia uma mensagem citando nativamente outra mensagem no WhatsApp.
-func sendQuotedTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string, quotedJID string, quotedText string, quotedMsgID string) {
+func sendTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string) {
+	SendTextMessage(ctx, client, jid, text)
+}
+
+// SendQuotedTextMessage envia uma mensagem citando nativamente outra mensagem no WhatsApp.
+func SendQuotedTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string, quotedJID string, quotedText string, quotedMsgID string) {
 	participant := quotedJID
 	if participant == "" {
 		participant = jid.String()
@@ -191,7 +196,11 @@ func sendQuotedTextMessage(ctx context.Context, client *whatsmeow.Client, jid ty
 		},
 	}
 
-	_, _ = sendMessage(ctx, client, jid, msg)
+	_, _ = SendMessage(ctx, client, jid, msg)
+}
+
+func sendQuotedTextMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, text string, quotedJID string, quotedText string, quotedMsgID string) {
+	SendQuotedTextMessage(ctx, client, jid, text, quotedJID, quotedText, quotedMsgID)
 }
 
 // CleanJIDString normaliza qualquer JID removendo sufixos de dispositivo AD (:1, :12) e padronizando para @s.whatsapp.net.
@@ -212,10 +221,8 @@ func CleanJIDString(raw string) string {
 	return nonAD.String()
 }
 
-// sendMessage envia qualquer tipo de mensagem, simulando digitação para chats de usuário.
-
-// Função sendMessage executa a regra de negócio/rotina correspondente
-func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, msg *waE2E.Message) (whatsmeow.SendResponse, error) {
+// SendMessage envia qualquer tipo de mensagem, simulando digitação para chats de usuário.
+func SendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, msg *waE2E.Message) (whatsmeow.SendResponse, error) {
 	if client == nil {
 		return whatsmeow.SendResponse{}, fmt.Errorf("cliente whatsmeow nulo")
 	}
@@ -224,13 +231,13 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 	jid = normalizarJID(ctx, client, jid)
 
 	// Não simula digitação para o chat interno do suporte/TI
-	if !strings.Contains(jid.String(), getSupportNumber()) {
+	if !strings.Contains(jid.String(), GetSupportNumber()) {
 		simularDigitacao(ctx, client, jid, msg)
 	}
 
 	resp, err := client.SendMessage(ctx, jid, msg)
 	if err == nil {
-		if webDB != nil {
+		if database.DB != nil {
 			msgText := ""
 			msgType := "text"
 			if msg.Conversation != nil {
@@ -253,7 +260,7 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 
 			if msgText != "" {
 				cleanChatJID := CleanJIDString(jid.String())
-				_, _ = webDB.Exec(
+				_, _ = database.DB.Exec(
 					"INSERT INTO chat_messages (chat_jid, sender_name, sender_jid, message_text, message_type, is_from_me, wa_message_id) VALUES (?, ?, ?, ?, ?, 1, ?)",
 					cleanChatJID, "GLPI-BOT (Bot)", "", msgText, msgType, resp.ID,
 				)
@@ -271,6 +278,10 @@ func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, m
 	}
 
 	return resp, err
+}
+
+func sendMessage(ctx context.Context, client *whatsmeow.Client, jid types.JID, msg *waE2E.Message) (whatsmeow.SendResponse, error) {
+	return SendMessage(ctx, client, jid, msg)
 }
 
 // simularDigitacao envia o evento de "digitando..." e aguarda um tempo proporcional
@@ -329,10 +340,8 @@ func calcularDelay(msg *waE2E.Message) time.Duration {
 
 // ─── Formatação de mensagens ──────────────────────────────────────────────────
 
-// formatarMensagem substitui placeholders como {empresa}, {saudacao} e chaves customizadas.
-
-// Função formatarMensagem executa a regra de negócio/rotina correspondente
-func formatarMensagem(msg string, placeholders map[string]string) string {
+// FormatarMensagem substitui placeholders como {empresa}, {saudacao} e chaves customizadas.
+func FormatarMensagem(msg string, placeholders map[string]string) string {
 	res := msg
 	for k, v := range placeholders {
 		res = strings.ReplaceAll(res, "{"+k+"}", v)
@@ -340,6 +349,10 @@ func formatarMensagem(msg string, placeholders map[string]string) string {
 	res = strings.ReplaceAll(res, "{empresa}", getEmpresa())
 	res = strings.ReplaceAll(res, "{saudacao}", getSaudacao())
 	return res
+}
+
+func formatarMensagem(msg string, placeholders map[string]string) string {
+	return FormatarMensagem(msg, placeholders)
 }
 
 // unwrapMessage desembrulha mensagens do WhatsApp envoltas em contêineres como Ephemeral, ViewOnce, etc.
@@ -552,14 +565,16 @@ func estaNoPeriodo(t time.Time, start, end string) bool {
 
 // ─── URL do GLPI ──────────────────────────────────────────────────────────────
 
-// obterLinkTicketGLPI monta o link direto para um ticket no painel web do GLPI.
-
-// Função obterLinkTicketGLPI executa a regra de negócio/rotina correspondente
-func obterLinkTicketGLPI(ticketID string) string {
+// ObterLinkTicketGLPI monta o link direto para um ticket no painel web do GLPI.
+func ObterLinkTicketGLPI(ticketID string) string {
 	apiURL := config.GetConfig().GLPIApiURL
 	baseURL := strings.TrimSuffix(apiURL, "/")
 	baseURL = strings.TrimSuffix(strings.ReplaceAll(baseURL, "/apirest.php", ""), "/")
 	return fmt.Sprintf("%s/index.php?redirect=ticket_%s", baseURL, ticketID)
+}
+
+func obterLinkTicketGLPI(ticketID string) string {
+	return ObterLinkTicketGLPI(ticketID)
 }
 
 // NormalizePhoneLocal normaliza o número de telefone localmente,
