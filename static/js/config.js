@@ -585,11 +585,26 @@ function renderSystemUsersTable(users) {
             ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Ativo</span>`
             : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/5 text-neutral-400 ring-1 ring-white/10"><span class="w-1.5 h-1.5 rounded-full bg-neutral-500"></span> Inativo</span>`;
 
-        const roleSelect = `
-            <select id="user-role-select-${index}" onchange="updateSystemUserPermissions(${index})" class="w-32 bg-white/5 text-xs text-white/90 px-2.5 py-1 rounded-lg ring-1 ring-white/10 focus:ring-white/20 focus:outline-none cursor-pointer">
-                <option value="operator" ${u.role === 'operator' ? 'selected' : ''}>Operador</option>
-                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrador</option>
-            </select>
+        const isAdmin = (u.role === 'admin');
+        const roleSelector = `
+            <div class="inline-flex items-center p-0.5 rounded-lg bg-zinc-950 border border-zinc-800 shadow-inner">
+                <button type="button" onclick="setSystemUserRole('${escapeHTML(u.username)}', 'operator')" 
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${!isAdmin ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 font-bold shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}" 
+                    title="Operador: Acesso restrito ao atendimento de conversas">
+                    <svg class="w-3.5 h-3.5 ${!isAdmin ? 'text-sky-400' : 'text-zinc-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span>Operador</span>
+                </button>
+                <button type="button" onclick="setSystemUserRole('${escapeHTML(u.username)}', 'admin')" 
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${isAdmin ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}" 
+                    title="Administrador: Acesso completo às configurações e gerenciamento">
+                    <svg class="w-3.5 h-3.5 ${isAdmin ? 'text-purple-400' : 'text-zinc-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <span>Admin</span>
+                </button>
+            </div>
         `;
 
         html += `
@@ -599,13 +614,13 @@ function renderSystemUsersTable(users) {
                 <td class="py-3 px-3 align-middle">
                     <div class="flex items-center gap-3">
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="user-toggle-${index}" ${isChecked} onchange="updateSystemUserPermissions(${index})" class="sr-only peer">
-                            <div class="w-8 h-4.5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-neutral-400 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500"></div>
+                            <input type="checkbox" id="user-toggle-${index}" ${isChecked} onchange="toggleSystemUserAccess('${escapeHTML(u.username)}', this.checked)" class="sr-only peer">
+                            <div class="w-8 h-4.5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-neutral-400 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-500"></div>
                         </label>
                         ${statusBadge}
                     </div>
                 </td>
-                <td class="py-3 px-3 align-middle">${roleSelect}</td>
+                <td class="py-3 px-3 align-middle">${roleSelector}</td>
                 <td class="py-3 px-3 align-middle text-right flex items-center justify-end gap-1.5">
                     <button onclick="openSetPasswordModal('${escapeHTML(u.username)}', ${u.id}, '${escapeHTML(u.name || u.username)}')" class="px-2.5 py-1 text-xs font-medium text-neutral-400 hover:text-white bg-transparent hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer" title="Definir Senha">
                         <svg class="w-3.5 h-3.5 text-neutral-400 hover:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
@@ -678,6 +693,25 @@ async function saveUserPasswordFromModal(event) {
     }
 }
 
+function setSystemUserRole(username, role) {
+    const user = systemUsersList.find(u => (u.username || '').toLowerCase() === (username || '').toLowerCase());
+    if (!user) return;
+    if (user.role === role) return;
+
+    user.role = role;
+    filterSystemUsers();
+    markConfigDirty();
+}
+
+function toggleSystemUserAccess(username, isEnabled) {
+    const user = systemUsersList.find(u => (u.username || '').toLowerCase() === (username || '').toLowerCase());
+    if (!user) return;
+
+    user.enabled = isEnabled;
+    filterSystemUsers();
+    markConfigDirty();
+}
+
 function updateSystemUserPermissions(index) {
     const user = systemUsersList[index];
     if (!user) return;
@@ -688,7 +722,7 @@ function updateSystemUserPermissions(index) {
     if (toggle) user.enabled = toggle.checked;
     if (roleSelect) user.role = roleSelect.value;
 
-    renderSystemUsersTable(systemUsersList);
+    filterSystemUsers();
     markConfigDirty();
 }
 
@@ -878,18 +912,28 @@ function renderModalGLPIUsers(users) {
                 </div>
 
                 <div class="flex items-center gap-3 shrink-0">
-                    <select id="modal-role-${index}" class="h-9 w-36 bg-zinc-900 border border-white/10 text-xs px-3 rounded-xl text-zinc-200 focus:border-amber-500/50 focus:outline-none cursor-pointer">
-                        <option value="operator" ${u.role === 'operator' ? 'selected' : ''}>Operador</option>
-                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrador</option>
-                    </select>
+                    <div class="inline-flex items-center p-0.5 rounded-lg bg-zinc-950 border border-zinc-800 shadow-inner">
+                        <button type="button" onclick="setModalUserRole(${index}, 'operator')" 
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${(u.role || 'operator') !== 'admin' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}" 
+                            title="Operador">
+                            <svg class="w-3.5 h-3.5 ${(u.role || 'operator') !== 'admin' ? 'text-sky-400' : 'text-zinc-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <span>Operador</span>
+                        </button>
+                        <button type="button" onclick="setModalUserRole(${index}, 'admin')" 
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${(u.role || 'operator') === 'admin' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}" 
+                            title="Administrador">
+                            <svg class="w-3.5 h-3.5 ${(u.role || 'operator') === 'admin' ? 'text-purple-400' : 'text-zinc-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            <span>Admin</span>
+                        </button>
+                    </div>
 
                     ${isAlreadyInSystem ? `
-                        <span class="h-9 px-4 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                        <span class="h-8 px-3.5 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             <span>Importado</span>
                         </span>
                     ` : `
-                        <button onclick="importUserFromModal(${index})" class="h-9 px-4 inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-black bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-amber-400 rounded-xl shadow-md hover:shadow-amber-500/20 transition-all duration-200 cursor-pointer border border-amber-300/30">
+                        <button onclick="importUserFromModal(${index})" class="h-8 px-3.5 inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-zinc-950 bg-emerald-500 hover:bg-emerald-400 rounded-lg shadow transition cursor-pointer">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             <span>Importar</span>
                         </button>
@@ -902,12 +946,18 @@ function renderModalGLPIUsers(users) {
     listContainer.innerHTML = html;
 }
 
+function setModalUserRole(index, role) {
+    const user = currentFilteredGLPIUsers[index];
+    if (!user) return;
+    user.role = role;
+    renderModalGLPIUsers(currentFilteredGLPIUsers);
+}
+
 async function importUserFromModal(index) {
     const user = currentFilteredGLPIUsers[index];
     if (!user) return;
 
-    const roleSelect = document.getElementById(`modal-role-${index}`);
-    const selectedRole = roleSelect ? roleSelect.value : 'operator';
+    const selectedRole = user.role || 'operator';
 
     const payload = {
         glpi_id: user.glpi_id || user.id || 0,
