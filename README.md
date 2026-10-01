@@ -1,66 +1,66 @@
 # GLPI-BOT
 
-Sistema de automação de atendimento via WhatsApp integrado à API REST do GLPI Helpdesk. Desenvolvido em Go utilizando a biblioteca Whatsmeow, o sistema oferece navegação interativa via enquetes nativas, abertura e consulta de chamados, suporte ao vivo (live chat) com controle de acesso baseado em funções (RBAC), e painel web administrativo embarcado.
+Bot de atendimento via WhatsApp integrado à API do GLPI, com suporte ao vivo (live chat), abertura e consulta de chamados por enquetes interativas e painel web de gerenciamento.
 
-## Pré-requisitos
+## Como rodar com Docker
 
-- Go 1.20 ou superior
-- CGO / SQLite3
-- Instância do GLPI com a API REST habilitada (App-Token e User-Token configurados)
+Não é necessário clonar o código-fonte nem instalar Go. Basta ter o Docker instalado e rodar a imagem oficial.
 
-## Compilação e Execução
+### Opção 1: Docker Compose (recomendado)
 
-### Execução Direta (Local)
-
-1. Compile o executável a partir do diretório raiz:
-   ```bash
-   go build -o bot ./cmd/bot
-   ```
-
-2. Execute o binário gerado:
-   ```bash
-   ./bot
-   ```
-
-3. Acesse o painel web administrativo no navegador:
-   `http://localhost:33090` (No primeiro acesso, a tela de configuração inicial será exibida para criar a sua conta de Administrador)
-
-### Execução via Docker Compose
+Crie um diretório para o bot, salve o arquivo `docker-compose.yml` abaixo e inicie o serviço:
 
 ```yaml
-version: '3.8'
-
 services:
   glpi-bot:
-    image: glpi-bot:latest
+    image: ghcr.io/arthurjaexiste/glpi-bot-whatsapp:latest
     container_name: glpi-bot
     restart: unless-stopped
     ports:
       - "33090:33090"
+    environment:
+      - TZ=America/Sao_Paulo
     volumes:
       - ./db:/app/db
 ```
+
+Inicie o container:
 
 ```bash
 docker compose up -d
 ```
 
-## Configurações pelo Painel Web
+### Opção 2: Docker Run
 
-Todas as configurações do sistema são realizadas diretamente pela interface web administrativa (`http://localhost:33090`), sendo salvas e persistidas no diretório `db/` (`db/config.json`). Não é necessário criar nem utilizar arquivos `.env`.
+Se preferir rodar direto via linha de comando:
 
-Após criar o seu usuário Administrador no primeiro acesso e efetuar o login, acesse as abas do painel:
+```bash
+docker run -d \
+  --name glpi-bot \
+  --restart unless-stopped \
+  -p 33090:33090 \
+  -e TZ=America/Sao_Paulo \
+  -v $(pwd)/db:/app/db \
+  ghcr.io/arthurjaexiste/glpi-bot-whatsapp:latest
+```
 
-1. **Status**:
-   - Clique em **Conectar** e escaneie o QR Code com o WhatsApp de atendimento.
+## Primeiro Acesso e Configuração
 
-2. **Configurações**:
-   - **Identidade & Suporte**: Nome da empresa e telefone de notificação técnica.
-   - **Conexão GLPI API**: URL da API REST (`https://seu-glpi/apirest.php`), **App-Token** e **User-Token**.
-   - **Horário & Ausência**: Definição de horários de expediente, dias da semana e mensagem automática de ausência.
-   - **Alerta E-mail (SMTP)**: Servidor e credenciais para alertas caso o bot desconecte.
-   - **Gestão de Usuários**: Criação e controle de acesso para administradores e operadores.
+Após subir o container, acesse o painel web:
 
-3. **Mensagens & Fluxo**:
-   - Personalize textos, variáveis dinâmicas e a árvore de navegação com enquetes interativas.
+**URL:** `http://localhost:33090` (ou pelo IP do servidor)
+
+1. **Conta de Administrador**: No primeiro acesso, defina o usuário e senha do administrador inicial na tela de boas-vindas.
+2. **Conectar WhatsApp**: Na aba **Status**, clique no botão **Conectar** e escaneie o QR Code com o WhatsApp da sua operação.
+3. **Integrar ao GLPI**: Na aba **Configurações**, informe a URL da API REST do GLPI (`https://seu-glpi/apirest.php`), o **App-Token** e o **User-Token**.
+4. **Customizar Mensagens e Fluxos**: Ajuste mensagens automáticas, horário de expediente e as opções das enquetes interativas diretamente pelo painel.
+
+> Todos os dados (sessão do WhatsApp, usuários e configurações) são salvos no diretório `./db` montado pelo Docker, persistindo mesmo após recriar o container.
+
+## Principais Recursos
+
+- **Abertura e consulta de chamados**: Integração direta com a API REST do GLPI.
+- **Enquetes interativas**: Navegação limpa no WhatsApp usando as enquetes nativas.
+- **Live Chat com RBAC**: Painel de atendimento em tempo real com perfis de Administrador e Operador.
+- **Configuração 100% via Web**: Sem arquivos `.env` manuais — tudo é gerenciado e salvo pelo painel.
 
